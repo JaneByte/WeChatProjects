@@ -1,0 +1,72 @@
+/* 公共样式 - 可以放一些通用的动画或重置样式 */
+
+/* 重置默认样式 */
+view, text, image, input, button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 去除 button 默认样式 */
+button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  font-size: inherit;
+  
+  &::after {
+    border: none;
+  }
+}
+
+/* 去除 input 默认样式 */
+input {
+  outline: none;
+  border: none;
+  background: transparent;
+}
+
+/* 图片默认样式 */
+image {
+  display: block;
+}
+
+/* 常用动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20rpx);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-normal) ease;
+}
+
+.slide-up {
+  animation: slideUp var(--transition-normal) ease;
+}

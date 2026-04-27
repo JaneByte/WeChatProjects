@@ -1,0 +1,269 @@
+// ==================== 柠檬牛油果配色 ====================
+$bg-page: #fefbf5;
+$primary: #8cb818;
+$primary-dark: #004132;
+$primary-light: #d0ebb7;
+$accent-warm: #fdf4d6;
+$accent-price: #fadf2e;
+$bg-card: #ffffff;
+$text-dark: #004132;
+$text-deep: #003322;
+$text-secondary: #6b7a5e;
+$text-placeholder: #9aaa8a;
+$text-light: #9aaa8a;
+$border-light: #e0e6c8;
+$shadow-sm: 0 4rpx 16rpx rgba(140, 184, 24, 0.04);
+$shadow-md: 0 8rpx 24rpx rgba(140, 184, 24, 0.06);
+$spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+$border-radius-card: 24rpx;
+
+page {
+  background-color: $bg-page;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* 关键：禁止页面滚动，只留scroll-view滚动 */
+}
+.page-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: $bg-page;
+  box-sizing: border-box;
+}
+.press-effect {
+  transition: transform 0.25s $spring-curve;
+  box-sizing: border-box;
+  &:active { transform: scale(0.97); }
+}
+
+/* 顶部品牌区域 */
+.top-brand-area {
+  flex-shrink: 0;
+  background: $primary;
+  padding: 16rpx 32rpx 28rpx;
+  border-radius: 0 0 $border-radius-card $border-radius-card;
+  box-sizing: border-box;
+}
+.brand-greeting {
+  margin-bottom: 28rpx;
+}
+.brand-wrapper {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12rpx;
+  .brand-name {
+    font-size: 48rpx;
+    font-weight: 900;
+    color: #fff;
+  }
+  .brand-sub {
+    font-size: 28rpx;
+    color: rgba(255,255,255,0.9);
+    margin-left: 6rpx;
+  }
+}
+.greeting-box {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  .greeting-emoji { font-size: 36rpx; }
+  .greeting-words {
+    font-size: 30rpx;
+    color: rgba(255,255,255,0.95);
+  }
+}
+.search-wrapper {
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.95);
+    padding: 22rpx 28rpx;
+    border-radius: 60rpx;
+    gap: 16rpx;
+    .search-icon { width: 40rpx; height: 40rpx; opacity: 0.55; }
+    .search-placeholder { font-size: 30rpx; color: $text-placeholder; }
+  }
+}
+
+/* ========== 滚动容器：修复卡顿、上移 ========== */
+.content-scroll {
+  flex: 1;
+  width: 100%;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  .header-left { display: flex; align-items: center; gap: 16rpx; }
+  .header-title { font-size: 38rpx; font-weight: 700; color: $text-dark; }
+  .header-badge {
+    background: $bg-page;
+    padding: 6rpx 16rpx;
+    border-radius: 30rpx;
+    .badge-text { font-size: 24rpx; color: $primary-dark; }
+  }
+  .header-more { font-size: 28rpx; color: $primary-dark; }
+}
+
+/* ========== 今日鲜采 ========== */
+.hero-section { margin: 32rpx 0 36rpx; }
+.hero-card {
+  display: flex;
+  background: $bg-card;
+  border-radius: $border-radius-card;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+  border: 1rpx solid $border-light;
+  .hero-image-wrapper {
+    width: 240rpx;
+    height: 240rpx;
+    flex-shrink: 0;
+    background: $primary-light;
+  }
+  .hero-image { width: 100%; height: 100%; }
+  .hero-content {
+    flex: 1;
+    padding: 28rpx 24rpx 28rpx 28rpx;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    .content-main {
+      .hero-name {
+        font-size: 36rpx;
+        font-weight: 700;
+        color: $text-dark;
+        margin-bottom: 16rpx;
+      }
+      .hero-desc {
+        font-size: 26rpx;
+        color: $text-secondary;
+        line-height: 1.5;
+        margin-bottom: 8rpx;
+        margin-left: 16rpx;
+      }
+    }
+    .content-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .price-wrapper {
+      .price-symbol { font-size: 26rpx; color: $primary-dark; }
+      .price-value { font-size: 42rpx; font-weight: 700; color: $primary-dark; }
+      .price-unit { font-size: 24rpx; color: $text-secondary; margin-left: 6rpx; }
+    }
+    .action-btn {
+      width: 72rpx;
+      height: 72rpx;
+      background: $accent-price;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      .btn-text { font-size: 44rpx; color: $primary-dark; font-weight: 600; }
+    }
+  }
+}
+
+/* 快捷入口 */
+.quick-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16rpx 0 28rpx;
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12rpx;
+    flex: 1;
+    .nav-icon-box {
+      width: 88rpx;
+      height: 88rpx;
+      background: $accent-warm;
+      border-radius: 20rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-icon { width: 56rpx; height: 56rpx; }
+    .nav-text { font-size: 28rpx; font-weight: 500; color: $text-dark; }
+  }
+}
+
+/* 氛围图 */
+.atmosphere-wrapper {
+  position: relative;
+  margin: 16rpx 0 16rpx;
+  width: 100%;
+  border-radius: $border-radius-card $border-radius-card 0 0;
+  overflow: hidden;
+  .atmosphere-image {
+    width: 100%;
+    height: 180rpx;
+    display: block;
+  }
+  .atmosphere-mask {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80rpx;
+    background: linear-gradient(to top, $bg-page 0%, transparent 100%);
+    pointer-events: none;
+  }
+}
+
+/* 瀑布流 */
+.goods-waterfall-section {
+  margin-top: 8rpx;
+  margin-bottom: 20rpx;
+}
+.waterfall-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28rpx;
+  gap: 24rpx;
+  .header-line { flex: 1; height: 1rpx; background: $border-light; }
+  .waterfall-title { font-size: 28rpx; color: $text-secondary; letter-spacing: 2rpx; }
+}
+.waterfall-container {
+  display: flex;
+  gap: 24rpx;
+}
+.waterfall-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+.load-state {
+  padding: 48rpx 0 32rpx;
+  text-align: center;
+  .load-text { font-size: 26rpx; color: $text-light; }
+}
+.bottom-placeholder { height: 120rpx; }
+
+/* 小屏幕 */
+@media (max-width: 350px) {
+  .quick-nav {
+    padding: 12rpx 0 20rpx;
+    .nav-icon-box { width: 76rpx; height: 76rpx; }
+    .nav-icon { width: 48rpx; height: 48rpx; }
+    .nav-text { font-size: 26rpx; }
+  }
+  .hero-card {
+    .hero-image-wrapper { width: 200rpx; height: 200rpx; }
+    .hero-content { padding: 20rpx 16rpx; }
+    .hero-name { font-size: 32rpx; }
+  }
+}

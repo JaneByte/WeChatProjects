@@ -1,0 +1,113 @@
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 32rpx;
+}
+
+/* 左侧区域 */
+.nav-left {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-left-placeholder {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 中间区域 */
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Logo 艺术字样式 */
+.logo-art {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.logo-letter {
+  font-size: 40rpx;
+  font-weight: 800;
+  font-family: 'PingFang SC', 'Microsoft YaHei', cursive;
+}
+
+/* 普通标题样式 */
+.nav-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333333;
+  letter-spacing: 1rpx;
+}
+
+/* 右侧区域 */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.action-btn {
+  position: relative;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #F5F8F2;
+  transition: all 0.2s ease;
+}
+
+.action-btn:active {
+  background-color: #E8F0E3;
+  transform: scale(0.94);
+}
+
+.action-icon {
+  width: 36rpx;
+  height: 36rpx;
+  opacity: 0.6;
+}
+
+.badge {
+  position: absolute;
+  top: 4rpx;
+  right: 8rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  background: linear-gradient(135deg, #6BBF59, #4CAF50);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  font-weight: bold;
+  border-radius: 15rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8rpx;
+}

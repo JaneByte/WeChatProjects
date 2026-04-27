@@ -1,0 +1,89 @@
+<!-- 横向滚动模式 -->
+<scroll-view 
+  wx:if="{{mode === 'scroll' && list.length > 0}}"
+  scroll-x 
+  class="weekly-hot-list__scroll"
+  show-scrollbar="{{false}}"
+>
+  <view class="weekly-hot-list__scroll-inner">
+    <view 
+      wx:for="{{list}}" 
+      wx:key="id" 
+      class="weekly-hot-list__item"
+      data-item="{{item}}"
+      bindtap="onItemTap"
+    >
+      <!-- 排名徽章 -->
+      <view class="item-rank item-rank--{{item.rank <= 3 ? 'top' : 'normal'}}">
+        <text wx:if="{{item.rank === 1}}">🥇</text>
+        <text wx:elif="{{item.rank === 2}}">🥈</text>
+        <text wx:elif="{{item.rank === 3}}">🥉</text>
+        <text wx:else>{{item.rank}}</text>
+      </view>
+
+      <!-- 商品图片 -->
+      <image class="item-image" src="{{item.image}}" mode="aspectFill" />
+
+      <!-- 商品信息 -->
+      <view class="item-info">
+        <text class="item-name">{{item.name}}</text>
+        <view class="item-price-wrap">
+          <text class="item-price">¥{{item.price}}</text>
+          <text class="item-unit">/{{item.unit}}</text>
+        </view>
+        <view wx:if="{{showSales}}" class="item-sales">
+          <text>🔥 {{item.sales}}份</text>
+        </view>
+      </view>
+
+      <!-- 加购按钮 -->
+      <view class="item-cart" data-item="{{item}}" catchtap="onAddToCart">
+        <text>+</text>
+      </view>
+    </view>
+  </view>
+</scroll-view>
+
+<!-- 网格模式 -->
+<view wx:elif="{{mode === 'grid' && list.length > 0}}" class="weekly-hot-list__grid">
+  <view 
+    wx:for="{{list}}" 
+    wx:key="id" 
+    class="weekly-hot-list__grid-item"
+    data-item="{{item}}"
+    bindtap="onItemTap"
+  >
+    <!-- 排名徽章 -->
+    <view class="grid-rank grid-rank--{{item.rank <= 3 ? 'top' : 'normal'}}">
+      <text wx:if="{{item.rank === 1}}">🥇</text>
+      <text wx:elif="{{item.rank === 2}}">🥈</text>
+      <text wx:elif="{{item.rank === 3}}">🥉</text>
+      <text wx:else>{{item.rank}}</text>
+    </view>
+
+    <!-- 商品图片 -->
+    <image class="grid-image" src="{{item.image}}" mode="aspectFill" />
+
+    <!-- 商品信息 -->
+    <view class="grid-info">
+      <text class="grid-name">{{item.name}}</text>
+      <view class="grid-price-wrap">
+        <text class="grid-price">¥{{item.price}}</text>
+        <text class="grid-unit">/{{item.unit}}</text>
+      </view>
+      <view wx:if="{{showSales}}" class="grid-sales">
+        <text>🔥 {{item.sales}}份</text>
+      </view>
+    </view>
+
+    <!-- 加购按钮 -->
+    <view class="grid-cart" data-item="{{item}}" catchtap="onAddToCart">
+      <text>+</text>
+    </view>
+  </view>
+</view>
+
+<!-- 空状态 -->
+<view wx:elif="{{list.length === 0}}" class="weekly-hot-list__empty">
+  <text>暂无热销商品</text>
+</view>

@@ -1,0 +1,17 @@
+<!-- components/goods-card/goods-card.wxml -->
+<view class="goods-card" bindtap="onTap" hover-class="press-effect">
+  <view class="image-wrapper">
+    <image class="goods-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+    <view class="add-btn" catchtap="onAdd" hover-class="press-effect">
+      <text class="add-icon">+</text>
+    </view>
+  </view>
+  <view class="goods-info">
+    <text class="goods-name">{{item.name}}</text>
+    <text class="goods-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+    <view class="price-row">
+      <text class="price">¥{{item.price}}</text>
+      <text class="unit">/{{item.unit}}</text>
+    </view>
+  </view>
+</view>

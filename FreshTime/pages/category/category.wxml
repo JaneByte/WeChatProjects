@@ -1,0 +1,109 @@
+<!-- 分类页面 - 温润大地风格 -->
+<view class="classify-container">
+  <!-- 顶部搜索栏 -->
+  <view class="search-section">
+    <view class="search-box" bindtap="goToSearch" hover-class="press-effect" aria-label="搜索商品">
+      <text class="search-icon">🔍</text>
+      <text class="search-text">搜索{{currentTab === 'fruit' ? '水果' : '蔬菜'}}</text>
+    </view>
+  </view>
+  <!-- 主体内容区：左右分栏 -->
+  <view class="main-content">
+    <!-- 左侧：Tab切换 + 分类导航 -->
+    <view class="left-panel">
+      <!-- 胶囊式Tab切换器 -->
+      <view class="capsule-tab">
+        <view 
+          class="tab-capsule {{currentTab === 'fruit' ? 'active' : ''}}"
+          bindtap="switchTab"
+          data-tab="fruit"
+          hover-class="press-effect"
+          aria-label="切换到水果分类"
+        >
+          <text class="capsule-text">水果</text>
+        </view>
+        <view 
+          class="tab-capsule {{currentTab === 'vegetable' ? 'active' : ''}}"
+          bindtap="switchTab"
+          data-tab="vegetable"
+          hover-class="press-effect"
+          aria-label="切换到蔬菜分类"
+        >
+          <text class="capsule-text">蔬菜</text>
+        </view>
+      </view>
+      <!-- 分类导航（纯文字 + 指示条） -->
+      <scroll-view class="category-nav" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation>
+        <view 
+          class="nav-item {{currentCategoryId === item.id ? 'active' : ''}}"
+          wx:for="{{categoryList}}"
+          wx:key="id"
+          bindtap="selectCategory"
+          data-id="{{item.id}}"
+          hover-class="press-effect"
+          aria-label="切换到{{item.name}}分类"
+        >
+          <view class="nav-indicator"></view>
+          <text class="nav-text">{{item.name}}</text>
+        </view>
+      </scroll-view>
+    </view>
+    <!-- 右侧：商品列表 -->
+    <scroll-view class="right-panel" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation>
+      <!-- 当前分类标题 -->
+      <view class="section-header">
+        <text class="section-title">{{currentCategory.name}}</text>
+        <text class="goods-count" wx:if="{{goodsList.length > 0}}">{{goodsList.length}}种</text>
+      </view>
+      <!-- 商品列表 - 单列大卡片 -->
+      <view class="goods-list">
+        <view 
+          class="goods-card"
+          wx:for="{{goodsList}}"
+          wx:key="id"
+          bindtap="goToDetail"
+          data-id="{{item.id}}"
+          hover-class="card-press"
+          aria-label="查看{{item.name}}详情"
+        >
+          <view class="card-image-wrapper">
+            <image class="card-image" src="{{item.image}}" mode="aspectFill" lazy-load alt="{{item.name}}"></image>
+          </view>
+          <view class="card-info">
+            <view class="info-header">
+              <text class="goods-name">{{item.name}}</text>
+              <text class="goods-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+            </view>
+            <view class="info-footer">
+              <view class="price-box">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{item.price}}</text>
+                <text class="price-unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+              </view>
+              <view 
+                class="add-cart-btn"
+                catchtap="addToCart"
+                data-id="{{item.id}}"
+                hover-class="press-effect"
+                aria-label="加入购物车"
+              >
+                <text class="add-text">+</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{goodsList.length === 0 && !loading}}">
+        <text class="empty-text">✨ 暂无商品</text>
+      </view>
+      <!-- 加载状态 -->
+      <view class="loading-state" wx:if="{{loading}}">
+        <text class="loading-text">加载中...</text>
+      </view>
+      
+      <!-- 底部安全区 -->
+      <view class="safe-bottom"></view>
+    </scroll-view>
+  </view>
+</view>

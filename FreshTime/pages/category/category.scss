@@ -1,0 +1,316 @@
+// ==================== 柠檬牛油果配色 ====================
+$bg-page: #fefbf5;
+$primary: #8cb818;
+$primary-dark: #004132;
+$primary-light: #d0ebb7;
+$accent-warm: #fdf4d6;
+$accent-price: #fadf2e;
+$bg-card: #ffffff;
+$text-dark: #004132;
+$text-deep: #003322;
+$text-secondary: #6b7a5e;
+$text-placeholder: #9aaa8a;
+$border-light: #e0e6c8;
+$shadow-sm: 0 2rpx 8rpx rgba(140, 184, 24, 0.06);
+$shadow-md: 0 4rpx 16rpx rgba(140, 184, 24, 0.08);
+$spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+// ==================== 页面基础 ====================
+page {
+  background: $bg-page;
+  height: 100%;
+}
+
+.classify-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: $bg-page;
+}
+
+// ==================== 点击反馈 ====================
+.press-effect {
+  transition: transform 0.25s $spring-curve;
+  
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// ==================== 搜索区域 ====================
+.search-section {
+  padding: 24rpx 28rpx 16rpx;
+  
+  .search-box {
+    display: flex;
+    align-items: center;
+    padding: 20rpx 28rpx;
+    background: $bg-card;
+    border-radius: 60rpx;
+    box-shadow: $shadow-sm;
+    
+    .search-icon {
+      font-size: 32rpx;
+      margin-right: 16rpx;
+      opacity: 0.7;
+    }
+    
+    .search-text {
+      font-size: 28rpx;
+      color: $text-placeholder;
+      font-weight: 400;
+    }
+  }
+}
+
+// ==================== 主体内容区 ====================
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+// ==================== 左侧面板 ====================
+.left-panel {
+  width: 220rpx;
+  display: flex;
+  flex-direction: column;
+  padding-left: 24rpx;
+}
+
+// 胶囊式Tab切换器
+.capsule-tab {
+  display: flex;
+  padding: 16rpx 0 24rpx;
+  gap: 12rpx;
+  
+  .tab-capsule {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14rpx 0;
+    background: transparent;
+    border-radius: 40rpx;
+    transition: all 0.2s $spring-curve;
+    
+    .capsule-text {
+      font-size: 28rpx;
+      color: $text-secondary;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+    
+    &.active {
+      background: $primary;
+      
+      .capsule-text {
+        color: #ffffff;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// 分类导航
+.category-nav {
+  flex: 1;
+  
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 0 24rpx 16rpx;
+    position: relative;
+    
+    .nav-indicator {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3rpx;
+      height: 0;
+      background: $primary;
+      border-radius: 2rpx;
+      transition: height 0.2s $spring-curve;
+    }
+    
+    .nav-text {
+      font-size: 28rpx;
+      color: $text-secondary;
+      font-weight: 400;
+      transition: all 0.2s;
+    }
+    
+    &.active {
+      .nav-indicator {
+        height: 36rpx;
+      }
+      
+      .nav-text {
+        color: $primary-dark;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// ==================== 右侧面板 ====================
+.right-panel {
+  flex: 1;
+  background: $bg-card;
+  border-top-left-radius: 32rpx;
+  border-bottom-left-radius: 32rpx;
+  padding: 24rpx 24rpx 0;
+  box-shadow: -2rpx 0 12rpx rgba(140, 184, 24, 0.06);
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+  padding: 0 8rpx;
+  
+  .section-title {
+    font-size: 34rpx;
+    color: $text-dark;
+    font-weight: 500;
+    letter-spacing: 0.5rpx;
+  }
+  
+  .goods-count {
+    font-size: 24rpx;
+    color: $text-placeholder;
+  }
+}
+
+// ==================== 商品列表 ====================
+.goods-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.goods-card {
+  display: flex;
+  margin-bottom: 28rpx;
+  background: $bg-card;
+  border-radius: 20rpx;
+  overflow: hidden;
+  
+  .card-image-wrapper {
+    width: 180rpx;
+    height: 180rpx;
+    border-radius: 16rpx;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: $bg-page;
+    
+    .card-image {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  
+  .card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8rpx 0 8rpx 20rpx;
+    
+    .info-header {
+      .goods-name {
+        font-size: 30rpx;
+        color: $text-dark;
+        font-weight: 500;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .goods-desc {
+        font-size: 24rpx;
+        color: $text-secondary;
+        line-height: 1.4;
+        margin-top: 6rpx;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+    
+    .info-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      
+      .price-box {
+        display: flex;
+        align-items: baseline;
+        
+        .price-symbol {
+          font-size: 24rpx;
+          color: $primary-dark;
+          font-weight: 600;
+        }
+        
+        .price-value {
+          font-size: 34rpx;
+          color: $primary-dark;
+          font-weight: 600;
+        }
+        
+        .price-unit {
+          font-size: 22rpx;
+          color: $text-secondary;
+          margin-left: 4rpx;
+        }
+      }
+      
+      .add-cart-btn {
+        width: 56rpx;
+        height: 56rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $accent-price;
+        border-radius: 50%;
+        transition: all 0.15s $spring-curve;
+        
+        .add-text {
+          font-size: 36rpx;
+          color: $primary-dark;
+          font-weight: 600;
+          line-height: 1;
+        }
+        
+        &:active {
+          transform: scale(0.88);
+          background: darken($accent-price, 5%);
+        }
+      }
+    }
+  }
+}
+
+// ==================== 状态展示 ====================
+.empty-state,
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 120rpx 0;
+  
+  .empty-text,
+  .loading-text {
+    font-size: 28rpx;
+    color: $text-placeholder;
+  }
+}
+
+.safe-bottom {
+  height: 40rpx;
+}

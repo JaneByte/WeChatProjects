@@ -1,0 +1,130 @@
+// 横向滚动模式
+.weekly-hot-list__scroll {
+  white-space: nowrap;
+  width: 100%;
+  padding: 8rpx 0 16rpx;  // 增加上下内边距
+}
+
+.weekly-hot-list__scroll-inner {
+  display: inline-flex;
+  gap: 24rpx;  // 增加卡片间距
+  padding-right: 24rpx;
+}
+
+.weekly-hot-list__item {
+  position: relative;
+  width: 272rpx;  // 稍微加宽
+  background: #fff;
+  border-radius: 24rpx;  // 更大圆角
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);  // 更柔和的阴影
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  }
+}
+
+// 排名徽章 - 优化样式
+.item-rank {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12rpx);
+
+  &--top {
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    color: #fff;
+    font-size: 36rpx;
+    box-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.3);
+  }
+
+  &--normal {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 26rpx;
+  }
+}
+
+.item-image {
+  width: 100%;
+  height: 272rpx;  // 正方形，更大
+  background: #f8f8f8;
+  object-fit: cover;
+}
+
+.item-info {
+  padding: 20rpx 16rpx 24rpx;
+}
+
+.item-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 12rpx;
+}
+
+.item-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.item-price {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ff6b35;  // 暖橙色，更温馨
+}
+
+.item-unit {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.item-sales {
+  font-size: 22rpx;
+  color: #ff6b35;
+  background: #fff5f0;
+  display: inline-block;
+  padding: 6rpx 12rpx;
+  border-radius: 20rpx;
+}
+
+// 加购按钮 - 更精致
+.item-cart {
+  position: absolute;
+  bottom: 20rpx;
+  right: 16rpx;
+  width: 60rpx;
+  height: 60rpx;
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: bold;
+  box-shadow: 0 6rpx 16rpx rgba(255, 107, 53, 0.3);
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.92);
+    box-shadow: 0 3rpx 8rpx rgba(255, 107, 53, 0.4);
+  }
+}

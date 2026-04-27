@@ -1,0 +1,14 @@
+<!-- components/flash-sale-item/flash-sale-item.wxml -->
+<view class="flash-card" bindtap="onTap" hover-class="press-effect">
+  <image class="flash-img" src="{{item.image}}" mode="aspectFill"></image>
+  <text class="flash-name">{{item.name}}</text>
+  <view class="flash-price-row">
+    <text class="flash-price">¥{{item.flashPrice}}</text>
+    <text class="flash-original">¥{{item.originalPrice}}</text>
+  </view>
+  <view class="flash-progress">
+    <view class="flash-progress-bar" style="width: {{item.soldPercent}}"></view>
+  </view>
+  <view class="flash-sold">已抢 {{item.soldPercent}}%</view>
+  <view class="flash-btn" catchtap="onBuy" hover-class="press-effect">立即抢购</view>
+</view>

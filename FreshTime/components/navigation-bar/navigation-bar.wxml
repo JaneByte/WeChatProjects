@@ -1,0 +1,43 @@
+<view class="navigation-bar" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-content">
+    <!-- 左侧：返回按钮或占位 -->
+    <view class="nav-left">
+      <view wx:if="{{back}}" class="back-btn" bindtap="onBack">
+        <image class="back-icon" src="/assets/icon/back.png" mode="aspectFill"></image>
+      </view>
+    </view>
+
+    <!-- 中间：标题区域 -->
+    <view class="nav-center">
+      <!-- 首页显示艺术 Logo -->
+      <block wx:if="{{showLogo}}">
+        <view class="logo-art">
+          <text class="logo-letter" style="color: #2E7D32">F</text>
+          <text class="logo-letter" style="color: #3E8E41">r</text>
+          <text class="logo-letter" style="color: #4CAF50">e</text>
+          <text class="logo-letter" style="color: #5DBE5A">s</text>
+          <text class="logo-letter" style="color: #6BBF59">h</text>
+          <text class="logo-letter" style="color: #2E7D32">T</text>
+          <text class="logo-letter" style="color: #3E8E41">i</text>
+          <text class="logo-letter" style="color: #4CAF50">m</text>
+          <text class="logo-letter" style="color: #5DBE5A">e</text>
+        </view>
+      </block>
+      <!-- 其他页面显示普通标题 -->
+      <block wx:else>
+        <text class="nav-title">{{title}}</text>
+      </block>
+    </view>
+
+    <!-- 右侧：搜索 + 消息 -->
+    <view class="nav-right">
+      <view class="action-btn" bindtap="onSearch">
+        <image class="action-icon" src="/assets/icon/search.png" mode="aspectFill"></image>
+      </view>
+      <view class="action-btn" bindtap="onMessage">
+        <image class="action-icon" src="/assets/icon/message.png" mode="aspectFill"></image>
+        <view class="badge" wx:if="{{messageCount > 0}}">{{messageCount}}</view>
+      </view>
+    </view>
+  </view>
+</view>

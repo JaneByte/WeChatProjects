@@ -1,1 +1,171 @@
-/* pages/profile/profile.wxss */
+$bg-page: #fefbf5;
+$bg-card: #ffffff;
+$primary: #8cb818;
+$primary-dark: #004132;
+$text-secondary: #6b7a5e;
+$text-placeholder: #9aaa8a;
+$border-light: #e0e6c8;
+
+page {
+  background: $bg-page;
+  min-height: 100%;
+}
+
+.profile-page {
+  padding: 24rpx;
+}
+
+.profile-hero {
+  background: linear-gradient(135deg, #8cb818, #7cab12);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 8rpx 22rpx rgba(124, 171, 18, 0.28);
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20rpx;
+}
+
+.nickname {
+  font-size: 34rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.level {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.order-card,
+.menu-card {
+  margin-top: 20rpx;
+  background: $bg-card;
+  border-radius: 20rpx;
+  border: 1rpx solid $border-light;
+  box-shadow: 0 4rpx 14rpx rgba(0, 65, 50, 0.06);
+  padding: 20rpx;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 28rpx;
+  color: $primary-dark;
+  font-weight: 600;
+}
+
+.card-link {
+  font-size: 24rpx;
+  color: $text-placeholder;
+}
+
+.order-grid {
+  margin-top: 20rpx;
+  display: flex;
+  justify-content: space-between;
+}
+
+.order-item {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.order-mark {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(140, 184, 24, 0.14);
+  color: $primary-dark;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.order-label {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $text-secondary;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 6rpx;
+  border-bottom: 1rpx solid rgba(224, 230, 200, 0.7);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.menu-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-title {
+  font-size: 28rpx;
+  color: $primary-dark;
+  font-weight: 500;
+}
+
+.menu-desc {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: $text-placeholder;
+}
+
+.menu-arrow {
+  font-size: 24rpx;
+  color: #9aaa8a;
+}
+
+@media (max-width: 350px) {
+  .profile-page { padding: 16rpx; }
+
+  .profile-hero {
+    border-radius: 20rpx;
+    padding: 20rpx;
+  }
+
+  .avatar {
+    width: 96rpx;
+    height: 96rpx;
+  }
+
+  .nickname { font-size: 30rpx; }
+
+  .order-card,
+  .menu-card {
+    margin-top: 16rpx;
+    padding: 16rpx;
+  }
+
+  .menu-item { padding: 14rpx 4rpx; }
+}

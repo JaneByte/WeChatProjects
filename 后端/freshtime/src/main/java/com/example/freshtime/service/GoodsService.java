@@ -1,18 +1,14 @@
 package com.example.freshtime.service;
 
-import java.util.Map;
+import com.example.freshtime.common.ApiResponse;
 
 public interface GoodsService {
 
-    // 根据分类ID获取商品列表
-    Map<String, Object> getGoodsList(Long categoryId);
+    ApiResponse<?> getGoodsList(Long categoryId);
 
-    // 获取推荐商品列表
-    Map<String, Object> getRecommendList();
+    ApiResponse<?> getRecommendList();
 
-    // 获取商品详情
-    Map<String, Object> getGoodsDetail(Long id);
+    ApiResponse<?> getGoodsDetail(Long id);
 
-    // 搜索商品
-    Map<String, Object> searchGoods(String keyword);
+    ApiResponse<?> searchGoods(String keyword);
 }

@@ -1,10 +1,8 @@
 package com.example.freshtime.service;
 
-import java.util.Map;
+import com.example.freshtime.common.ApiResponse;
 
 public interface CategoryService {
-    //定义业务方法
 
-    Map<String, Object> getCategoryTree();
-
+    ApiResponse<?> getCategoryTree();
 }

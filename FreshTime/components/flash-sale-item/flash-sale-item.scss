@@ -1,9 +1,9 @@
 // ==================== 温润大地配色 ====================
-$primary: #438855;
-$primary-light: #75b596;
-$accent: #d4e8a5;
+$primary: #8cb818;
+$primary-light: #b7d878;
+$accent: #dff0bf;
 $bg-card: #ffffff;
-$text-dark: #1c1a1b;
+$text-dark: #004132;
 $text-secondary: #6b7a6e;
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
@@ -13,7 +13,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   border-radius: 20rpx;
   padding: 20rpx;
   box-sizing: border-box;
-  box-shadow: 0 4rpx 12rpx rgba(67, 136, 85, 0.06);
+  box-shadow: 0 4rpx 12rpx rgba(140, 184, 24, 0.12);
 }
 
 .press-effect {
@@ -92,4 +92,10 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   border-radius: 40rpx;
   text-align: center;
   border: 1rpx solid $primary;
+  transition: transform 0.25s $spring-curve, background 0.25s $spring-curve;
+
+  &:active {
+    transform: scale(0.96);
+    background: darken($accent, 4%);
+  }
 }

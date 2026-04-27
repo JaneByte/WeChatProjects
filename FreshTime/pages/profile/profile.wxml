@@ -1,2 +1,47 @@
-<!--pages/profile/profile.wxml-->
-<text>pages/profile/profile.wxml</text>
+<!-- pages/profile/profile.wxml -->
+<view class="profile-page">
+  <view class="profile-hero">
+    <view class="user-card">
+      <image class="avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <view class="user-meta">
+        <text class="nickname">{{userInfo.nickname}}</text>
+        <text class="level">{{userInfo.level}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="order-card">
+    <view class="card-head">
+      <text class="card-title">我的订单</text>
+      <text class="card-link">查看全部</text>
+    </view>
+    <view class="order-grid">
+      <view
+        class="order-item"
+        wx:for="{{orderTabs}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onOrderTap"
+      >
+        <text class="order-mark">{{item.mark}}</text>
+        <text class="order-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-card">
+    <view
+      class="menu-item"
+      wx:for="{{menuList}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onMenuTap"
+    >
+      <view class="menu-main">
+        <text class="menu-title">{{item.label}}</text>
+        <text class="menu-desc">{{item.desc}}</text>
+      </view>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+</view>

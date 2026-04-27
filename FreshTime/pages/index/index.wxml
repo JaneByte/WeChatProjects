@@ -1,108 +1,164 @@
-<!-- pages/index/index.wxml -->
-<view class="page-container">
-  <!-- 顶部品牌区域 -->
-  <view class="top-brand-area" style="padding-top: {{statusBarHeight}}px;">
-    <view class="brand-greeting">
-      <view class="brand-wrapper">
-        <text class="brand-name">FreshTime</text>
-        <text class="brand-sub">· 鲜时刻</text>
+<view class="index-page">
+  <view class="top-shell" style="padding-top: {{statusBarHeight}}px;">
+    <view class="top-row">
+      <view class="brand-wrap">
+        <text class="brand-name">{{brandName}}</text>
+        <text class="brand-sub">{{brandSub}}</text>
       </view>
-      <view class="greeting-box">
-        <text class="greeting-emoji">{{greetingEmoji}}</text>
-        <text class="greeting-words">{{greetingWords}}</text>
+      <view class="fresh-pill">
+        <text class="fresh-pill-text">今日上新 {{newArrivalCount}} 款</text>
       </view>
     </view>
-    <view class="search-wrapper">
-      <view class="search-box" bindtap="onSearchTap" hover-class="press-effect">
-        <image class="search-icon" src="/assets/icon/search.png" mode="aspectFit"></image>
-        <text class="search-placeholder">搜索蔬果...</text>
-      </view>
+
+    <view class="hello-text">{{greetingWords}}</view>
+
+    <view class="search-bar press-effect" bindtap="onSearchTap">
+      <image class="search-icon" src="{{searchIcon}}" mode="aspectFit"></image>
+      <text class="search-text">{{searchPlaceholder}}</text>
     </view>
   </view>
 
-  <!-- 滚动容器：修复卡顿、上移、抖动 -->
   <scroll-view
-    class="content-scroll"
+    class="main-scroll"
     scroll-y
     enhanced="{{false}}"
     show-scrollbar="{{false}}"
     bindscrolltolower="onScrollToLower"
-    bounces="{{false}}"
-    scroll-with-animation="{{false}}"
   >
-    <!-- 1. 今日鲜采·主推爆品 -->
     <view class="hero-section" wx:if="{{dailyRecommend}}">
-      <view class="section-header">
-        <view class="header-left">
-          <text class="header-title">今日鲜采</text>
-          <view class="header-badge"><text class="badge-text">每日精选</text></view>
+      <view class="section-head">
+        <view class="head-left">
+          <text class="head-title">{{heroTitle}}</text>
+          <text class="head-badge">{{heroBadge}}</text>
         </view>
-        <text class="header-more" bindtap="onRecommendMoreTap" hover-class="press-effect">更多 ></text>
+        <text class="head-more press-effect" bindtap="onRecommendMoreTap">{{moreText}}</text>
       </view>
-      <view class="hero-card" bindtap="onRecommendTap" hover-class="press-effect">
-        <view class="hero-image-wrapper">
-          <image class="hero-image" src="{{dailyRecommend.image}}" mode="aspectFill" lazy-load></image>
-        </view>
-        <view class="hero-content">
-          <view class="content-main">
-            <text class="hero-name">{{dailyRecommend.name}}</text>
-            <text class="hero-desc">{{dailyRecommend.desc}}</text>
-          </view>
-          <view class="content-footer">
-            <view class="price-wrapper">
-              <text class="price-symbol">¥</text>
+
+      <view class="hero-card press-effect" bindtap="onRecommendTap">
+        <image class="hero-image" src="{{dailyRecommend.image}}" mode="aspectFill" lazy-load></image>
+        <view class="hero-info">
+          <text class="hero-name">{{dailyRecommend.name}}</text>
+          <text class="hero-desc">{{dailyRecommend.desc}}</text>
+          <view class="hero-foot">
+            <view class="hero-price">
+              <text class="price-symbol">{{priceSymbol}}</text>
               <text class="price-value">{{dailyRecommend.price}}</text>
               <text class="price-unit">/{{dailyRecommend.unit}}</text>
             </view>
-            <view class="action-btn" catchtap="onRecommendAdd" hover-class="press-effect">
-              <text class="btn-text">+</text>
+            <view class="hero-add" catchtap="onRecommendAdd">
+              <text class="hero-add-text">{{addBtnText}}</text>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 2. 快捷入口 -->
-    <view class="quick-nav">
-      <view class="nav-item" wx:for="{{navList}}" wx:key="type" bindtap="onNavTap" data-type="{{item.type}}" hover-class="press-effect">
-        <view class="nav-icon-box">
-          <image class="nav-icon" src="{{item.icon}}" mode="aspectFit"></image>
+    <view class="flash-section" wx:if="{{flashSaleList.length > 0}}">
+      <view class="section-head">
+        <view class="head-left">
+          <text class="head-title">限时秒杀</text>
+          <view class="flash-countdown">
+            <text class="flash-countdown-text">{{flashCountdown}}</text>
+          </view>
         </view>
-        <text class="nav-text">{{item.text}}</text>
+        <text class="head-more press-effect" bindtap="onFlashMoreTap">{{moreText}}</text>
+      </view>
+
+      <scroll-view class="flash-scroll" scroll-x show-scrollbar="{{false}}">
+        <view class="flash-list">
+          <view
+            class="flash-item press-effect"
+            wx:for="{{flashSaleList}}"
+            wx:key="id"
+            bindtap="onFlashTap"
+            data-id="{{item.id}}"
+          >
+            <image class="flash-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+            <view class="flash-item-info">
+              <text class="flash-name">{{item.name}}</text>
+              <view class="flash-price-row">
+                <text class="flash-price">{{priceSymbol}}{{item.price}}</text>
+                <text class="flash-origin">{{priceSymbol}}{{item.originPrice}}</text>
+              </view>
+              <view class="flash-foot">
+                <text class="flash-stock">剩余 {{item.stock}}</text>
+                <view class="flash-add" catchtap="onFlashAdd" data-id="{{item.id}}">
+                  <text class="flash-add-text">{{addBtnText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="quick-entry">
+      <view
+        class="entry-item press-effect"
+        wx:for="{{navList}}"
+        wx:key="type"
+        bindtap="onNavTap"
+        data-type="{{item.type}}"
+      >
+        <view class="entry-icon-wrap">
+          <text class="entry-icon-text">{{item.iconText}}</text>
+        </view>
+        <text class="entry-text">{{item.text}}</text>
       </view>
     </view>
 
-    <!-- 3. 氛围衔接图 -->
-    <view class="atmosphere-wrapper" wx:if="{{bannerList.length > 0}}">
-      <image class="atmosphere-image" src="{{bannerList[atmosphereBannerIndex].image}}" mode="aspectFill" bindtap="onBannerTap" data-id="{{bannerList[atmosphereBannerIndex].id}}" hover-class="press-effect" lazy-load></image>
-      <view class="atmosphere-mask"></view>
+    <view class="trace-section">
+      <view class="section-head">
+        <view class="head-left">
+          <text class="head-title">产地溯源</text>
+        </view>
+        <text class="head-more press-effect" bindtap="onTraceMoreTap">{{moreText}}</text>
+      </view>
+
+      <scroll-view class="trace-scroll" scroll-x show-scrollbar="{{false}}">
+        <view class="trace-list">
+          <view
+            class="trace-item press-effect"
+            wx:for="{{traceList}}"
+            wx:key="id"
+            bindtap="onTraceTap"
+            data-id="{{item.id}}"
+          >
+            <text class="trace-name">{{item.name}}</text>
+            <text class="trace-desc">{{item.desc}}</text>
+            <text class="trace-meta">{{item.meta}}</text>
+          </view>
+        </view>
+      </scroll-view>
     </view>
 
-    <!-- 4. 商品瀑布流 -->
-    <view class="goods-waterfall-section">
-      <view class="waterfall-header" bindtap="onMoreTap" hover-class="press-effect">
-        <view class="header-line"></view>
-        <text class="waterfall-title">更多好货</text>
-        <view class="header-line"></view>
+    <view class="goods-section">
+      <view class="section-head">
+        <view class="head-left">
+          <text class="head-title">{{waterfallTitle}}</text>
+        </view>
+        <text class="head-more press-effect" bindtap="onMoreTap">{{moreText}}</text>
       </view>
-      <view class="waterfall-container">
-        <view class="waterfall-column">
+
+      <view class="goods-waterfall">
+        <view class="waterfall-col">
           <block wx:for="{{leftColumnList}}" wx:key="id">
             <goods-card item="{{item}}" bind:goodstap="onGoodsTap" bind:add="onAddToCart" />
           </block>
         </view>
-        <view class="waterfall-column">
+        <view class="waterfall-col">
           <block wx:for="{{rightColumnList}}" wx:key="id">
             <goods-card item="{{item}}" bind:goodstap="onGoodsTap" bind:add="onAddToCart" />
           </block>
         </view>
       </view>
+
       <view class="load-state">
-        <text class="load-text" wx:if="{{loadingMore}}">正在加载...</text>
-        <text class="load-text" wx:if="{{noMore && goodsList.length > 0}}">— 已经到底啦 —</text>
+        <text class="load-text" wx:if="{{loadingMore}}">{{loadingText}}</text>
+        <text class="load-text" wx:if="{{noMore && goodsList.length > 0}}">{{noMoreText}}</text>
       </view>
     </view>
 
-    <view class="bottom-placeholder"></view>
+    <view class="safe-gap"></view>
   </scroll-view>
 </view>

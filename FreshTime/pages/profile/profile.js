@@ -1,66 +1,42 @@
 // pages/profile/profile.js
 Page({
-
-  /**
-   * 页面的初始数据
-   */
   data: {
-
+    userInfo: {
+      nickname: '新鲜生活家',
+      level: '普通会员',
+      avatar: '/assets/icon/my.png'
+    },
+    orderTabs: [
+      { key: 'pendingPay', label: '待付款', mark: '付' },
+      { key: 'pendingShip', label: '待发货', mark: '发' },
+      { key: 'pendingReceive', label: '待收货', mark: '收' },
+      { key: 'afterSale', label: '售后', mark: '售' }
+    ],
+    menuList: [
+      { key: 'address', label: '收货地址', desc: '管理常用地址' },
+      { key: 'coupon', label: '优惠券', desc: '查看可用优惠' },
+      { key: 'service', label: '在线客服', desc: '问题咨询与反馈' },
+      { key: 'settings', label: '设置', desc: '账号与通知配置' }
+    ]
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options) {
-
+  onOrderTap(e) {
+    const { key } = e.currentTarget.dataset;
+    wx.showToast({
+      title: `订单功能开发中：${key}`,
+      icon: 'none'
+    });
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
+  onMenuTap(e) {
+    const { key } = e.currentTarget.dataset;
+    wx.showToast({
+      title: `功能开发中：${key}`,
+      icon: 'none'
+    });
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
   onPullDownRefresh() {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
-
+    wx.stopPullDownRefresh();
   }
-})
+});

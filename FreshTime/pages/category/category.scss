@@ -1,6 +1,7 @@
 // ==================== 柠檬牛油果配色 ====================
 $bg-page: #fefbf5;
 $primary: #8cb818;
+$primary-strong: #7cab12;
 $primary-dark: #004132;
 $primary-light: #d0ebb7;
 $accent-warm: #fdf4d6;
@@ -50,7 +51,8 @@ page {
     box-shadow: $shadow-sm;
     
     .search-icon {
-      font-size: 32rpx;
+      width: 34rpx;
+      height: 34rpx;
       margin-right: 16rpx;
       opacity: 0.7;
     }
@@ -92,21 +94,22 @@ page {
     padding: 14rpx 0;
     background: transparent;
     border-radius: 40rpx;
-    transition: all 0.2s $spring-curve;
+    transition: all 0.25s $spring-curve;
     
     .capsule-text {
       font-size: 28rpx;
       color: $text-secondary;
       font-weight: 400;
-      transition: color 0.2s;
+      transition: color 0.25s $spring-curve;
     }
     
     &.active {
-      background: $primary;
+      background: linear-gradient(135deg, $primary, $primary-strong);
+      box-shadow: 0 6rpx 14rpx rgba(140, 184, 24, 0.28);
       
       .capsule-text {
         color: #ffffff;
-        font-weight: 500;
+        font-weight: 600;
       }
     }
   }
@@ -119,8 +122,9 @@ page {
   .nav-item {
     display: flex;
     align-items: center;
-    padding: 24rpx 0 24rpx 16rpx;
+    padding: 22rpx 12rpx 22rpx 16rpx;
     position: relative;
+    border-radius: 14rpx 0 0 14rpx;
     
     .nav-indicator {
       position: absolute;
@@ -130,25 +134,28 @@ page {
       width: 3rpx;
       height: 0;
       background: $primary;
-      border-radius: 2rpx;
-      transition: height 0.2s $spring-curve;
+      border-radius: 3rpx;
+      transition: height 0.25s $spring-curve;
     }
     
     .nav-text {
       font-size: 28rpx;
       color: $text-secondary;
       font-weight: 400;
-      transition: all 0.2s;
+      transition: all 0.25s $spring-curve;
     }
     
     &.active {
+      background: rgba(140, 184, 24, 0.12);
+
       .nav-indicator {
-        height: 36rpx;
+        height: 38rpx;
+        width: 5rpx;
       }
       
       .nav-text {
         color: $primary-dark;
-        font-weight: 500;
+        font-weight: 600;
       }
     }
   }
@@ -220,7 +227,7 @@ page {
     
     .info-header {
       .goods-name {
-        font-size: 30rpx;
+        font-size: 28rpx;
         color: $text-dark;
         font-weight: 500;
         line-height: 1.4;
@@ -276,20 +283,22 @@ page {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: $accent-price;
+        background: linear-gradient(135deg, $primary, $primary-strong);
+        border: 1rpx solid rgba(122, 171, 18, 0.38);
+        box-shadow: 0 6rpx 14rpx rgba(140, 184, 24, 0.26);
         border-radius: 50%;
-        transition: all 0.15s $spring-curve;
+        transition: all 0.25s $spring-curve;
         
         .add-text {
           font-size: 36rpx;
-          color: $primary-dark;
+          color: #ffffff;
           font-weight: 600;
           line-height: 1;
         }
         
         &:active {
-          transform: scale(0.88);
-          background: darken($accent-price, 5%);
+          transform: scale(0.9);
+          background: linear-gradient(135deg, darken($primary, 4%), darken($primary-strong, 4%));
         }
       }
     }
@@ -306,11 +315,38 @@ page {
   
   .empty-text,
   .loading-text {
-    font-size: 28rpx;
+    font-size: 24rpx;
     color: $text-placeholder;
   }
 }
 
 .safe-bottom {
   height: 40rpx;
+}
+
+@media (max-width: 350px) {
+  .search-section {
+    padding: 20rpx 20rpx 12rpx;
+    .search-box {
+      padding: 16rpx 20rpx;
+      .search-text { font-size: 24rpx; }
+    }
+  }
+
+  .left-panel { width: 196rpx; padding-left: 16rpx; }
+
+  .right-panel {
+    border-top-left-radius: 24rpx;
+    border-bottom-left-radius: 24rpx;
+    padding: 20rpx 16rpx 0;
+  }
+
+  .goods-card {
+    margin-bottom: 20rpx;
+    .card-image-wrapper { width: 156rpx; height: 156rpx; }
+    .card-info {
+      padding-left: 14rpx;
+      .info-header .goods-name { font-size: 24rpx; }
+    }
+  }
 }

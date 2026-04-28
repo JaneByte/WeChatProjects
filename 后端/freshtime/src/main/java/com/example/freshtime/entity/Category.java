@@ -6,13 +6,13 @@ import java.time.LocalDateTime;
 
 @Data
 public class Category {
-    private Long id;                    //id
-    private Long parentId;              //父类id
-    private String name;                //分类名
-    private String icon;                //分类对应图标路径
-    private Integer sort;               //排序值，越小越靠前
-    private Integer status;             //当前状态，是否启用
-    private LocalDateTime createTime;   //分类创建时间
+    private Long id;                    // 分类ID
+    private Long parentId;              // 父分类ID
+    private String name;                // 分类名称
+    private String icon;                // 分类图标路径
+    private Integer sort;               // 排序值，越小越靠前
+    private Integer status;             // 状态，是否启用
+    private LocalDateTime createTime;   // 创建时间
 
     public Category() {}
 

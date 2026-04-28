@@ -1,93 +1,107 @@
-<!-- cart.wxml 完整正确版 -->
-<view class="cart-page">
-
-<!-- 空状态 -->
-<view class="empty-state state-block" wx:if="{{cartItems.length === 0}}">
-  <view class="empty-icon state-icon">空</view>
-  <text class="empty-text state-text">购物车是空的</text>
-  <view class="go-shop-btn press-effect" bindtap="goShopping">去逛逛</view>
-</view>
-
-<!-- 非空内容（wx:else 必须紧贴上面的 wx:if，不能有空行！） -->
-<block wx:else>
-  <view class="top-header-bar">
-    <text class="bar-title">我的购物车</text>
-    <view class="edit-btn press-effect" bindtap="toggleEditMode">
-      {{editMode ? '完成' : '编辑'}}
-    </view>
+﻿<view class="cart-page">
+  <view class="empty-state state-block" wx:if="{{cartItems.length === 0}}">
+    <view class="empty-icon state-icon">空</view>
+    <text class="empty-text state-text">暂无数据</text>
+    <view class="go-shop-btn press-effect" bindtap="goShopping">去逛逛</view>
   </view>
 
-  <scroll-view class="cart-scroll" scroll-y bindscroll="onScroll">
-    <view class="cart-list">
-      <view wx:for="{{cartItems}}" wx:key="id" class="cart-item-wrapper">
-        <view class="cart-item {{item.selected ? 'item-selected' : ''}} {{item.stock <= 0 ? 'sold-out' : ''}}"
-         style="transform: translateX(-{{item.slideOffset || 0}}rpx); transition: {{slideTransition ? 'transform 0.2s linear' : ''}};"
-         bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" data-id="{{item.id}}">
-          
-          <view class="item-main">
-            <view class="checkbox-wrapper press-effect" catchtap="toggleSelect" data-id="{{item.id}}">
-              <view class="custom-checkbox {{item.selected ? 'checked' : ''}}">
-                <text wx:if="{{item.selected}}" class="check-icon">&#10003;</text>
+  <block wx:else>
+    <view class="top-header-bar">
+      <text class="bar-title">我的购物车</text>
+      <view class="edit-btn press-effect" bindtap="toggleEditMode">
+        {{editMode ? '完成' : '编辑'}}
+      </view>
+    </view>
+
+    <scroll-view class="cart-scroll" scroll-y bindscroll="onScroll">
+      <view class="cart-list">
+        <view wx:for="{{cartItems}}" wx:key="id" class="cart-item-wrapper">
+          <view
+            class="cart-item {{item.selected ? 'item-selected' : ''}} {{item.stock <= 0 ? 'sold-out' : ''}}"
+            style="transform: translateX(-{{item.slideOffset || 0}}rpx); transition: {{slideTransition ? 'transform 0.2s linear' : ''}};"
+            bindtouchstart="onTouchStart"
+            bindtouchmove="onTouchMove"
+            bindtouchend="onTouchEnd"
+            data-id="{{item.id}}"
+          >
+            <view class="item-main">
+              <view class="checkbox-wrapper press-effect" catchtap="toggleSelect" data-id="{{item.id}}">
+                <view class="custom-checkbox {{item.selected ? 'checked' : ''}}">
+                  <text wx:if="{{item.selected}}" class="check-icon">&#10003;</text>
+                </view>
+              </view>
+
+              <image
+                class="goods-image"
+                src="{{item.image}}"
+                mode="aspectFill"
+                catchtap="goToDetail"
+                data-id="{{item.id}}"
+              />
+
+              <view class="goods-info" catchtap="goToDetail" data-id="{{item.id}}">
+                <text class="goods-name">{{item.name}}</text>
+                <text class="goods-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+                <text class="goods-unit" wx:else>/{{item.unit}}</text>
+                <view class="price-row">
+                  <text class="goods-price">¥{{item.price}}</text>
+                  <text wx:if="{{item.stock <= 0}}" class="sold-out-tag">售罄</text>
+                </view>
+              </view>
+
+              <view class="quantity-ctrl">
+                <view
+                  class="qty-btn minus {{item.quantity <= 1 || item.stock <= 0 || editMode ? 'disabled' : ''}}"
+                  catchtap="decreaseQuantity"
+                  data-id="{{item.id}}"
+                >
+                  <text class="btn-text">-</text>
+                </view>
+                <text class="qty-num">{{item.quantity}}</text>
+                <view
+                  class="qty-btn plus {{item.quantity >= item.stock || item.stock <= 0 || editMode ? 'disabled' : ''}}"
+                  catchtap="increaseQuantity"
+                  data-id="{{item.id}}"
+                >
+                  <text class="btn-text">+</text>
+                </view>
               </view>
             </view>
 
-            <image class="goods-image" src="{{item.image}}" mode="aspectFill" catchtap="goToDetail" data-id="{{item.id}}" />
-
-            <view class="goods-info" catchtap="goToDetail" data-id="{{item.id}}">
-              <text class="goods-name">{{item.name}}</text>
-              <text class="goods-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
-              <text class="goods-unit" wx:else>/{{item.unit}}</text>
-              <view class="price-row">
-                <text class="goods-price">¥{{item.price}}</text>
-                <text wx:if="{{item.stock <= 0}}" class="sold-out-tag">售罄</text>
-              </view>
-            </view>
-
-            <view class="quantity-ctrl">
-              <view class="qty-btn minus {{item.quantity <= 1 || item.stock <= 0 || editMode ? 'disabled' : ''}}" catchtap="decreaseQuantity" data-id="{{item.id}}">
-                <text class="btn-text">−</text>
-              </view>
-              <text class="qty-num">{{item.quantity}}</text>
-              <view class="qty-btn plus {{item.quantity >= item.stock || item.stock <= 0 || editMode ? 'disabled' : ''}}" catchtap="increaseQuantity" data-id="{{item.id}}">
-                <text class="btn-text">+</text>
-              </view>
+            <view class="delete-area" catchtap="deleteItem" data-id="{{item.id}}">
+              <text class="delete-text">删除</text>
             </view>
           </view>
+        </view>
+      </view>
+      <view class="list-bottom-placeholder"></view>
+    </scroll-view>
 
-          <view class="delete-area" catchtap="deleteItem" data-id="{{item.id}}">
-            <text class="delete-text">删除</text>
+    <view class="cart-footer">
+      <view class="footer-left">
+        <view class="checkbox-wrapper press-effect" catchtap="toggleSelectAll">
+          <view class="custom-checkbox {{allSelected ? 'checked' : ''}}">
+            <text wx:if="{{allSelected}}" class="check-icon">&#10003;</text>
           </view>
         </view>
+        <text class="select-all-text">全选</text>
+      </view>
+      <view class="footer-right">
+        <view class="total-info">
+          <text class="total-label">合计：</text>
+          <text class="total-price">¥{{totalPrice}}</text>
+        </view>
+        <block wx:if="{{!editMode}}">
+          <view class="action-btn checkout-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="onCheckout">
+            结算 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
+          </view>
+        </block>
+        <block wx:else>
+          <view class="action-btn delete-action-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="onBatchDelete">
+            删除 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
+          </view>
+        </block>
       </view>
     </view>
-    <view class="list-bottom-placeholder"></view>
-  </scroll-view>
-
-  <view class="cart-footer">
-    <view class="footer-left">
-      <view class="checkbox-wrapper press-effect" catchtap="toggleSelectAll">
-        <view class="custom-checkbox {{allSelected ? 'checked' : ''}}">
-          <text wx:if="{{allSelected}}" class="check-icon">&#10003;</text>
-        </view>
-      </view>
-      <text class="select-all-text">全选</text>
-    </view>
-    <view class="footer-right">
-      <view class="total-info">
-        <text class="total-label">合计：</text>
-        <text class="total-price">¥{{totalPrice}}</text>
-      </view>
-      <block wx:if="{{!editMode}}">
-        <view class="action-btn checkout-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="onCheckout">
-          结算 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
-        </view>
-      </block>
-      <block wx:else>
-        <view class="action-btn delete-action-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="onBatchDelete">
-          删除 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
-        </view>
-      </block>
-    </view>
-  </view>
-</block>
+  </block>
 </view>

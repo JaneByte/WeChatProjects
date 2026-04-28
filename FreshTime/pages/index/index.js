@@ -1,17 +1,17 @@
-// pages/index/index.js
-const { getTempFileUrls } = require('../../utils/cloud.js');
+﻿// pages/index/index.js
+const { get } = require('../../utils/request');
+const { getTempFileUrls } = require('../../utils/cloud');
+const { showRequestError } = require('../../utils/ui');
 
 Page({
   data: {
-    // 基础文案
     brandName: 'FreshTime',
     brandSub: '鲜时刻',
     greetingWords: '早安，新鲜蔬果已经到店',
-    newArrivalCount: 12,
+    newArrivalCount: 0,
     searchIcon: '/assets/icon/search.png',
     searchPlaceholder: '搜索蔬果 / 产地 / 秒杀',
 
-    // 模块文案
     heroTitle: '今日推荐',
     heroBadge: '每日精选',
     moreText: '更多 >',
@@ -21,7 +21,6 @@ Page({
     loadingText: '正在加载...',
     noMoreText: '—— 已经到底啦 ——',
 
-    // 路由配置
     paths: {
       search: '/pages/search/search',
       goods: '/pages/goods/goods',
@@ -29,16 +28,13 @@ Page({
       category: '/pages/category/category'
     },
 
-    // 顶部与推荐
     statusBarHeight: 44,
     dailyRecommend: null,
 
-    // 秒杀
     flashCountdown: '00:00:00',
     flashEndTimestamp: 0,
     flashSaleList: [],
 
-    // 功能入口
     navList: [
       { type: 'seasonal', text: '时令优选', iconText: '时' },
       { type: 'hot', text: '热销爆款', iconText: '热' },
@@ -46,14 +42,8 @@ Page({
       { type: 'category', text: '全部分类', iconText: '分' }
     ],
 
-    // 产地溯源
-    traceList: [
-      { id: 't1', name: '山东寿光', desc: '当日采收，次日发货', meta: '蔬菜基地直采' },
-      { id: 't2', name: '云南高原', desc: '高海拔慢生长，更香甜', meta: '水果产区直供' },
-      { id: 't3', name: '海南乐东', desc: '热带日照足，口感更稳定', meta: '产地溯源可查' }
-    ],
+    traceList: [],
 
-    // 商品流
     goodsList: [],
     leftColumnList: [],
     rightColumnList: [],
@@ -69,9 +59,8 @@ Page({
     this.setData({ statusBarHeight: safeAreaTop + 8 });
 
     this.generateGreeting();
-    this.loadDailyRecommend();
-    this.loadFlashSale();
-    this.loadGoods();
+    this.loadHomeIndex();
+    this.loadGoods(true);
   },
 
   onShow() {
@@ -88,7 +77,6 @@ Page({
     this.clearFlashCountdown();
   },
 
-  // 时间段问候
   generateGreeting() {
     const hour = new Date().getHours();
     let greeting = '';
@@ -100,83 +88,133 @@ Page({
     this.setData({ greetingWords: greeting });
   },
 
-  // 今日推荐
-  async loadDailyRecommend() {
-    const hour = new Date().getHours();
-    let recommend = {};
+  async loadHomeIndex(showError = false) {
+    try {
+      const res = await get('/home/index', {}, { retry: 1 });
+      const data = this.unwrapData(res);
 
-    if (hour >= 6 && hour < 11) {
-      recommend = {
-        id: 'r1',
-        name: '奶油草莓',
-        desc: '清晨采摘，果香浓郁，甜感稳定',
-        price: 19.9,
-        unit: '300g',
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/strawberry.webp'
-      };
-    } else if (hour >= 11 && hour < 18) {
-      recommend = {
-        id: 'r2',
-        name: '樱桃番茄组合',
-        desc: '沙瓤多汁，午后轻食的高频选择',
-        price: 16.8,
-        unit: '组合',
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/cherry-tomato.webp'
-      };
-    } else {
-      recommend = {
-        id: 'r3',
-        name: '蓝莓大果',
-        desc: '颗粒饱满，酸甜平衡，晚间轻负担',
-        price: 18.9,
-        unit: '125g',
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/blueberry.webp'
-      };
+      const recommend = await this.normalizeGoodsImage(data.todayRecommend || null);
+      const flashRaw = data.flash || {};
+      const flashList = await this.normalizeGoodsImageList(flashRaw.list || []);
+      const flashEndTimestamp = this.parseTimeToTimestamp(flashRaw.endTime);
+
+      this.setData({
+        newArrivalCount: data.newArrivalCount || 0,
+        dailyRecommend: recommend,
+        flashSaleList: flashList,
+        traceList: data.traceList || [],
+        flashEndTimestamp
+      });
+
+      if (flashEndTimestamp > Date.now() && flashList.length > 0) {
+        this.startFlashCountdown();
+      } else {
+        this.setData({ flashCountdown: '00:00:00' });
+        this.clearFlashCountdown();
+      }
+    } catch (error) {
+      this.setData({
+        dailyRecommend: null,
+        flashSaleList: [],
+        traceList: []
+      });
+      this.clearFlashCountdown();
+      if (showError) {
+        showRequestError(error, '首页数据加载失败');
+      }
     }
-
-    const urlMap = await getTempFileUrls([recommend.image]);
-    recommend.image = urlMap[recommend.image] || recommend.image;
-    this.setData({ dailyRecommend: recommend });
   },
 
-  // 秒杀模块
-  async loadFlashSale() {
-    const flashSaleList = [
-      {
-        id: 'f1',
-        name: '脆甜黄瓜',
-        price: 4.9,
-        originPrice: 7.9,
-        stock: 36,
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/cucumber.webp'
-      },
-      {
-        id: 'f2',
-        name: '精品香蕉',
-        price: 5.9,
-        originPrice: 8.8,
-        stock: 22,
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/banana.webp'
-      },
-      {
-        id: 'f3',
-        name: '鲜番茄',
-        price: 6.9,
-        originPrice: 9.8,
-        stock: 28,
-        image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/tomato.webp'
-      }
-    ];
+  async loadGoods(reset = false) {
+    if (this.data.loadingMore) return;
+    if (!reset && this.data.noMore) return;
 
-    const urlMap = await getTempFileUrls(flashSaleList.map((item) => item.image));
-    const listWithUrls = flashSaleList.map((item) => ({
-      ...item,
-      image: urlMap[item.image] || item.image
-    }));
+    const nextPage = reset ? 1 : this.data.page;
+    this.setData({ loadingMore: true });
 
-    const flashEndTimestamp = Date.now() + 2 * 60 * 60 * 1000;
-    this.setData({ flashSaleList: listWithUrls, flashEndTimestamp });
-    this.startFlashCountdown();
+    try {
+      const res = await get(
+        '/home/goods',
+        { page: nextPage, pageSize: this.data.pageSize },
+        { retry: 1 }
+      );
+      const data = this.unwrapData(res);
+      const list = await this.normalizeGoodsImageList(data.list || []);
+
+      const mergedList = reset ? list : [...this.data.goodsList, ...list];
+      const split = this.splitWaterfallColumns(mergedList);
+      const hasMore = data.hasMore === true;
+
+      this.setData({
+        goodsList: mergedList,
+        leftColumnList: split.leftColumnList,
+        rightColumnList: split.rightColumnList,
+        page: nextPage + 1,
+        noMore: !hasMore,
+        loadingMore: false
+      });
+    } catch (error) {
+      this.setData({ loadingMore: false });
+      showRequestError(error, '商品加载失败');
+    }
+  },
+
+  splitWaterfallColumns(goodsList) {
+    const leftColumnList = [];
+    const rightColumnList = [];
+    goodsList.forEach((item, index) => {
+      if (index % 2 === 0) leftColumnList.push(item);
+      else rightColumnList.push(item);
+    });
+    return { leftColumnList, rightColumnList };
+  },
+
+  async normalizeGoodsImage(goods) {
+    if (!goods) return null;
+    const image = goods.mainImage || goods.image || '';
+    if (!image || !image.startsWith('cloud://')) {
+      return { ...goods, image };
+    }
+    const urlMap = await getTempFileUrls([image]);
+    const finalImage = urlMap[image] || image;
+    return { ...goods, mainImage: finalImage, image: finalImage };
+  },
+
+  async normalizeGoodsImageList(list) {
+    if (!list || list.length === 0) return [];
+    const fileIds = list
+      .map((item) => item.mainImage || item.image)
+      .filter((id) => id && id.startsWith('cloud://'));
+
+    const urlMap = fileIds.length > 0 ? await getTempFileUrls(fileIds) : {};
+    return list.map((item) => {
+      const rawImage = item.mainImage || item.image || '';
+      const image = urlMap[rawImage] || rawImage;
+      const stock =
+        typeof item.stock === 'number'
+          ? item.stock
+          : (typeof item.flashStock === 'number' ? item.flashStock : 0);
+      return { ...item, mainImage: image, image, stock };
+    });
+  },
+
+  unwrapData(response) {
+    if (
+      response &&
+      typeof response === 'object' &&
+      Object.prototype.hasOwnProperty.call(response, 'data')
+    ) {
+      return response.data || {};
+    }
+    return response || {};
+  },
+
+  parseTimeToTimestamp(timeValue) {
+    if (!timeValue) return 0;
+    if (typeof timeValue === 'number') return timeValue;
+    const normalized = `${timeValue}`.replace(/-/g, '/');
+    const ts = new Date(normalized).getTime();
+    return Number.isNaN(ts) ? 0 : ts;
   },
 
   startFlashCountdown() {
@@ -213,108 +251,8 @@ Page({
     return num < 10 ? `0${num}` : `${num}`;
   },
 
-  // 商品列表
-  async loadGoods() {
-    if (this.data.loadingMore || this.data.noMore) return;
-    this.setData({ loadingMore: true });
-
-    const newGoods = await this.fetchGoods(this.data.page);
-    if (newGoods.length === 0) {
-      this.setData({ noMore: true, loadingMore: false });
-      return;
-    }
-
-    const allGoods = [...this.data.goodsList, ...newGoods];
-    const leftColumnList = [];
-    const rightColumnList = [];
-
-    allGoods.forEach((item, index) => {
-      if (index % 2 === 0) leftColumnList.push(item);
-      else rightColumnList.push(item);
-    });
-
-    this.setData({
-      goodsList: allGoods,
-      leftColumnList,
-      rightColumnList,
-      page: this.data.page + 1,
-      loadingMore: false
-    });
-  },
-
-  fetchGoods(page) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (page > 2) {
-          resolve([]);
-          return;
-        }
-
-        const mockGoods = [
-          {
-            id: 'g1',
-            name: '樱桃番茄',
-            price: 12.9,
-            unit: '500g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/cherry-tomato.webp',
-            desc: '清甜多汁'
-          },
-          {
-            id: 'g2',
-            name: '蓝莓',
-            price: 18.9,
-            unit: '125g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/blueberry.webp',
-            desc: '饱满大颗'
-          },
-          {
-            id: 'g3',
-            name: '奶油草莓',
-            price: 19.9,
-            unit: '300g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/strawberry.webp',
-            desc: '果香浓郁'
-          },
-          {
-            id: 'g4',
-            name: '水果黄瓜',
-            price: 5.9,
-            unit: '500g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/cucumber.webp',
-            desc: '脆嫩爽口'
-          },
-          {
-            id: 'g5',
-            name: '普罗旺斯西红柿',
-            price: 8.9,
-            unit: '500g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/tomato.webp',
-            desc: '沙瓤多汁'
-          },
-          {
-            id: 'g6',
-            name: '精品香蕉',
-            price: 4.9,
-            unit: '500g',
-            image: 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/banana.webp',
-            desc: '自然香甜'
-          }
-        ];
-
-        getTempFileUrls(mockGoods.map((item) => item.image)).then((urlMap) => {
-          const goodsWithUrls = mockGoods.map((item) => ({
-            ...item,
-            image: urlMap[item.image] || item.image
-          }));
-          resolve(goodsWithUrls);
-        });
-      }, 400);
-    });
-  },
-
-  // 交互事件
   onScrollToLower() {
-    this.loadGoods();
+    this.loadGoods(false);
   },
 
   async onPullDownRefresh() {
@@ -327,9 +265,8 @@ Page({
     });
 
     this.generateGreeting();
-    await this.loadDailyRecommend();
-    await this.loadFlashSale();
-    await this.loadGoods();
+    await this.loadHomeIndex(true);
+    await this.loadGoods(true);
     wx.stopPullDownRefresh();
   },
 
@@ -363,8 +300,13 @@ Page({
   onFlashAdd(e) {
     const { id } = e.currentTarget.dataset;
     const flashSaleList = this.data.flashSaleList.map((item) => {
-      if (item.id === id && item.stock > 0) {
-        return { ...item, stock: item.stock - 1 };
+      const currentStock = typeof item.stock === 'number' ? item.stock : 0;
+      if (`${item.id}` === `${id}` && currentStock > 0) {
+        return {
+          ...item,
+          stock: currentStock - 1,
+          flashStock: (typeof item.flashStock === 'number' ? item.flashStock : currentStock) - 1
+        };
       }
       return item;
     });

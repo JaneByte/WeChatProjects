@@ -1,4 +1,4 @@
-<view class="classify-container">
+﻿<view class="classify-container">
   <view class="search-section">
     <view class="search-box" bindtap="goToSearch" hover-class="press-effect" aria-label="搜索商品">
       <image class="search-icon" src="/assets/icon/search.png" mode="aspectFit"></image>
@@ -48,7 +48,7 @@
     <scroll-view class="right-panel" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation>
       <view class="section-header">
         <text class="section-title">{{currentCategory.name}}</text>
-        <text class="goods-count" wx:if="{{goodsList.length > 0}}">{{goodsList.length}}种</text>
+        <text class="goods-count" wx:if="{{goodsList.length > 0}}">{{goodsList.length}}款</text>
       </view>
 
       <view class="goods-list">
@@ -90,11 +90,11 @@
       </view>
 
       <view class="empty-state state-block" wx:if="{{goodsList.length === 0 && !loading}}">
-        <text class="empty-text state-text">暂无商品</text>
+        <text class="empty-text state-text">暂无数据</text>
       </view>
 
       <view class="loading-state state-block state-loading" wx:if="{{loading}}">
-        <text class="loading-text state-text">加载中...</text>
+        <text class="loading-text state-text">加载中</text>
       </view>
 
       <view class="safe-bottom"></view>

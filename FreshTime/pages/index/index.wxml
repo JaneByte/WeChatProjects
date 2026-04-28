@@ -1,4 +1,4 @@
-<view class="index-page">
+﻿<view class="index-page">
   <view class="top-shell" style="padding-top: {{statusBarHeight}}px;">
     <view class="top-row">
       <view class="brand-wrap">
@@ -162,3 +162,4 @@
     <view class="safe-gap"></view>
   </scroll-view>
 </view>
+

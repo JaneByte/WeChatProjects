@@ -1,4 +1,8 @@
-// pages/profile/profile.js
+﻿const { get, post } = require('../../utils/request.js');
+const { showRequestError } = require('../../utils/ui.js');
+
+const app = getApp();
+
 Page({
   data: {
     userInfo: {
@@ -17,15 +21,132 @@ Page({
       { key: 'coupon', label: '优惠券', desc: '查看可用优惠' },
       { key: 'service', label: '在线客服', desc: '问题咨询与反馈' },
       { key: 'settings', label: '设置', desc: '账号与通知配置' }
-    ]
+    ],
+    activeOrderTab: '',
+    currentOrderStatus: null,
+    currentUserIdText: '未设置',
+    orderList: [],
+    orderTotal: 0,
+    submittingOrderAction: false
+  },
+
+  onShow() {
+    this.refreshCurrentUserText();
+    this.loadOrderSummary(this.data.currentOrderStatus);
+  },
+
+  refreshCurrentUserText() {
+    const userId = app.getUserId();
+    this.setData({ currentUserIdText: userId ? `${userId}` : '未设置' });
+  },
+
+  getCurrentUserId() {
+    const userId = app.getUserId();
+    if (!userId) {
+      wx.showToast({ title: '请先设置用户ID', icon: 'none', duration: 1500 });
+      return null;
+    }
+    return userId;
+  },
+
+  loadOrderSummary(status = null) {
+    const userId = this.getCurrentUserId();
+    if (!userId) {
+      this.setData({ orderList: [], orderTotal: 0, currentOrderStatus: status });
+      return;
+    }
+
+    const params = { userId, limit: 50 };
+    if (status !== null && status !== undefined) {
+      params.status = status;
+    }
+
+    get('/order/list', params, { retry: 0 })
+      .then((res) => {
+        const list = (res && res.data) || [];
+        this.setData({
+          currentOrderStatus: status,
+          orderList: Array.isArray(list) ? list : [],
+          orderTotal: Array.isArray(list) ? list.length : 0
+        });
+      })
+      .catch((error) => {
+        showRequestError(error, '订单加载失败');
+      });
   },
 
   onOrderTap(e) {
     const { key } = e.currentTarget.dataset;
-    wx.showToast({
-      title: `订单功能开发中：${key}`,
-      icon: 'none'
-    });
+    const statusMap = {
+      pendingPay: 0,
+      pendingShip: 1,
+      pendingReceive: 2,
+      afterSale: 5
+    };
+    const status = Object.prototype.hasOwnProperty.call(statusMap, key) ? statusMap[key] : null;
+    this.setData({ activeOrderTab: key });
+    this.loadOrderSummary(status);
+  },
+
+  executeOrderAction(actionRequest, successText, errorText) {
+    if (this.data.submittingOrderAction) return;
+    this.setData({ submittingOrderAction: true });
+
+    actionRequest()
+      .then(() => {
+        wx.showToast({ title: successText, icon: 'success', duration: 1200 });
+        this.loadOrderSummary(this.data.currentOrderStatus);
+      })
+      .catch((error) => {
+        showRequestError(error, errorText);
+      })
+      .finally(() => {
+        this.setData({ submittingOrderAction: false });
+      });
+  },
+
+  onCancelOrder(e) {
+    const { id } = e.currentTarget.dataset;
+    const userId = this.getCurrentUserId();
+    if (!userId) return;
+    this.executeOrderAction(
+      () => post(`/order/cancel?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
+      '取消成功',
+      '取消失败'
+    );
+  },
+
+  onFinishOrder(e) {
+    const { id } = e.currentTarget.dataset;
+    const userId = this.getCurrentUserId();
+    if (!userId) return;
+    this.executeOrderAction(
+      () => post(`/order/finish?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
+      '确认收货成功',
+      '确认收货失败'
+    );
+  },
+
+  onPayOrder(e) {
+    const { id } = e.currentTarget.dataset;
+    const userId = this.getCurrentUserId();
+    if (!userId) return;
+    this.executeOrderAction(
+      () => post(`/order/pay?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
+      '支付成功',
+      '支付失败'
+    );
+  },
+
+  onDeliverOrder(e) {
+    const { id } = e.currentTarget.dataset;
+    const userId = this.getCurrentUserId();
+    if (!userId) return;
+    this.executeOrderAction(
+      () => post(`/order/deliver?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
+      '发货成功',
+      '发货失败'
+    );
   },
 
   onMenuTap(e) {
@@ -36,7 +157,41 @@ Page({
     });
   },
 
+  onSwitchUserId() {
+    wx.showModal({
+      title: '切换用户ID',
+      editable: true,
+      placeholderText: '请输入数字用户ID',
+      success: (res) => {
+        if (!res.confirm) return;
+        const input = (res.content || '').trim();
+        const ok = app.setUserId(input);
+        if (!ok) {
+          wx.showToast({ title: '用户ID无效', icon: 'none', duration: 1500 });
+          return;
+        }
+        this.refreshCurrentUserText();
+        wx.showToast({ title: '用户切换成功', icon: 'success', duration: 1200 });
+        this.loadOrderSummary(this.data.currentOrderStatus);
+      }
+    });
+  },
+
+  onClearUserId() {
+    app.clearUserId();
+    this.setData({
+      currentUserIdText: '未设置',
+      orderList: [],
+      orderTotal: 0,
+      activeOrderTab: '',
+      currentOrderStatus: null
+    });
+    wx.showToast({ title: '已清除用户ID', icon: 'none', duration: 1200 });
+  },
+
   onPullDownRefresh() {
+    this.refreshCurrentUserText();
+    this.loadOrderSummary(this.data.currentOrderStatus);
     wx.stopPullDownRefresh();
   }
 });

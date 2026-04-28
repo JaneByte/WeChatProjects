@@ -1,4 +1,4 @@
-$bg-page: #fefbf5;
+﻿$bg-page: #fefbf5;
 $bg-card: #ffffff;
 $primary: #8cb818;
 $primary-dark: #004132;
@@ -75,9 +75,28 @@ page {
   font-weight: 600;
 }
 
+.id-actions {
+  display: flex;
+  align-items: center;
+  column-gap: 16rpx;
+}
+
 .card-link {
   font-size: 24rpx;
   color: $text-placeholder;
+}
+
+.card-link--danger {
+  color: #d94848;
+}
+
+.user-id-row {
+  margin-top: 10rpx;
+}
+
+.user-id-text {
+  font-size: 22rpx;
+  color: $text-secondary;
 }
 
 .order-grid {
@@ -91,6 +110,16 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.order-item--active .order-mark {
+  background: $primary;
+  color: #ffffff;
+}
+
+.order-item--active .order-label {
+  color: $primary-dark;
+  font-weight: 600;
 }
 
 .order-mark {
@@ -144,6 +173,71 @@ page {
 .menu-arrow {
   font-size: 24rpx;
   color: #9aaa8a;
+}
+
+.recent-order {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  border-radius: 14rpx;
+  background: #f9fbf1;
+  border: 1rpx solid rgba(224, 230, 200, 0.9);
+}
+
+.recent-top,
+.recent-mid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recent-status {
+  color: $primary-dark;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.recent-no,
+.recent-amount,
+.recent-count {
+  font-size: 22rpx;
+  color: $text-secondary;
+}
+
+.recent-mid {
+  margin-top: 8rpx;
+}
+
+.recent-actions {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  color: $primary-dark;
+  border: 1rpx solid rgba(0, 65, 50, 0.25);
+  background: #ffffff;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.action-btn--primary {
+  background: $primary;
+  color: #ffffff;
+  border-color: $primary;
+}
+
+.empty-order-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 140rpx;
+}
+
+.empty-order-text {
+  font-size: 24rpx;
+  color: $text-placeholder;
 }
 
 @media (max-width: 350px) {

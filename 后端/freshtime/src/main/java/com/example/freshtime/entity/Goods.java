@@ -1,6 +1,7 @@
 package com.example.freshtime.entity;
 
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -18,10 +19,16 @@ public class Goods {
     private Integer stock;
     private String unit;
     private Integer salesVolume;
-    private Integer isHot;
     private Integer isRecommend;
+    private Integer isFlash;
+    private BigDecimal flashPrice;
+    private LocalDateTime flashStartTime;
+    private LocalDateTime flashEndTime;
+    private Integer flashStock;
+    private Integer homeSort;
+    private Integer showInHome;
     private Integer status;
-    private String origin;        // 产地
-    private String keywords;      // 搜索关键词
+    private String origin;
+    private String keywords;
     private LocalDateTime createTime;
 }

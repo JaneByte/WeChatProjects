@@ -1,4 +1,4 @@
-const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
+﻿const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
 
 const DEFAULT_TIMEOUT = 10000;
 const TOKEN_STORAGE_KEY = 'token';
@@ -69,14 +69,14 @@ function logRequestFail(traceId, method, url, duration, error) {
 
 /**
  * 统一网络请求方法
- * @param {Object} options - 请求配置
- * @param {String} options.url - 接口路径（支持相对路径或完整 URL）
- * @param {String} [options.method='GET'] - 请求方法
- * @param {Object} [options.data={}] - 请求参数
- * @param {Object} [options.header={}] - 请求头
- * @param {Number} [options.timeout=DEFAULT_TIMEOUT] - 超时时间
- * @param {Number} [options.retry=0] - 失败重试次数（仅 5xx/网络失败生效）
- * @returns {Promise<any>} 请求结果
+ * @param {Object} options 请求配置
+ * @param {String} options.url 接口路径（支持相对路径或完整 URL）
+ * @param {String} [options.method='GET'] 请求方法
+ * @param {Object} [options.data={}] 请求参数
+ * @param {Object} [options.header={}] 请求头
+ * @param {Number} [options.timeout=DEFAULT_TIMEOUT] 超时时间
+ * @param {Number} [options.retry=0] 失败重试次数（仅 5xx/网络失败生效）
+ * @returns {Promise<any>}
  */
 function request(options = {}) {
   const {
@@ -166,10 +166,10 @@ function request(options = {}) {
 
 /**
  * GET 请求快捷方法
- * @param {String} url - 接口路径
- * @param {Object} [data={}] - 查询参数
- * @param {Object} [options={}] - 额外配置
- * @returns {Promise<any>} 请求结果
+ * @param {String} url 接口路径
+ * @param {Object} [data={}] 查询参数
+ * @param {Object} [options={}] 额外配置
+ * @returns {Promise<any>}
  */
 function get(url, data = {}, options = {}) {
   return request({
@@ -182,10 +182,10 @@ function get(url, data = {}, options = {}) {
 
 /**
  * POST 请求快捷方法
- * @param {String} url - 接口路径
- * @param {Object} [data={}] - 请求体
- * @param {Object} [options={}] - 额外配置
- * @returns {Promise<any>} 请求结果
+ * @param {String} url 接口路径
+ * @param {Object} [data={}] 请求体
+ * @param {Object} [options={}] 额外配置
+ * @returns {Promise<any>}
  */
 function post(url, data = {}, options = {}) {
   return request({
@@ -198,10 +198,10 @@ function post(url, data = {}, options = {}) {
 
 /**
  * PUT 请求快捷方法
- * @param {String} url - 接口路径
- * @param {Object} [data={}] - 请求体
- * @param {Object} [options={}] - 额外配置
- * @returns {Promise<any>} 请求结果
+ * @param {String} url 接口路径
+ * @param {Object} [data={}] 请求体
+ * @param {Object} [options={}] 额外配置
+ * @returns {Promise<any>}
  */
 function put(url, data = {}, options = {}) {
   return request({
@@ -214,10 +214,10 @@ function put(url, data = {}, options = {}) {
 
 /**
  * DELETE 请求快捷方法
- * @param {String} url - 接口路径
- * @param {Object} [data={}] - 请求参数
- * @param {Object} [options={}] - 额外配置
- * @returns {Promise<any>} 请求结果
+ * @param {String} url 接口路径
+ * @param {Object} [data={}] 请求参数
+ * @param {Object} [options={}] 额外配置
+ * @returns {Promise<any>}
  */
 function del(url, data = {}, options = {}) {
   return request({

@@ -34,6 +34,8 @@ Page({
       { label: '待付款', value: '0' },
       { label: '待发货', value: '1' },
       { label: '待收货', value: '2' },
+      { label: '退款中', value: '6' },
+      { label: '已退款', value: '5' },
       { label: '已完成', value: '3' },
       { label: '已取消', value: '4' }
     ]
@@ -149,9 +151,19 @@ Page({
     if (!userId) return;
     if (this.data.actionLoading) return;
     this.setData({ actionLoading: true });
-    post(`/order/pay?userId=${userId}&orderId=${id}`, {}, { retry: 0 })
-      .then(() => {
-        wx.redirectTo({ url: `/pages/pay-result/pay-result?result=success&orderId=${id}` });
+    post(`/order/pay/mock-create?userId=${userId}&orderId=${id}`, {}, { retry: 0 })
+      .then((payRes) => {
+        const payData = (payRes && payRes.data) || {};
+        return post('/order/pay/mock-confirm', {
+          userId,
+          orderId: id,
+          payTradeNo: payData.payTradeNo
+        }, { retry: 0 }).then((confirmRes) => {
+          const confirmData = (confirmRes && confirmRes.data) || {};
+          wx.redirectTo({
+            url: `/pages/pay-result/pay-result?result=success&orderId=${id}&payTradeNo=${encodeURIComponent(confirmData.payTradeNo || '')}&payChannel=${encodeURIComponent(confirmData.payChannel || '')}`
+          });
+        });
       })
       .catch((error) => showRequestError(error, '支付失败'))
       .finally(() => this.setData({ actionLoading: false }));
@@ -178,6 +190,18 @@ Page({
       () => post(`/order/finish?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
       '确认收货成功',
       '确认收货失败'
+    );
+  },
+
+  onRefund(e) {
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
+    const userId = app.getUserId();
+    if (!userId) return;
+    this.executeAction(
+      () => post(`/order/refund/apply?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
+      '退款申请已提交',
+      '退款申请失败'
     );
   }
 });

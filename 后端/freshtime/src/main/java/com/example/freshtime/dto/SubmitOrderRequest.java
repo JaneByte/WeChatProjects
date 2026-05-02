@@ -9,6 +9,7 @@ public class SubmitOrderRequest {
     private Long userId;
     private Long merchantId;
     private Long addressId;
+    private Long couponId;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;

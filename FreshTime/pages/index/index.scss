@@ -32,16 +32,19 @@ page {
 }
 
 .top-shell {
-  padding: 10rpx 24rpx 18rpx;
-  background: linear-gradient(180deg, #e8f2da 0%, #f3f9ea 100%);
-  border-radius: 0 0 24rpx 24rpx;
-  border-bottom: 1rpx solid rgba(124, 171, 18, 0.2);
+  padding: 6rpx 24rpx 20rpx;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0) 36%),
+    linear-gradient(165deg, #dbeebf 0%, #e9f5d3 40%, #f4f9e9 100%);
+  border-radius: 0 0 30rpx 30rpx;
+  border-bottom: 1rpx solid rgba(124, 171, 18, 0.22);
 }
 
 .top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 54rpx;
 }
 
 .brand-wrap {
@@ -51,9 +54,10 @@ page {
 }
 
 .brand-name {
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 700;
   color: $text-dark;
+  letter-spacing: 1rpx;
 }
 
 .brand-sub {
@@ -61,10 +65,20 @@ page {
   color: $text-secondary;
 }
 
+.top-tags {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 8rpx;
+}
+
 .fresh-pill {
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
   background: rgba(140, 184, 24, 0.16);
+}
+
+.fresh-pill-soft {
+  background: rgba(0, 65, 50, 0.08);
 }
 
 .fresh-pill-text {
@@ -75,12 +89,24 @@ page {
 
 .hello-text {
   margin-top: 10rpx;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: $text-secondary;
+  font-weight: 500;
+}
+
+.hello-block {
+  margin-top: 10rpx;
+}
+
+.hello-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8a9879;
 }
 
 .search-bar {
-  margin-top: 14rpx;
+  margin-top: 16rpx;
   display: flex;
   align-items: center;
   height: 78rpx;
@@ -88,7 +114,7 @@ page {
   background: $bg-card;
   border-radius: 999rpx;
   border: 1rpx solid $line;
-  box-shadow: $shadow-light;
+  box-shadow: 0 8rpx 20rpx rgba(115, 153, 20, 0.12);
 }
 
 .search-icon {
@@ -115,6 +141,10 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14rpx;
+}
+
+.section-head-mini {
+  margin-bottom: 10rpx;
 }
 
 .head-left {
@@ -148,20 +178,44 @@ page {
 
 .hero-card {
   background: $bg-card;
-  border-radius: 24rpx;
+  border-radius: 26rpx;
   overflow: hidden;
   border: 1rpx solid $line;
-  box-shadow: $shadow-mid;
+  box-shadow: 0 14rpx 30rpx rgba(100, 140, 18, 0.22);
+  position: relative;
 }
 
 .hero-image {
   width: 100%;
-  height: 250rpx;
+  height: 280rpx;
   display: block;
 }
 
+.hero-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 280rpx;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.18) 100%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  position: absolute;
+  top: 14rpx;
+  left: 14rpx;
+  z-index: 2;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.9);
+  color: $primary-strong;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
 .hero-info {
-  padding: 18rpx;
+  padding: 20rpx;
 }
 
 .hero-name {
@@ -231,17 +285,22 @@ page {
 
 .flash-section {
   margin-bottom: 22rpx;
+  background: #fff;
+  border: 1rpx solid #ebeadf;
+  border-radius: 18rpx;
+  padding: 14rpx 14rpx 12rpx;
+  box-shadow: 0 8rpx 18rpx rgba(153, 121, 29, 0.08);
 }
 
 .flash-countdown {
-  padding: 4rpx 10rpx;
+  padding: 4rpx 12rpx;
   border-radius: 999rpx;
-  background: rgba(124, 171, 18, 0.18);
+  background: #fff1db;
 }
 
 .flash-countdown-text {
   font-size: 22rpx;
-  color: $primary-strong;
+  color: #b36b00;
   font-weight: 600;
 }
 
@@ -259,9 +318,9 @@ page {
   width: 250rpx;
   background: $bg-card;
   border-radius: 16rpx;
-  border: 1rpx solid $line;
+  border: 1rpx solid #efe5d1;
   overflow: hidden;
-  box-shadow: $shadow-light;
+  box-shadow: 0 8rpx 16rpx rgba(179, 116, 0, 0.08);
 }
 
 .flash-image {
@@ -338,17 +397,20 @@ page {
 
 .quick-entry {
   background: $bg-card;
-  border-radius: 16rpx;
+  border-radius: 18rpx;
   border: 1rpx solid $line;
-  padding: 14rpx 8rpx;
-  display: flex;
-  justify-content: space-around;
+  padding: 14rpx 12rpx 16rpx;
   margin-bottom: 22rpx;
   box-shadow: $shadow-light;
 }
 
+.entry-grid {
+  display: flex;
+  justify-content: space-between;
+}
+
 .entry-item {
-  width: 24%;
+  width: 23%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -358,7 +420,7 @@ page {
   width: 68rpx;
   height: 68rpx;
   border-radius: 16rpx;
-  background: $primary-soft;
+  background: linear-gradient(160deg, #f3f9e8, #e8f3d7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -378,6 +440,11 @@ page {
 
 .trace-section {
   margin-bottom: 22rpx;
+  background: #fff;
+  border: 1rpx solid $line;
+  border-radius: 18rpx;
+  padding: 14rpx 14rpx 12rpx;
+  box-shadow: $shadow-light;
 }
 
 .trace-scroll {
@@ -392,11 +459,23 @@ page {
 
 .trace-item {
   width: 230rpx;
-  padding: 16rpx;
+  padding: 16rpx 16rpx 18rpx;
   border-radius: 16rpx;
-  background: linear-gradient(135deg, #f1f8e6 0%, #e4f0d1 100%);
+  background: linear-gradient(135deg, #eef8ea 0%, #e0f0d6 65%, #d8ebce 100%);
   border: 1rpx solid rgba(124, 171, 18, 0.2);
   box-shadow: $shadow-light;
+  position: relative;
+}
+
+.trace-label {
+  display: inline-block;
+  font-size: 18rpx;
+  color: #3d6f2a;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
+  margin-bottom: 8rpx;
 }
 
 .trace-name {
@@ -421,7 +500,12 @@ page {
 }
 
 .goods-section {
-  padding-bottom: 6rpx;
+  padding: 14rpx 12rpx 6rpx;
+  margin-top: 4rpx;
+  background: #fff;
+  border: 1rpx solid $line;
+  border-radius: 18rpx;
+  box-shadow: $shadow-light;
 }
 
 .goods-waterfall {

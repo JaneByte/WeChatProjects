@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 @Mapper
 public interface UserMapper {
 
@@ -22,4 +24,7 @@ public interface UserMapper {
 
     @Update("UPDATE user SET nickname = #{nickname} WHERE id = #{id}")
     int updateNickname(UserInfo userInfo);
+
+    @Select("SELECT * FROM user ORDER BY id ASC")
+    List<UserInfo> selectAllUsers();
 }

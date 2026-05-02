@@ -5,12 +5,19 @@
         <text class="brand-name">{{brandName}}</text>
         <text class="brand-sub">{{brandSub}}</text>
       </view>
-      <view class="fresh-pill">
-        <text class="fresh-pill-text">今日上新 {{newArrivalCount}} 款</text>
-      </view>
     </view>
 
-    <view class="hello-text">{{greetingWords}}</view>
+    <view class="hello-block">
+      <text class="hello-text">{{greetingWords}}</text>
+      <view class="top-tags">
+        <view class="fresh-pill">
+          <text class="fresh-pill-text">今日上新 {{newArrivalCount}} 款</text>
+        </view>
+        <view class="fresh-pill fresh-pill-soft">
+          <text class="fresh-pill-text">产地直采</text>
+        </view>
+      </view>
+    </view>
 
     <view class="search-bar press-effect" bindtap="onSearchTap">
       <image class="search-icon" src="{{searchIcon}}" mode="aspectFit"></image>
@@ -55,6 +62,8 @@
 
         <view class="hero-card press-effect" bindtap="onRecommendTap">
           <image class="hero-image" src="{{dailyRecommend.image}}" mode="aspectFill" lazy-load></image>
+          <view class="hero-mask"></view>
+          <view class="hero-tag">今日主推</view>
           <view class="hero-info">
             <text class="hero-name">{{dailyRecommend.name}}</text>
             <text class="hero-desc">{{dailyRecommend.desc}}</text>
@@ -68,6 +77,22 @@
                 <text class="hero-add-text">{{addBtnText}}</text>
               </view>
             </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="quick-entry">
+        <view class="section-head section-head-mini">
+          <view class="head-left">
+            <text class="head-title">快捷入口</text>
+          </view>
+        </view>
+        <view class="entry-grid">
+          <view class="entry-item press-effect" wx:for="{{navList}}" wx:key="type" bindtap="onNavTap" data-type="{{item.type}}">
+            <view class="entry-icon-wrap">
+              <text class="entry-icon-text">{{item.iconText}}</text>
+            </view>
+            <text class="entry-text">{{item.text}}</text>
           </view>
         </view>
       </view>
@@ -105,15 +130,6 @@
         </scroll-view>
       </view>
 
-      <view class="quick-entry">
-        <view class="entry-item press-effect" wx:for="{{navList}}" wx:key="type" bindtap="onNavTap" data-type="{{item.type}}">
-          <view class="entry-icon-wrap">
-            <text class="entry-icon-text">{{item.iconText}}</text>
-          </view>
-          <text class="entry-text">{{item.text}}</text>
-        </view>
-      </view>
-
       <view class="trace-section">
         <view class="section-head">
           <view class="head-left">
@@ -124,13 +140,17 @@
 
         <scroll-view class="trace-scroll" scroll-x show-scrollbar="{{false}}">
           <view class="trace-list">
-            <view class="trace-item press-effect" wx:for="{{traceList}}" wx:key="id" bindtap="onTraceTap" data-id="{{item.id}}" data-name="{{item.name}}" data-desc="{{item.desc}}" data-meta="{{item.meta}}">
+            <view class="trace-item press-effect" wx:for="{{traceList}}" wx:key="id" bindtap="onTraceTap" data-id="{{item.id}}" data-goods-id="{{item.goodsId}}" data-name="{{item.name}}" data-desc="{{item.desc}}" data-meta="{{item.meta}}">
+              <text class="trace-label">TRACE</text>
               <text class="trace-name">{{item.name}}</text>
               <text class="trace-desc">{{item.desc}}</text>
               <text class="trace-meta">{{item.meta}}</text>
             </view>
           </view>
         </scroll-view>
+        <view wx:if="{{traceList.length === 0}}" class="load-state">
+          <text class="load-text">暂无溯源专题</text>
+        </view>
       </view>
 
       <view class="goods-section">
@@ -156,7 +176,9 @@
 
         <view class="load-state">
           <text class="load-text" wx:if="{{loadingMore}}">{{loadingText}}</text>
+          <text class="load-text" wx:if="{{loadMoreError}}">加载失败，下拉重试</text>
           <text class="load-text" wx:if="{{noMore && goodsList.length > 0}}">{{noMoreText}}</text>
+          <text class="load-text" wx:if="{{!loadingMore && !noMore && goodsList.length === 0}}">暂无热销商品</text>
         </view>
       </view>
     </block>

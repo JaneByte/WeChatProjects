@@ -13,6 +13,7 @@
         <button wx:if='{{detail.status === 0}}' size='mini' class='mini-btn primary' bindtap='onPay'>去支付</button>
         <button wx:if='{{detail.status === 0 || detail.status === 1}}' size='mini' class='mini-btn' bindtap='onCancel'>取消订单</button>
         <button wx:if='{{detail.status === 2}}' size='mini' class='mini-btn' bindtap='onFinish'>确认收货</button>
+        <button wx:if='{{detail.status === 1 || detail.status === 2}}' size='mini' class='mini-btn' bindtap='onRefund'>申请退款</button>
       </view>
     </view>
 

@@ -100,6 +100,12 @@ Page({
       merchantId: detail.merchantId || 1
     }]);
     wx.navigateTo({ url: '/pages/checkout/checkout' });
+  },
+
+  onGoTrace() {
+    const detail = this.data.detail;
+    if (!detail || !detail.id) return;
+    wx.navigateTo({ url: `/pages/trace-detail/trace-detail?goodsId=${detail.id}` });
   }
 });
 

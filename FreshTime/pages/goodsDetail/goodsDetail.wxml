@@ -21,5 +21,8 @@
       <button class='btn ghost' bindtap='onAddCart' disabled='{{detail.stock <= 0}}'>加入购物车</button>
       <button class='btn primary' bindtap='onBuyNow' disabled='{{detail.stock <= 0}}'>立即购买</button>
     </view>
+    <view class='actions'>
+      <button class='btn ghost' bindtap='onGoTrace'>查看溯源信息</button>
+    </view>
   </view>
 </view>

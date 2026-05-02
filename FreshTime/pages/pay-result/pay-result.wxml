@@ -3,6 +3,8 @@
     <view class='icon {{success ? "success" : "fail"}}'>{{success ? '√' : '!'}}</view>
     <view class='title'>{{success ? '支付成功' : '支付失败'}}</view>
     <view class='desc'>{{message}}</view>
+    <view wx:if='{{success && payTradeNo}}' class='desc'>支付单号：{{payTradeNo}}</view>
+    <view wx:if='{{success && payChannel}}' class='desc'>支付渠道：{{payChannel}}</view>
     <view class='actions'>
       <button wx:if='{{orderId && success}}' class='btn primary' bindtap='goOrderDetail'>查看订单详情</button>
       <button wx:elif='{{orderId && !success}}' class='btn primary' bindtap='goOrderDetail'>返回订单重试</button>

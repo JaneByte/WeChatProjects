@@ -1,15 +1,20 @@
 package com.example.freshtime.service.impl;
 
 import com.example.freshtime.common.ApiResponse;
+import com.example.freshtime.dto.MockPayConfirmRequest;
 import com.example.freshtime.dto.SubmitOrderRequest;
 import com.example.freshtime.entity.AddressInfo;
+import com.example.freshtime.entity.CouponInfo;
 import com.example.freshtime.entity.Goods;
 import com.example.freshtime.entity.OrderInfo;
 import com.example.freshtime.entity.OrderItemInfo;
 import com.example.freshtime.mapper.AddressMapper;
+import com.example.freshtime.mapper.CartMapper;
+import com.example.freshtime.mapper.CouponMapper;
 import com.example.freshtime.mapper.OrderMapper;
 import com.example.freshtime.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class OrderServiceImpl implements OrderService {
     private static final int MAX_ORDER_ITEM_COUNT = 50;
+    private static final String MOCK_PAY_CHANNEL = "mock_wechat";
     private static final ConcurrentHashMap<Long, Object> USER_SUBMIT_LOCK = new ConcurrentHashMap<>();
 
     @Autowired
@@ -32,6 +38,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private AddressMapper addressMapper;
+
+    @Autowired
+    private CouponMapper couponMapper;
+
+    @Autowired
+    private CartMapper cartMapper;
+
+    @Value("${spring.datasource.url:}")
+    private String datasourceUrl;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -124,20 +139,51 @@ public class OrderServiceImpl implements OrderService {
                     emptyToDefault(address.getDetail(), ""));
         }
 
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        Long couponId = request.getCouponId();
+        if (couponId != null) {
+            CouponInfo coupon = couponMapper.selectByIdAndUserId(couponId, request.getUserId());
+            if (coupon == null || coupon.getStatus() == null || coupon.getStatus() != 1) {
+                return ApiResponse.badRequest("优惠券不可用");
+            }
+            if (coupon.getExpireDate() != null && coupon.getExpireDate().isBefore(java.time.LocalDate.now())) {
+                return ApiResponse.badRequest("优惠券已过期");
+            }
+            BigDecimal threshold = coupon.getThresholdAmount() == null ? BigDecimal.ZERO : coupon.getThresholdAmount();
+            BigDecimal discount = coupon.getDiscountAmount() == null ? BigDecimal.ZERO : coupon.getDiscountAmount();
+            if (totalAmount.compareTo(threshold) < 0) {
+                return ApiResponse.badRequest("未满足优惠券使用门槛");
+            }
+            discountAmount = discount.min(totalAmount);
+        }
+
+        BigDecimal actualAmount = totalAmount.subtract(discountAmount);
+        if (actualAmount.compareTo(BigDecimal.ZERO) < 0) {
+            actualAmount = BigDecimal.ZERO;
+        }
+
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setOrderNo(generateOrderNo());
         orderInfo.setUserId(request.getUserId());
         orderInfo.setMerchantId(request.getMerchantId() == null ? 1L : request.getMerchantId());
         orderInfo.setTotalAmount(totalAmount);
-        orderInfo.setDiscountAmount(BigDecimal.ZERO);
-        orderInfo.setActualAmount(totalAmount);
+        orderInfo.setDiscountAmount(discountAmount);
+        orderInfo.setActualAmount(actualAmount);
         orderInfo.setReceiverName(receiverName);
         orderInfo.setReceiverPhone(receiverPhone);
         orderInfo.setReceiverAddress(receiverAddress);
         orderInfo.setRemark(request.getRemark());
         orderInfo.setStatus(0);
+        orderInfo.setPayStatus(0);
 
         orderMapper.insertOrder(orderInfo);
+
+        if (couponId != null) {
+            int marked = couponMapper.markUsed(couponId, request.getUserId());
+            if (marked <= 0) {
+                return ApiResponse.badRequest("优惠券使用失败，请重试");
+            }
+        }
 
         for (OrderItemInfo orderItem : orderItems) {
             orderItem.setOrderId(orderInfo.getId());
@@ -238,6 +284,29 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResponse<?> payOrder(Long userId, Long orderId) {
+        ApiResponse<?> createResp = mockPayCreate(userId, orderId);
+        if (createResp.getCode() != 200) {
+            return createResp;
+        }
+        Object data = createResp.getData();
+        if (!(data instanceof Map)) {
+            return ApiResponse.badRequest("发起支付失败");
+        }
+        Map<?, ?> row = (Map<?, ?>) data;
+        Object tradeNoObj = row.get("payTradeNo");
+        if (tradeNoObj == null) {
+            return ApiResponse.badRequest("发起支付失败");
+        }
+        MockPayConfirmRequest request = new MockPayConfirmRequest();
+        request.setUserId(userId);
+        request.setOrderId(orderId);
+        request.setPayTradeNo(String.valueOf(tradeNoObj));
+        return mockPayConfirm(request);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponse<?> mockPayCreate(Long userId, Long orderId) {
         if (userId == null || orderId == null) {
             return ApiResponse.badRequest("userId或orderId不能为空");
         }
@@ -249,12 +318,53 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() == null || order.getStatus() != 0) {
             return ApiResponse.badRequest("当前状态不可支付");
         }
-
-        int updated = orderMapper.payOrder(orderId, userId);
-        if (updated <= 0) {
-            return ApiResponse.badRequest("支付失败，请重试");
+        if (order.getPayStatus() != null && order.getPayStatus() == 2) {
+            return ApiResponse.badRequest("订单已支付");
         }
-        return ApiResponse.success("支付成功", null);
+
+        String payTradeNo = generateMockPayTradeNo();
+        int updated = orderMapper.createMockPay(orderId, userId, MOCK_PAY_CHANNEL, payTradeNo);
+        if (updated <= 0) {
+            return ApiResponse.badRequest("发起支付失败，请重试");
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("orderId", orderId);
+        data.put("payChannel", MOCK_PAY_CHANNEL);
+        data.put("payTradeNo", payTradeNo);
+        data.put("payStatus", 1);
+        return ApiResponse.success("模拟支付单已创建", data);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponse<?> mockPayConfirm(MockPayConfirmRequest request) {
+        if (request == null || request.getUserId() == null || request.getOrderId() == null) {
+            return ApiResponse.badRequest("支付确认参数不能为空");
+        }
+        String payTradeNo = request.getPayTradeNo() == null ? "" : request.getPayTradeNo().trim();
+        if (payTradeNo.isEmpty()) {
+            return ApiResponse.badRequest("payTradeNo不能为空");
+        }
+
+        OrderInfo order = orderMapper.selectOrderByIdAndUserId(request.getOrderId(), request.getUserId());
+        if (order == null) {
+            return ApiResponse.notFound("订单不存在");
+        }
+        if (order.getStatus() == null || order.getStatus() != 0) {
+            return ApiResponse.badRequest("当前状态不可支付确认");
+        }
+
+        int updated = orderMapper.confirmMockPay(request.getOrderId(), request.getUserId(), payTradeNo);
+        if (updated <= 0) {
+            return ApiResponse.badRequest("支付确认失败，请重试");
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("orderId", request.getOrderId());
+        data.put("payTradeNo", payTradeNo);
+        data.put("payChannel", MOCK_PAY_CHANNEL);
+        data.put("payStatus", 2);
+        return ApiResponse.success("支付成功", data);
     }
 
     @Override
@@ -308,6 +418,64 @@ public class OrderServiceImpl implements OrderService {
         return ApiResponse.success("发货成功", null);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponse<?> applyRefund(Long userId, Long orderId) {
+        if (userId == null || orderId == null) {
+            return ApiResponse.badRequest("userId或orderId不能为空");
+        }
+        OrderInfo order = orderMapper.selectOrderByIdAndUserId(orderId, userId);
+        if (order == null) {
+            return ApiResponse.notFound("订单不存在");
+        }
+        if (order.getStatus() == null || (order.getStatus() != 1 && order.getStatus() != 2)) {
+            return ApiResponse.badRequest("当前状态不可申请退款");
+        }
+        int updated = orderMapper.applyRefund(orderId, userId);
+        if (updated <= 0) {
+            return ApiResponse.badRequest("退款申请失败，请重试");
+        }
+        return ApiResponse.success("退款申请已提交", null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponse<?> finishRefund(Long userId, Long orderId) {
+        if (userId == null || orderId == null) {
+            return ApiResponse.badRequest("userId或orderId不能为空");
+        }
+        OrderInfo order = orderMapper.selectOrderByIdAndUserId(orderId, userId);
+        if (order == null) {
+            return ApiResponse.notFound("订单不存在");
+        }
+        if (order.getStatus() == null || order.getStatus() != 6) {
+            return ApiResponse.badRequest("当前状态不可完成退款");
+        }
+
+        orderMapper.restoreGoodsStockByOrderId(orderId);
+        int updated = orderMapper.finishRefund(orderId, userId);
+        if (updated <= 0) {
+            return ApiResponse.badRequest("退款完成失败，请重试");
+        }
+        return ApiResponse.success("退款已完成", null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponse<?> clearMyTestData(Long userId) {
+        if (userId == null) {
+            return ApiResponse.badRequest("userId不能为空");
+        }
+        if (datasourceUrl == null || !datasourceUrl.contains("localhost")) {
+            return ApiResponse.forbidden("仅开发环境可执行清理");
+        }
+        cartMapper.deleteAllByUserId(userId);
+        addressMapper.deleteByUserId(userId);
+        orderMapper.deleteOrderItemsByUserId(userId);
+        orderMapper.deleteOrdersByUserId(userId);
+        return ApiResponse.success("测试数据已清理", null);
+    }
+
     private Map<String, Object> buildOrderView(OrderInfo order) {
         Map<String, Object> row = new HashMap<>();
         row.put("id", order.getId());
@@ -319,6 +487,10 @@ public class OrderServiceImpl implements OrderService {
         row.put("receiverPhone", order.getReceiverPhone());
         row.put("receiverAddress", order.getReceiverAddress());
         row.put("remark", order.getRemark());
+        row.put("payChannel", order.getPayChannel());
+        row.put("payTradeNo", order.getPayTradeNo());
+        row.put("payStatus", order.getPayStatus());
+        row.put("payTime", order.getPayTime());
         row.put("statusText", mapStatusText(order.getStatus()));
         row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId()));
         return row;
@@ -339,6 +511,8 @@ public class OrderServiceImpl implements OrderService {
                 return "已取消";
             case 5:
                 return "已退款";
+            case 6:
+                return "退款中";
             default:
                 return "未知状态";
         }
@@ -347,6 +521,11 @@ public class OrderServiceImpl implements OrderService {
     private String generateOrderNo() {
         String random = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
         return "FT" + System.currentTimeMillis() + random;
+    }
+
+    private String generateMockPayTradeNo() {
+        String random = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        return "MOCK" + System.currentTimeMillis() + random;
     }
 
     private boolean isOrderOverdue(OrderInfo order) {

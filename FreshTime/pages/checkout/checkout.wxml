@@ -26,6 +26,34 @@
     <input class='remark-input' placeholder='选填：口味偏好、配送时间等' value='{{remark}}' bindinput='onInputRemark' />
   </view>
 
+  <view class='remark'>
+    <text class='remark-label'>优惠券</text>
+    <view class='coupon-section'>
+      <view class='coupon-title'>推荐可用券（自动优选）</view>
+      <view wx:if='{{availableCouponList.length}}' class='coupon-list'>
+        <view
+          wx:for='{{availableCouponList}}'
+          wx:key='id'
+          class='coupon-item {{selectedCouponId === item.id ? "coupon-item-active" : ""}}'
+          data-id='{{item.id}}'
+          bindtap='onChooseCoupon'
+        >
+          <view class='coupon-main'>{{item.title}}（满{{item.thresholdAmount}}减{{item.discountAmount}}）</view>
+          <view class='coupon-sub'>有效期至：{{item.expireAt}}</view>
+        </view>
+      </view>
+      <view wx:else class='coupon-empty'>当前无可用优惠券</view>
+      <view wx:if='{{selectedCouponId}}' class='coupon-clear' bindtap='onClearCoupon'>不使用优惠券</view>
+      <view wx:if='{{unavailableCouponList.length}}' class='coupon-title'>不可用优惠券</view>
+      <view wx:if='{{unavailableCouponList.length}}' class='coupon-list'>
+        <view wx:for='{{unavailableCouponList}}' wx:key='id' class='coupon-item coupon-item-disabled'>
+          <view class='coupon-main'>{{item.title}}（满{{item.thresholdAmount}}减{{item.discountAmount}}）</view>
+          <view class='coupon-sub'>{{item.unusableReason}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <view class='summary'>
     <view class='summary-line'>
       <text>商品总额</text>
@@ -35,14 +63,18 @@
       <text>运费</text>
       <text>¥0.00</text>
     </view>
+    <view class='summary-line'>
+      <text>优惠抵扣</text>
+      <text>-¥{{discountAmount}}</text>
+    </view>
     <view class='summary-line total'>
       <text>实付金额</text>
-      <text>¥{{amount}}</text>
+      <text>¥{{actualAmount}}</text>
     </view>
   </view>
 
   <view class='bottom'>
-    <text>合计：¥{{amount}}</text>
+    <text>合计：¥{{actualAmount}}</text>
     <button
       class='submit {{(submitting || !items.length || !address || !address.id) ? "submit-disabled" : ""}}'
       loading='{{submitting}}'

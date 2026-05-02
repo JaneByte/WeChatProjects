@@ -8,5 +8,6 @@
     <switch color='#07c160' checked='{{notifyPromo}}' bindchange='onTogglePromo' />
   </view>
   <view class='tip'>当前设置仅用于演示页面展示。</view>
+  <button class='danger-btn' bindtap='onGrantTestCoupons'>给所有用户发测试优惠券</button>
+  <button class='danger-btn' bindtap='onClearTestData'>清理当前用户测试数据</button>
 </view>
-

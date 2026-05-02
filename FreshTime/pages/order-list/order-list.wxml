@@ -24,6 +24,7 @@
         <button wx:if='{{item.status === 0}}' size='mini' class='mini-btn primary' data-id='{{item.id}}' catchtap='onPay'>去支付</button>
         <button wx:if='{{item.status === 0 || item.status === 1}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onCancel'>取消订单</button>
         <button wx:if='{{item.status === 2}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onFinish'>确认收货</button>
+        <button wx:if='{{item.status === 1 || item.status === 2}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onRefund'>申请退款</button>
       </view>
     </view>
   </view>

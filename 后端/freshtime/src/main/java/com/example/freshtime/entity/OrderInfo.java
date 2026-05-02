@@ -19,6 +19,9 @@ public class OrderInfo {
     private String receiverAddress;
     private String remark;
     private Integer status;
+    private String payChannel;
+    private String payTradeNo;
+    private Integer payStatus;
     private LocalDateTime payTime;
     private LocalDateTime deliverTime;
     private LocalDateTime finishTime;

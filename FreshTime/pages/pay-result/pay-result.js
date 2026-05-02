@@ -2,16 +2,20 @@ Page({
   data: {
     success: true,
     message: '订单支付已完成，可前往订单列表查看状态',
-    orderId: null
+    orderId: null,
+    payTradeNo: '',
+    payChannel: ''
   },
 
   onLoad(options) {
     const success = options.result !== 'fail';
     const orderId = Number(options.orderId || 0) || null;
+    const payTradeNo = options.payTradeNo ? decodeURIComponent(options.payTradeNo) : '';
+    const payChannel = options.payChannel ? decodeURIComponent(options.payChannel) : '';
     const message = success
       ? '订单支付已完成，可前往订单列表查看状态'
       : '支付未完成，请返回订单页重试';
-    this.setData({ success, message, orderId });
+    this.setData({ success, message, orderId, payTradeNo, payChannel });
   },
 
   goOrderList() {

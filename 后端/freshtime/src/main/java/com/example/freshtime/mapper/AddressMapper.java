@@ -38,4 +38,7 @@ public interface AddressMapper {
 
     @Delete("DELETE FROM address WHERE id = #{id} AND user_id = #{userId}")
     int deleteByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+    @Delete("DELETE FROM address WHERE user_id = #{userId}")
+    int deleteByUserId(@Param("userId") Long userId);
 }

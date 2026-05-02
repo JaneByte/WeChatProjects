@@ -1,6 +1,7 @@
-﻿const { get } = require('../../utils/request');
+﻿const { get, post } = require('../../utils/request');
 const { getTempFileUrls } = require('../../utils/cloud');
 const { showRequestError } = require('../../utils/ui');
+const app = getApp();
 
 Page({
   data: {
@@ -49,13 +50,22 @@ Page({
     page: 1,
     pageSize: 10,
     loadingMore: false,
-    noMore: false
+    noMore: false,
+    loadMoreError: false
   },
 
   onLoad() {
     const systemInfo = wx.getSystemInfoSync();
-    const safeAreaTop = (systemInfo.safeArea && systemInfo.safeArea.top) || systemInfo.statusBarHeight || 44;
-    this.setData({ statusBarHeight: safeAreaTop + 8 });
+    const statusBar = systemInfo.statusBarHeight || 20;
+    let navSafeHeight = statusBar + 44;
+    try {
+      const menuRect = wx.getMenuButtonBoundingClientRect();
+      if (menuRect && menuRect.top && menuRect.height) {
+        const topGap = menuRect.top - statusBar;
+        navSafeHeight = statusBar + topGap * 2 + menuRect.height;
+      }
+    } catch (error) {}
+    this.setData({ statusBarHeight: navSafeHeight + 4 });
     this.generateGreeting();
     this.loadHomeIndex();
     this.loadGoods(true);
@@ -122,7 +132,7 @@ Page({
     if (!reset && this.data.noMore) return;
 
     const nextPage = reset ? 1 : this.data.page;
-    this.setData({ loadingMore: true });
+    this.setData({ loadingMore: true, loadMoreError: false });
 
     try {
       const res = await get('/home/goods', { page: nextPage, pageSize: this.data.pageSize }, { retry: 1 });
@@ -138,10 +148,11 @@ Page({
         rightColumnList: split.rightColumnList,
         page: nextPage + 1,
         noMore: !hasMore,
-        loadingMore: false
+        loadingMore: false,
+        loadMoreError: false
       });
     } catch (error) {
-      this.setData({ loadingMore: false });
+      this.setData({ loadingMore: false, loadMoreError: true });
       showRequestError(error, '商品加载失败');
     }
   },
@@ -241,7 +252,11 @@ Page({
     wx.navigateTo({ url: `${paths.goodsDetail}?id=${dailyRecommend.id}` });
   },
 
-  onRecommendAdd() { wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 }); },
+  onRecommendAdd() {
+    const { dailyRecommend } = this.data;
+    if (!dailyRecommend || !dailyRecommend.id) return;
+    this.addToCart(dailyRecommend.id);
+  },
   onFlashMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=flash` }); },
 
   onFlashTap(e) {
@@ -251,13 +266,13 @@ Page({
 
   onFlashAdd(e) {
     const { id } = e.currentTarget.dataset;
-    const flashSaleList = this.data.flashSaleList.map((item) => {
-      const currentStock = typeof item.stock === 'number' ? item.stock : 0;
-      if (`${item.id}` === `${id}` && currentStock > 0) return { ...item, stock: currentStock - 1 };
-      return item;
-    });
-    this.setData({ flashSaleList });
-    wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
+    const target = this.data.flashSaleList.find((item) => `${item.id}` === `${id}`);
+    if (!target) return;
+    if (Number(target.stock || 0) <= 0) {
+      wx.showToast({ title: '秒杀已售罄', icon: 'none' });
+      return;
+    }
+    this.addToCart(id);
   },
 
   onNavTap(e) {
@@ -276,11 +291,12 @@ Page({
 
   onTraceTap(e) {
     const id = Number(e.currentTarget.dataset.id || 0);
+    const goodsId = Number(e.currentTarget.dataset.goodsId || 0);
     const name = e.currentTarget.dataset.name || '';
     const desc = e.currentTarget.dataset.desc || '';
     const meta = e.currentTarget.dataset.meta || '';
     wx.navigateTo({
-      url: `/pages/trace-detail/trace-detail?id=${id}&name=${encodeURIComponent(name)}&desc=${encodeURIComponent(desc)}&meta=${encodeURIComponent(meta)}`
+      url: `/pages/trace-detail/trace-detail?id=${id}&goodsId=${goodsId}&name=${encodeURIComponent(name)}&desc=${encodeURIComponent(desc)}&meta=${encodeURIComponent(meta)}`
     });
   },
 
@@ -295,7 +311,28 @@ Page({
     wx.navigateTo({ url: `${this.data.paths.goodsDetail}?id=${item.id}` });
   },
 
-  onAddToCart() {
-    wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
+  onAddToCart(e) {
+    const item = (e && e.detail && e.detail.item) || null;
+    if (!item || !item.id) return;
+    if (Number(item.stock || 0) <= 0) {
+      wx.showToast({ title: '商品已售罄', icon: 'none' });
+      return;
+    }
+    this.addToCart(item.id);
+  },
+
+  addToCart(goodsId, quantity = 1) {
+    const userId = app.getUserId && app.getUserId();
+    if (!userId) {
+      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+      return;
+    }
+    post(`/cart/add?userId=${userId}&goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 })
+      .then(() => {
+        wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
+        if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+      })
+      .catch((error) => showRequestError(error, '加入购物车失败'));
   }
 });
+

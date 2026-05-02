@@ -47,5 +47,7 @@ public interface CartMapper {
 
     @Delete("DELETE FROM cart WHERE user_id = #{userId} AND selected = 1")
     int deleteSelectedByUserId(@Param("userId") Long userId);
-}
 
+    @Delete("DELETE FROM cart WHERE user_id = #{userId}")
+    int deleteAllByUserId(@Param("userId") Long userId);
+}

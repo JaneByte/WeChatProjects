@@ -23,9 +23,9 @@ public interface OrderMapper {
     int deductGoodsStock(@Param("goodsId") Long goodsId, @Param("quantity") Integer quantity);
 
     @Insert("INSERT INTO `order`(order_no, user_id, merchant_id, total_amount, discount_amount, actual_amount, " +
-            "receiver_name, receiver_phone, receiver_address, remark, status) " +
+            "receiver_name, receiver_phone, receiver_address, remark, status, pay_status) " +
             "VALUES(#{orderNo}, #{userId}, #{merchantId}, #{totalAmount}, #{discountAmount}, #{actualAmount}, " +
-            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{status})")
+            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{status}, #{payStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertOrder(OrderInfo orderInfo);
 
@@ -50,11 +50,27 @@ public interface OrderMapper {
                           @Param("fromStatus") Integer fromStatus,
                           @Param("toStatus") Integer toStatus);
 
-    @Update("UPDATE `order` SET status = 1, pay_time = NOW() WHERE id = #{orderId} AND user_id = #{userId} AND status = 0")
-    int payOrder(@Param("orderId") Long orderId, @Param("userId") Long userId);
+    @Update("UPDATE `order` SET pay_channel = #{payChannel}, pay_trade_no = #{payTradeNo}, pay_status = 1 " +
+            "WHERE id = #{orderId} AND user_id = #{userId} AND status = 0")
+    int createMockPay(@Param("orderId") Long orderId,
+                      @Param("userId") Long userId,
+                      @Param("payChannel") String payChannel,
+                      @Param("payTradeNo") String payTradeNo);
+
+    @Update("UPDATE `order` SET status = 1, pay_status = 2, pay_time = NOW() " +
+            "WHERE id = #{orderId} AND user_id = #{userId} AND status = 0 AND pay_status = 1 AND pay_trade_no = #{payTradeNo}")
+    int confirmMockPay(@Param("orderId") Long orderId,
+                       @Param("userId") Long userId,
+                       @Param("payTradeNo") String payTradeNo);
 
     @Update("UPDATE `order` SET status = 2, deliver_time = NOW() WHERE id = #{orderId} AND user_id = #{userId} AND status = 1")
     int deliverOrder(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Update("UPDATE `order` SET status = 6 WHERE id = #{orderId} AND user_id = #{userId} AND status IN (1, 2)")
+    int applyRefund(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
+    @Update("UPDATE `order` SET status = 5 WHERE id = #{orderId} AND user_id = #{userId} AND status = 6")
+    int finishRefund(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
     @Update("UPDATE goods g " +
             "JOIN order_item oi ON oi.goods_id = g.id " +
@@ -65,4 +81,10 @@ public interface OrderMapper {
 
     @Select("SELECT * FROM order_item WHERE order_id = #{orderId} ORDER BY id ASC")
     List<OrderItemInfo> selectOrderItemsByOrderId(@Param("orderId") Long orderId);
+
+    @org.apache.ibatis.annotations.Delete("DELETE oi FROM order_item oi INNER JOIN `order` o ON oi.order_id = o.id WHERE o.user_id = #{userId}")
+    int deleteOrderItemsByUserId(@Param("userId") Long userId);
+
+    @org.apache.ibatis.annotations.Delete("DELETE FROM `order` WHERE user_id = #{userId}")
+    int deleteOrdersByUserId(@Param("userId") Long userId);
 }

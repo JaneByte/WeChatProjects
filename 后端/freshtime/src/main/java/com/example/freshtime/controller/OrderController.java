@@ -1,6 +1,7 @@
 package com.example.freshtime.controller;
 
 import com.example.freshtime.common.ApiResponse;
+import com.example.freshtime.dto.MockPayConfirmRequest;
 import com.example.freshtime.dto.SubmitOrderRequest;
 import com.example.freshtime.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,18 @@ public class OrderController {
         return orderService.payOrder(userId, orderId);
     }
 
+    @PostMapping("/pay/mock-create")
+    public ApiResponse<?> mockCreate(
+            @RequestParam Long userId,
+            @RequestParam Long orderId) {
+        return orderService.mockPayCreate(userId, orderId);
+    }
+
+    @PostMapping("/pay/mock-confirm")
+    public ApiResponse<?> mockConfirm(@RequestBody MockPayConfirmRequest request) {
+        return orderService.mockPayConfirm(request);
+    }
+
     @PostMapping("/expire")
     public ApiResponse<?> expireOrder(
             @RequestParam Long userId,
@@ -73,5 +86,24 @@ public class OrderController {
             @RequestParam Long userId,
             @RequestParam Long orderId) {
         return orderService.deliverOrder(userId, orderId);
+    }
+
+    @PostMapping("/refund/apply")
+    public ApiResponse<?> applyRefund(
+            @RequestParam Long userId,
+            @RequestParam Long orderId) {
+        return orderService.applyRefund(userId, orderId);
+    }
+
+    @PostMapping("/refund/finish")
+    public ApiResponse<?> finishRefund(
+            @RequestParam Long userId,
+            @RequestParam Long orderId) {
+        return orderService.finishRefund(userId, orderId);
+    }
+
+    @PostMapping("/dev/clear-my-test-data")
+    public ApiResponse<?> clearMyTestData(@RequestParam Long userId) {
+        return orderService.clearMyTestData(userId);
     }
 }

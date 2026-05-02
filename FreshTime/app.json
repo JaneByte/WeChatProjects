@@ -4,7 +4,21 @@
     "pages/index/index",
     "pages/category/category",
     "pages/cart/cart",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/goods/goods",
+    "pages/goodsDetail/goodsDetail",
+    "pages/search/search",
+    "pages/address-list/address-list",
+    "pages/address-edit/address-edit",
+    "pages/checkout/checkout",
+    "pages/order-list/order-list",
+    "pages/order-detail/order-detail",
+    "pages/pay-result/pay-result",
+    "pages/comment-edit/comment-edit",
+    "pages/trace-detail/trace-detail",
+    "pages/coupon/coupon",
+    "pages/service/service",
+    "pages/settings/settings"
   ],
   "window": {
     "navigationBarTitleText": "FreshTime 鲜时刻",

@@ -1,4 +1,4 @@
-<!-- 横向滚动模式 -->
+﻿<!-- 横向滚动模式 -->
 <scroll-view
   wx:if="{{mode === 'scroll' && list.length > 0}}"
   scroll-x
@@ -29,7 +29,7 @@
           <text class="item-unit">/{{item.unit}}</text>
         </view>
         <view wx:if="{{showSales}}" class="item-sales">
-          <text>热销 {{item.sales}}份</text>
+          <text>销量 {{item.sales}} 件</text>
         </view>
       </view>
 
@@ -65,7 +65,7 @@
         <text class="grid-unit">/{{item.unit}}</text>
       </view>
       <view wx:if="{{showSales}}" class="grid-sales">
-        <text>热销 {{item.sales}}份</text>
+        <text>销量 {{item.sales}} 件</text>
       </view>
     </view>
 

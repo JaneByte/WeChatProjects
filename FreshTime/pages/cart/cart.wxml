@@ -1,7 +1,7 @@
-﻿<view class="cart-page">
+<view class="cart-page">
   <view class="empty-state state-block" wx:if="{{cartItems.length === 0}}">
     <view class="empty-icon state-icon">空</view>
-    <text class="empty-text state-text">暂无数据</text>
+    <text class="empty-text state-text">购物车还是空的</text>
     <view class="go-shop-btn press-effect" bindtap="goShopping">去逛逛</view>
   </view>
 
@@ -27,7 +27,7 @@
             <view class="item-main">
               <view class="checkbox-wrapper press-effect" catchtap="toggleSelect" data-id="{{item.id}}">
                 <view class="custom-checkbox {{item.selected ? 'checked' : ''}}">
-                  <text wx:if="{{item.selected}}" class="check-icon">&#10003;</text>
+                  <text wx:if="{{item.selected}}" class="check-icon">✓</text>
                 </view>
               </view>
 
@@ -81,7 +81,7 @@
       <view class="footer-left">
         <view class="checkbox-wrapper press-effect" catchtap="toggleSelectAll">
           <view class="custom-checkbox {{allSelected ? 'checked' : ''}}">
-            <text wx:if="{{allSelected}}" class="check-icon">&#10003;</text>
+            <text wx:if="{{allSelected}}" class="check-icon">✓</text>
           </view>
         </view>
         <text class="select-all-text">全选</text>

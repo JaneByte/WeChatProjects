@@ -29,9 +29,7 @@ function getAuthHeader() {
 }
 
 function shouldRetry(statusCode, retryLeft) {
-  if (!retryLeft || retryLeft <= 0) {
-    return false;
-  }
+  if (!retryLeft || retryLeft <= 0) return false;
   return statusCode >= 500;
 }
 
@@ -166,10 +164,6 @@ function request(options = {}) {
 
 /**
  * GET 请求快捷方法
- * @param {String} url 接口路径
- * @param {Object} [data={}] 查询参数
- * @param {Object} [options={}] 额外配置
- * @returns {Promise<any>}
  */
 function get(url, data = {}, options = {}) {
   return request({
@@ -182,10 +176,6 @@ function get(url, data = {}, options = {}) {
 
 /**
  * POST 请求快捷方法
- * @param {String} url 接口路径
- * @param {Object} [data={}] 请求体
- * @param {Object} [options={}] 额外配置
- * @returns {Promise<any>}
  */
 function post(url, data = {}, options = {}) {
   return request({
@@ -198,10 +188,6 @@ function post(url, data = {}, options = {}) {
 
 /**
  * PUT 请求快捷方法
- * @param {String} url 接口路径
- * @param {Object} [data={}] 请求体
- * @param {Object} [options={}] 额外配置
- * @returns {Promise<any>}
  */
 function put(url, data = {}, options = {}) {
   return request({
@@ -214,10 +200,6 @@ function put(url, data = {}, options = {}) {
 
 /**
  * DELETE 请求快捷方法
- * @param {String} url 接口路径
- * @param {Object} [data={}] 请求参数
- * @param {Object} [options={}] 额外配置
- * @returns {Promise<any>}
  */
 function del(url, data = {}, options = {}) {
   return request({

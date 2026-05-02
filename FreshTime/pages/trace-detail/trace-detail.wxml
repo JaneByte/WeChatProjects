@@ -1,0 +1,15 @@
+<view class='page'>
+  <view class='card'>
+    <view class='title'>{{trace.name}}</view>
+    <view class='desc'>{{trace.desc}}</view>
+    <view class='meta'>{{trace.meta}}</view>
+  </view>
+  <view class='card'>
+    <view class='sub-title'>溯源信息</view>
+    <view class='row' wx:for='{{list}}' wx:key='label'>
+      <text class='label'>{{item.label}}</text>
+      <text class='value'>{{item.value}}</text>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,53 @@
+﻿<view class='page'>
+  <view class='address' bindtap='onChooseAddress'>
+    <view wx:if='{{address}}'>
+      <view class='name'>{{address.receiverName}} {{address.receiverPhone}}</view>
+      <view class='text'>{{address.province}}{{address.city}}{{address.district}}{{address.detail}}</view>
+    </view>
+    <view wx:else>
+      <view class='text'>请选择收货地址</view>
+      <view class='hint'>点击这里去新增或选择地址</view>
+    </view>
+  </view>
+
+  <view class='list' wx:if='{{items.length > 0}}'>
+    <view class='item' wx:for='{{items}}' wx:key='id'>
+      <text>{{item.name}} x{{item.quantity}}</text>
+      <text>¥{{item.price}}</text>
+    </view>
+  </view>
+  <view class='list empty-list' wx:else>
+    <text class='text'>暂无可结算商品</text>
+    <button size='mini' bindtap='onGoCart'>去购物车</button>
+  </view>
+
+  <view class='remark'>
+    <text class='remark-label'>订单备注</text>
+    <input class='remark-input' placeholder='选填：口味偏好、配送时间等' value='{{remark}}' bindinput='onInputRemark' />
+  </view>
+
+  <view class='summary'>
+    <view class='summary-line'>
+      <text>商品总额</text>
+      <text>¥{{amount}}</text>
+    </view>
+    <view class='summary-line'>
+      <text>运费</text>
+      <text>¥0.00</text>
+    </view>
+    <view class='summary-line total'>
+      <text>实付金额</text>
+      <text>¥{{amount}}</text>
+    </view>
+  </view>
+
+  <view class='bottom'>
+    <text>合计：¥{{amount}}</text>
+    <button
+      class='submit {{(submitting || !items.length || !address || !address.id) ? "submit-disabled" : ""}}'
+      loading='{{submitting}}'
+      disabled='{{submitting || !items.length || !address || !address.id}}'
+      bindtap='onSubmit'
+    >提交订单</button>
+  </view>
+</view>

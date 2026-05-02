@@ -450,6 +450,94 @@ page {
   height: 104rpx;
 }
 
+.home-skeleton {
+  padding: 6rpx 0 10rpx;
+}
+
+.skeleton-card {
+  height: 300rpx;
+  border-radius: 24rpx;
+  background: #eaf0e3;
+}
+
+.skeleton-row {
+  margin-top: 18rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+.skeleton-chip {
+  flex: 1;
+  height: 58rpx;
+  border-radius: 999rpx;
+  background: #eaf0e3;
+}
+
+.skeleton-grid {
+  margin-top: 18rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.skeleton-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.skeleton-item {
+  height: 220rpx;
+  border-radius: 18rpx;
+  background: #eaf0e3;
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150rpx;
+  width: 150rpx;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shimmer 1.3s infinite;
+}
+
+.home-error {
+  margin-top: 24rpx;
+  background: #ffffff;
+  border: 1rpx solid #e3ead5;
+  border-radius: 16rpx;
+  padding: 32rpx 20rpx;
+  text-align: center;
+}
+
+.home-error-text {
+  font-size: 26rpx;
+  color: #5f6f5f;
+}
+
+.home-retry {
+  margin: 16rpx auto 0;
+  width: 180rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: 999rpx;
+  color: #ffffff;
+  background: #07c160;
+  font-size: 24rpx;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(110vw); }
+}
+
 @media (max-width: 350px) {
   .top-shell {
     padding: 8rpx 16rpx 14rpx;

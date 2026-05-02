@@ -1,0 +1,70 @@
+.pay-result-page {
+  min-height: 100vh;
+  padding: 40rpx 24rpx;
+  background: #f5f8f5;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 48rpx 32rpx;
+  text-align: center;
+}
+
+.icon {
+  width: 120rpx;
+  height: 120rpx;
+  margin: 0 auto;
+  border-radius: 60rpx;
+  line-height: 120rpx;
+  font-size: 56rpx;
+  font-weight: 600;
+}
+
+.icon.success {
+  background: #e8f8ee;
+  color: #07c160;
+}
+
+.icon.fail {
+  background: #fff0ef;
+  color: #e54d42;
+}
+
+.title {
+  margin-top: 24rpx;
+  font-size: 34rpx;
+  color: #1f2f1f;
+  font-weight: 600;
+}
+
+.desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #667766;
+}
+
+.actions {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  border-radius: 40rpx;
+  background: #ffffff;
+  color: #2e3e2e;
+  border: 1rpx solid #d8e5d8;
+}
+
+.btn.primary {
+  background: #07c160;
+  border-color: #07c160;
+  color: #ffffff;
+}
+

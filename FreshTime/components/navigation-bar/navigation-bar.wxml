@@ -1,4 +1,4 @@
-<view class="navigation-bar" style="padding-top: {{statusBarHeight}}px;">
+﻿<view class="navigation-bar" style="padding-top: {{statusBarHeight}}px;">
   <view class="nav-content">
     <!-- 左侧：返回按钮或占位 -->
     <view class="nav-left">
@@ -9,7 +9,6 @@
 
     <!-- 中间：标题区域 -->
     <view class="nav-center">
-      <!-- 首页显示艺术 Logo -->
       <block wx:if="{{showLogo}}">
         <view class="logo-art">
           <text class="logo-letter" style="color: #2E7D32">F</text>
@@ -23,7 +22,6 @@
           <text class="logo-letter" style="color: #5DBE5A">e</text>
         </view>
       </block>
-      <!-- 其他页面显示普通标题 -->
       <block wx:else>
         <text class="nav-title">{{title}}</text>
       </block>

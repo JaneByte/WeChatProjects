@@ -20,7 +20,6 @@ $primary-soft: #eef5e5;
 
 .weekly-hot-list__item {
   position: relative;
-  width: 272rpx;  // 绋嶅井鍔犲
   background: #fff;
   border-radius: 24rpx;  // 鏇村ぇ鍦嗚
   overflow: hidden;
@@ -33,7 +32,6 @@ $primary-soft: #eef5e5;
   }
 }
 
-// 鎺掑悕寰界珷 - 浼樺寲鏍峰紡
 .item-rank {
   position: absolute;
   top: 16rpx;
@@ -97,7 +95,6 @@ $primary-soft: #eef5e5;
 .item-price {
   font-size: 36rpx;
   font-weight: 700;
-  color: $primary-dark;  // 鏆栨鑹诧紝鏇存俯棣?
 }
 
 .item-unit {
@@ -114,7 +111,6 @@ $primary-soft: #eef5e5;
   border-radius: 20rpx;
 }
 
-// 鍔犺喘鎸夐挳 - 鏇寸簿鑷?
 .item-cart {
   position: absolute;
   bottom: 20rpx;
@@ -162,6 +158,8 @@ $primary-soft: #eef5e5;
   border: 1rpx solid #e9e9e9;
   padding: 44rpx 20rpx;
 }
+
+
 
 
 

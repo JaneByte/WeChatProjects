@@ -8,6 +8,7 @@ import java.util.List;
 public class SubmitOrderRequest {
     private Long userId;
     private Long merchantId;
+    private Long addressId;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;

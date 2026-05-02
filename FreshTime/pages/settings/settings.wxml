@@ -1,0 +1,12 @@
+<view class='page'>
+  <view class='item'>
+    <text>订单通知</text>
+    <switch color='#07c160' checked='{{notifyOrder}}' bindchange='onToggleOrder' />
+  </view>
+  <view class='item'>
+    <text>优惠活动通知</text>
+    <switch color='#07c160' checked='{{notifyPromo}}' bindchange='onTogglePromo' />
+  </view>
+  <view class='tip'>当前设置仅用于演示页面展示。</view>
+</view>
+

@@ -1,0 +1,11 @@
+.page { padding: 24rpx; background: #f5f8f5; min-height: 100vh; }
+.card { background: #fff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.title { font-size: 32rpx; color: #1f2f1f; font-weight: 600; }
+.desc { margin-top: 10rpx; font-size: 24rpx; color: #4a5a4a; }
+.meta { margin-top: 8rpx; font-size: 22rpx; color: #07c160; }
+.sub-title { font-size: 26rpx; color: #243224; font-weight: 600; margin-bottom: 8rpx; }
+.row { display: flex; justify-content: space-between; padding: 12rpx 0; border-bottom: 1rpx solid #eef2ee; }
+.row:last-child { border-bottom: 0; }
+.label { font-size: 24rpx; color: #5c6c5c; }
+.value { font-size: 24rpx; color: #253525; }
+

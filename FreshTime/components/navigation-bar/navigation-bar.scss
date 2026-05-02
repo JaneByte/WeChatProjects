@@ -1,4 +1,4 @@
-.custom-nav {
+﻿.custom-nav {
   position: fixed;
   top: 0;
   left: 0;
@@ -36,7 +36,7 @@
   height: 40rpx;
 }
 
-/* 中间区域 */
+/* 涓棿鍖哄煙 */
 .nav-center {
   flex: 1;
   display: flex;
@@ -44,7 +44,7 @@
   align-items: center;
 }
 
-/* Logo 艺术字样式 */
+/* Logo 鑹烘湳瀛楁牱寮?*/
 .logo-art {
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
   font-family: 'PingFang SC', 'Microsoft YaHei', cursive;
 }
 
-/* 普通标题样式 */
+/* 鏅€氭爣棰樻牱寮?*/
 .nav-title {
   font-size: 36rpx;
   font-weight: 600;
@@ -65,7 +65,7 @@
   letter-spacing: 1rpx;
 }
 
-/* 右侧区域 */
+/* 鍙充晶鍖哄煙 */
 .nav-right {
   display: flex;
   align-items: center;
@@ -111,3 +111,7 @@
   justify-content: center;
   padding: 0 8rpx;
 }
+
+
+
+

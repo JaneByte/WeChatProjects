@@ -1,4 +1,4 @@
-<!-- components/goods-card/goods-card.wxml -->
+﻿<!-- components/goods-card/goods-card.wxml -->
 <view class="goods-card" bindtap="onTap" hover-class="press-effect">
   <view class="image-wrapper">
     <image class="goods-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>

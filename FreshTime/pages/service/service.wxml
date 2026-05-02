@@ -1,0 +1,15 @@
+<view class='page'>
+  <view class='card'>
+    <view class='title'>客服热线</view>
+    <view class='phone'>400-888-1024</view>
+    <view class='time'>服务时间：09:00 - 21:00</view>
+  </view>
+  <view class='card'>
+    <view class='title'>常见问题</view>
+    <view class='faq' wx:for='{{faqList}}' wx:key='q'>
+      <view class='q'>Q：{{item.q}}</view>
+      <view class='a'>A：{{item.a}}</view>
+    </view>
+  </view>
+</view>
+

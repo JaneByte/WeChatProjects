@@ -1,0 +1,316 @@
+﻿// 变量定义
+$page-bg: #f3f8f4;
+$card-bg: #ffffff;
+$primary: #1f7a4c;
+$accent: #07c160;
+$danger: #d85b52;
+$text-primary: #1d2b3a;
+$text-secondary: #6e7b8c;
+$text-tertiary: #9aa5b4;
+$border-light: #eef1f5;
+$shadow-sm: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+$shadow-md: 0 8rpx 28rpx rgba(0, 0, 0, 0.06);
+$radius-lg: 24rpx;
+$radius-full: 999rpx;
+
+// 页面容器
+.page {
+  padding: 28rpx 24rpx 40rpx;
+  background: $page-bg;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+// ========== 顶部栏 ==========
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 36rpx;
+  padding: 0 4rpx;
+}
+
+.title-group {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $text-primary;
+  line-height: 1.2;
+  letter-spacing: -0.5rpx;
+}
+
+.page-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $text-tertiary;
+  font-weight: 400;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  height: 68rpx;
+  padding: 0 28rpx;
+  border-radius: $radius-full;
+  background: $primary;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 20rpx rgba(31, 122, 76, 0.22);
+  transition: all 0.2s ease;
+
+  .add-icon {
+    font-size: 28rpx;
+    font-weight: 300;
+    margin-right: 2rpx;
+  }
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+// ========== 状态区域 ==========
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+  text-align: center;
+}
+
+.state-icon-box {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  box-shadow: $shadow-sm;
+}
+
+.state-icon {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.error-state .state-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #fff0f0;
+  color: $danger;
+  font-size: 40rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: $text-secondary;
+  margin-bottom: 10rpx;
+  font-weight: 500;
+}
+
+.state-hint {
+  font-size: 24rpx;
+  color: $text-tertiary;
+  margin-bottom: 32rpx;
+}
+
+.state-btn {
+  margin-top: 20rpx;
+  padding: 16rpx 48rpx;
+  border-radius: $radius-full;
+  font-size: 26rpx;
+  font-weight: 600;
+  background: #fff;
+  color: $primary;
+  border: 2rpx solid $border-light;
+  transition: all 0.2s;
+
+  &:active {
+    background: darken(#fff, 3%);
+  }
+
+  &.primary-btn {
+    background: $accent;
+    color: #fff;
+    border: none;
+    box-shadow: 0 8rpx 20rpx rgba(7, 193, 96, 0.25);
+
+    &:active {
+      opacity: 0.85;
+    }
+  }
+}
+
+// ========== 骨架屏 ==========
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.skeleton-card {
+  height: 180rpx;
+  border-radius: $radius-lg;
+  background: #e8ecf1;
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -200rpx;
+  width: 200rpx;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: shimmerMove 1.4s infinite ease-in-out;
+}
+
+@keyframes shimmerMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(120vw);
+  }
+}
+
+// ========== 地址列表 ==========
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.card {
+  background: $card-bg;
+  border-radius: $radius-lg;
+  padding: 28rpx 24rpx 20rpx;
+  box-shadow: $shadow-md;
+  transition: all 0.2s ease;
+  border: 2rpx solid transparent;
+
+  &:active {
+    transform: scale(0.985);
+    border-color: #e8edf2;
+    box-shadow: $shadow-sm;
+  }
+}
+
+// 卡片头部
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+
+.name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $text-primary;
+  letter-spacing: -0.3rpx;
+}
+
+.phone {
+  font-size: 26rpx;
+  color: $text-secondary;
+  font-weight: 500;
+}
+
+.default-tag {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: $accent;
+  background: #eaf9f0;
+  padding: 6rpx 18rpx;
+  border-radius: $radius-full;
+  border: 2rpx solid rgba(7, 193, 96, 0.22);
+  line-height: 1;
+  letter-spacing: 0.5rpx;
+}
+
+// 地址详情
+.address-detail {
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+  word-break: break-all;
+}
+
+// 操作按钮区域
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid $border-light;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 24rpx;
+  border-radius: $radius-full;
+  font-size: 24rpx;
+  font-weight: 550;
+  transition: all 0.2s ease;
+  background: #f5f7fa;
+  color: $text-secondary;
+
+  .action-icon {
+    font-size: 22rpx;
+  }
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+.edit-btn {
+  background: #eef8f2;
+  color: #1f7a4c;
+
+  &:active {
+    background: darken(#eef8f2, 4%);
+  }
+}
+
+.delete-btn {
+  background: #fff2f0;
+  color: $danger;
+
+  &:active {
+    background: darken(#fff1f1, 4%);
+  }
+}

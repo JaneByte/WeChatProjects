@@ -2,9 +2,11 @@ package com.example.freshtime.service.impl;
 
 import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.dto.SubmitOrderRequest;
+import com.example.freshtime.entity.AddressInfo;
 import com.example.freshtime.entity.Goods;
 import com.example.freshtime.entity.OrderInfo;
 import com.example.freshtime.entity.OrderItemInfo;
+import com.example.freshtime.mapper.AddressMapper;
 import com.example.freshtime.mapper.OrderMapper;
 import com.example.freshtime.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,17 +14,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+    private static final int MAX_ORDER_ITEM_COUNT = 50;
+    private static final ConcurrentHashMap<Long, Object> USER_SUBMIT_LOCK = new ConcurrentHashMap<>();
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private AddressMapper addressMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -33,30 +42,58 @@ public class OrderServiceImpl implements OrderService {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             return ApiResponse.badRequest("订单商品不能为空");
         }
+        if (request.getItems().size() > MAX_ORDER_ITEM_COUNT) {
+            return ApiResponse.badRequest("单次下单商品数量过多");
+        }
+        if (request.getRemark() != null && request.getRemark().length() > 200) {
+            return ApiResponse.badRequest("订单备注过长");
+        }
 
+        final Long userId = request.getUserId();
+        Object lockToken = new Object();
+        Object existing = USER_SUBMIT_LOCK.putIfAbsent(userId, lockToken);
+        if (existing != null) {
+            return ApiResponse.badRequest("请勿重复提交订单");
+        }
+
+        try {
+            return doSubmitOrder(request);
+        } finally {
+            USER_SUBMIT_LOCK.remove(userId, lockToken);
+        }
+    }
+
+    private ApiResponse<?> doSubmitOrder(SubmitOrderRequest request) {
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemInfo> orderItems = new ArrayList<>();
+        Map<Long, Integer> mergedItems = new HashMap<>();
 
         for (SubmitOrderRequest.Item item : request.getItems()) {
             if (item.getGoodsId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
                 return ApiResponse.badRequest("商品参数不合法");
             }
+            mergedItems.put(item.getGoodsId(), mergedItems.getOrDefault(item.getGoodsId(), 0) + item.getQuantity());
+        }
 
-            Goods goods = orderMapper.selectGoodsForUpdate(item.getGoodsId());
+        for (Map.Entry<Long, Integer> entry : mergedItems.entrySet()) {
+            Long goodsId = entry.getKey();
+            Integer quantity = entry.getValue();
+
+            Goods goods = orderMapper.selectGoodsForUpdate(goodsId);
             if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
                 return ApiResponse.badRequest("商品不存在或已下架");
             }
-            if (goods.getStock() == null || goods.getStock() < item.getQuantity()) {
+            if (goods.getStock() == null || goods.getStock() < quantity) {
                 return ApiResponse.badRequest("商品库存不足: " + goods.getName());
             }
 
-            int updated = orderMapper.deductGoodsStock(goods.getId(), item.getQuantity());
+            int updated = orderMapper.deductGoodsStock(goods.getId(), quantity);
             if (updated <= 0) {
                 return ApiResponse.badRequest("库存更新失败，请重试");
             }
 
             BigDecimal itemPrice = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
-            BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+            BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(quantity));
             totalAmount = totalAmount.add(itemTotal);
 
             OrderItemInfo orderItem = new OrderItemInfo();
@@ -64,9 +101,27 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setGoodsName(goods.getName());
             orderItem.setGoodsImage(goods.getMainImage());
             orderItem.setPrice(itemPrice);
-            orderItem.setQuantity(item.getQuantity());
+            orderItem.setQuantity(quantity);
             orderItem.setTotalPrice(itemTotal);
             orderItems.add(orderItem);
+        }
+
+        String receiverName = emptyToDefault(request.getReceiverName(), "默认收货人");
+        String receiverPhone = emptyToDefault(request.getReceiverPhone(), "13800000000");
+        String receiverAddress = emptyToDefault(request.getReceiverAddress(), "默认收货地址");
+
+        if (request.getAddressId() != null) {
+            AddressInfo address = addressMapper.selectByIdAndUserId(request.getAddressId(), request.getUserId());
+            if (address == null) {
+                return ApiResponse.badRequest("收货地址不存在");
+            }
+            receiverName = address.getReceiverName();
+            receiverPhone = address.getReceiverPhone();
+            receiverAddress = String.format("%s%s%s%s",
+                    emptyToDefault(address.getProvince(), ""),
+                    emptyToDefault(address.getCity(), ""),
+                    emptyToDefault(address.getDistrict(), ""),
+                    emptyToDefault(address.getDetail(), ""));
         }
 
         OrderInfo orderInfo = new OrderInfo();
@@ -76,9 +131,9 @@ public class OrderServiceImpl implements OrderService {
         orderInfo.setTotalAmount(totalAmount);
         orderInfo.setDiscountAmount(BigDecimal.ZERO);
         orderInfo.setActualAmount(totalAmount);
-        orderInfo.setReceiverName(emptyToDefault(request.getReceiverName(), "默认收货人"));
-        orderInfo.setReceiverPhone(emptyToDefault(request.getReceiverPhone(), "13800000000"));
-        orderInfo.setReceiverAddress(emptyToDefault(request.getReceiverAddress(), "默认收货地址"));
+        orderInfo.setReceiverName(receiverName);
+        orderInfo.setReceiverPhone(receiverPhone);
+        orderInfo.setReceiverAddress(receiverAddress);
         orderInfo.setRemark(request.getRemark());
         orderInfo.setStatus(0);
 
@@ -109,17 +164,24 @@ public class OrderServiceImpl implements OrderService {
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (OrderInfo order : orders) {
-            Map<String, Object> row = new HashMap<>();
-            row.put("id", order.getId());
-            row.put("orderNo", order.getOrderNo());
-            row.put("status", order.getStatus());
-            row.put("actualAmount", order.getActualAmount());
-            row.put("createTime", order.getCreateTime());
-            row.put("statusText", mapStatusText(order.getStatus()));
-            row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId()));
-            result.add(row);
+            expireOverduePendingOrder(order);
+            result.add(buildOrderView(order));
         }
         return ApiResponse.success(result);
+    }
+
+    @Override
+    public ApiResponse<?> getOrderDetail(Long userId, Long orderId) {
+        if (userId == null || orderId == null) {
+            return ApiResponse.badRequest("userId或orderId不能为空");
+        }
+        OrderInfo order = orderMapper.selectOrderByIdAndUserId(orderId, userId);
+        if (order == null) {
+            return ApiResponse.notFound("订单不存在");
+        }
+        expireOverduePendingOrder(order);
+        order = orderMapper.selectOrderByIdAndUserId(orderId, userId);
+        return ApiResponse.success(buildOrderView(order));
     }
 
     @Override
@@ -133,26 +195,8 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return ApiResponse.notFound("订单不存在");
         }
-        if (order.getStatus() == null) {
-            return ApiResponse.badRequest("订单状态异常");
-        }
-        if (order.getStatus() == 4) {
-            return ApiResponse.badRequest("订单已取消，无需重复操作");
-        }
-        if (order.getStatus() == 0) {
-            return ApiResponse.badRequest("待付款订单请使用“过期取消”");
-        }
-        if (order.getStatus() == 2) {
-            return ApiResponse.badRequest("订单已发货，暂不可取消");
-        }
-        if (order.getStatus() == 3) {
-            return ApiResponse.badRequest("订单已完成，无法取消");
-        }
-        if (order.getStatus() == 5) {
-            return ApiResponse.badRequest("订单已退款，无法取消");
-        }
-        if (order.getStatus() != 1) {
-            return ApiResponse.badRequest("当前状态不可取消");
+        if (order.getStatus() == null || (order.getStatus() != 0 && order.getStatus() != 1)) {
+            return ApiResponse.badRequest("仅待付款或待发货订单可取消");
         }
 
         int restoreCount = orderMapper.restoreGoodsStockByOrderId(orderId);
@@ -160,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("库存回补失败，请重试");
         }
 
-        int updated = orderMapper.updateOrderStatus(orderId, userId, 1, 4);
+        int updated = orderMapper.updateOrderStatus(orderId, userId, order.getStatus(), 4);
         if (updated <= 0) {
             return ApiResponse.badRequest("取消失败，请重试");
         }
@@ -179,13 +223,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return ApiResponse.notFound("订单不存在");
         }
-        if (order.getStatus() == null) {
-            return ApiResponse.badRequest("订单状态异常");
-        }
-        if (order.getStatus() == 3) {
-            return ApiResponse.badRequest("订单已完成，无需重复收货");
-        }
-        if (order.getStatus() != 2) {
+        if (order.getStatus() == null || order.getStatus() != 2) {
             return ApiResponse.badRequest("当前状态不可确认收货");
         }
 
@@ -208,19 +246,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return ApiResponse.notFound("订单不存在");
         }
-        if (order.getStatus() == null) {
-            return ApiResponse.badRequest("订单状态异常");
-        }
-        if (order.getStatus() == 1) {
-            return ApiResponse.badRequest("订单已支付，无需重复支付");
-        }
-        if (order.getStatus() == 4) {
-            return ApiResponse.badRequest("订单已取消，无法支付");
-        }
-        if (order.getStatus() == 3) {
-            return ApiResponse.badRequest("订单已完成，无法支付");
-        }
-        if (order.getStatus() != 0) {
+        if (order.getStatus() == null || order.getStatus() != 0) {
             return ApiResponse.badRequest("当前状态不可支付");
         }
 
@@ -245,6 +271,9 @@ public class OrderServiceImpl implements OrderService {
         if (order.getStatus() == null || order.getStatus() != 0) {
             return ApiResponse.badRequest("当前状态不可过期取消");
         }
+        if (!isOrderOverdue(order)) {
+            return ApiResponse.badRequest("订单未超时，不可过期取消");
+        }
 
         int restoreCount = orderMapper.restoreGoodsStockByOrderId(orderId);
         if (restoreCount <= 0) {
@@ -268,13 +297,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return ApiResponse.notFound("订单不存在");
         }
-        if (order.getStatus() == null) {
-            return ApiResponse.badRequest("订单状态异常");
-        }
-        if (order.getStatus() == 2) {
-            return ApiResponse.badRequest("订单已发货，无需重复操作");
-        }
-        if (order.getStatus() != 1) {
+        if (order.getStatus() == null || order.getStatus() != 1) {
             return ApiResponse.badRequest("当前状态不可发货");
         }
 
@@ -283,6 +306,22 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("发货失败，请重试");
         }
         return ApiResponse.success("发货成功", null);
+    }
+
+    private Map<String, Object> buildOrderView(OrderInfo order) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("id", order.getId());
+        row.put("orderNo", order.getOrderNo());
+        row.put("status", order.getStatus());
+        row.put("actualAmount", order.getActualAmount());
+        row.put("createTime", order.getCreateTime());
+        row.put("receiverName", order.getReceiverName());
+        row.put("receiverPhone", order.getReceiverPhone());
+        row.put("receiverAddress", order.getReceiverAddress());
+        row.put("remark", order.getRemark());
+        row.put("statusText", mapStatusText(order.getStatus()));
+        row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId()));
+        return row;
     }
 
     private String mapStatusText(Integer status) {
@@ -308,6 +347,28 @@ public class OrderServiceImpl implements OrderService {
     private String generateOrderNo() {
         String random = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
         return "FT" + System.currentTimeMillis() + random;
+    }
+
+    private boolean isOrderOverdue(OrderInfo order) {
+        if (order == null || order.getCreateTime() == null) {
+            return false;
+        }
+        LocalDateTime expireAt = order.getCreateTime().plusMinutes(30);
+        return !LocalDateTime.now().isBefore(expireAt);
+    }
+
+    private void expireOverduePendingOrder(OrderInfo order) {
+        if (order == null || order.getId() == null || order.getUserId() == null) {
+            return;
+        }
+        if (order.getStatus() == null || order.getStatus() != 0) {
+            return;
+        }
+        if (!isOrderOverdue(order)) {
+            return;
+        }
+        orderMapper.restoreGoodsStockByOrderId(order.getId());
+        orderMapper.updateOrderStatus(order.getId(), order.getUserId(), 0, 4);
     }
 
     private String emptyToDefault(String value, String fallback) {

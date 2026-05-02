@@ -1,4 +1,4 @@
-﻿<view class="classify-container">
+<view class="classify-container">
   <view class="search-section">
     <view class="search-box" bindtap="goToSearch" hover-class="press-effect" aria-label="搜索商品">
       <image class="search-icon" src="/assets/icon/search.png" mode="aspectFit"></image>
@@ -9,36 +9,16 @@
   <view class="main-content">
     <view class="left-panel">
       <view class="capsule-tab">
-        <view
-          class="tab-capsule {{currentTab === 'fruit' ? 'active' : ''}}"
-          bindtap="switchTab"
-          data-tab="fruit"
-          hover-class="press-effect"
-          aria-label="切换到水果分类"
-        >
+        <view class="tab-capsule {{currentTab === 'fruit' ? 'active' : ''}}" bindtap="switchTab" data-tab="fruit" hover-class="press-effect">
           <text class="capsule-text">水果</text>
         </view>
-        <view
-          class="tab-capsule {{currentTab === 'vegetable' ? 'active' : ''}}"
-          bindtap="switchTab"
-          data-tab="vegetable"
-          hover-class="press-effect"
-          aria-label="切换到蔬菜分类"
-        >
+        <view class="tab-capsule {{currentTab === 'vegetable' ? 'active' : ''}}" bindtap="switchTab" data-tab="vegetable" hover-class="press-effect">
           <text class="capsule-text">蔬菜</text>
         </view>
       </view>
 
       <scroll-view class="category-nav" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation>
-        <view
-          class="nav-item {{currentCategoryId === item.id ? 'active' : ''}}"
-          wx:for="{{categoryList}}"
-          wx:key="id"
-          bindtap="selectCategory"
-          data-id="{{item.id}}"
-          hover-class="press-effect"
-          aria-label="切换到{{item.name}}分类"
-        >
+        <view class="nav-item {{currentCategoryId === item.id ? 'active' : ''}}" wx:for="{{categoryList}}" wx:key="id" bindtap="selectCategory" data-id="{{item.id}}" hover-class="press-effect">
           <view class="nav-indicator"></view>
           <text class="nav-text">{{item.name}}</text>
         </view>
@@ -48,19 +28,17 @@
     <scroll-view class="right-panel" scroll-y enhanced show-scrollbar="{{false}}" scroll-with-animation>
       <view class="section-header">
         <text class="section-title">{{currentCategory.name}}</text>
-        <text class="goods-count" wx:if="{{goodsList.length > 0}}">{{goodsList.length}}款</text>
+        <text class="goods-count" wx:if="{{filteredGoodsList.length > 0}}">{{filteredGoodsList.length}}款</text>
+      </view>
+
+      <view class="filter-row">
+        <input class="filter-input" placeholder="筛选商品" value="{{filterKeyword}}" bindinput="onFilterInput" />
+        <view class="filter-switch {{onlyInStock ? 'active' : ''}}" bindtap="onToggleStock">仅看有货</view>
+        <view class="filter-clear" bindtap="onClearFilter">重置</view>
       </view>
 
       <view class="goods-list">
-        <view
-          class="goods-card"
-          wx:for="{{goodsList}}"
-          wx:key="id"
-          bindtap="goToDetail"
-          data-id="{{item.id}}"
-          hover-class="card-press"
-          aria-label="查看{{item.name}}详情"
-        >
+        <view class="goods-card" wx:for="{{filteredGoodsList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" hover-class="card-press">
           <view class="card-image-wrapper">
             <image class="card-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
           </view>
@@ -75,13 +53,7 @@
                 <text class="price-value">{{item.price}}</text>
                 <text class="price-unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
               </view>
-              <view
-                class="add-cart-btn"
-                catchtap="addToCart"
-                data-id="{{item.id}}"
-                hover-class="press-effect"
-                aria-label="加入购物车"
-              >
+              <view class="add-cart-btn" catchtap="addToCart" data-id="{{item.id}}" hover-class="press-effect">
                 <text class="add-text">+</text>
               </view>
             </view>
@@ -89,12 +61,17 @@
         </view>
       </view>
 
-      <view class="empty-state state-block" wx:if="{{goodsList.length === 0 && !loading}}">
-        <text class="empty-text state-text">暂无数据</text>
+      <view class="empty-state state-block" wx:if="{{loadError && !loading}}">
+        <text class="empty-text state-text">加载失败，请重试</text>
+        <view class="retry-btn press-effect" bindtap="onRetryLoad">点击重试</view>
+      </view>
+
+      <view class="empty-state state-block" wx:elif="{{filteredGoodsList.length === 0 && !loading}}">
+        <text class="empty-text state-text">暂无符合条件的商品</text>
       </view>
 
       <view class="loading-state state-block state-loading" wx:if="{{loading}}">
-        <text class="loading-text state-text">加载中</text>
+        <text class="loading-text state-text">加载中...</text>
       </view>
 
       <view class="safe-bottom"></view>

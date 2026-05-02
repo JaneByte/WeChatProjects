@@ -1,0 +1,15 @@
+<view class='page'>
+  <view class='form'>
+    <input placeholder='收货人' data-field='receiverName' value='{{form.receiverName}}' bindinput='onInput' />
+    <input placeholder='手机号' data-field='receiverPhone' value='{{form.receiverPhone}}' bindinput='onInput' />
+    <input placeholder='省份' data-field='province' value='{{form.province}}' bindinput='onInput' />
+    <input placeholder='城市' data-field='city' value='{{form.city}}' bindinput='onInput' />
+    <input placeholder='区县' data-field='district' value='{{form.district}}' bindinput='onInput' />
+    <input placeholder='详细地址' data-field='detail' value='{{form.detail}}' bindinput='onInput' />
+    <view class='default-row'>
+      <text class='default-label'>设为默认地址</text>
+      <switch color='#07c160' checked='{{form.isDefault === 1}}' bindchange='onToggleDefault' />
+    </view>
+    <button class='save-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onSave'>保存地址</button>
+  </view>
+</view>

@@ -33,6 +33,13 @@ public class OrderController {
         return orderService.getOrderList(userId, limit, status);
     }
 
+    @GetMapping("/detail")
+    public ApiResponse<?> getOrderDetail(
+            @RequestParam Long userId,
+            @RequestParam Long orderId) {
+        return orderService.getOrderDetail(userId, orderId);
+    }
+
     @PostMapping("/cancel")
     public ApiResponse<?> cancelOrder(
             @RequestParam Long userId,

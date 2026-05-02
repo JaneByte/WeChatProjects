@@ -1,0 +1,15 @@
+.page { padding: 24rpx; }
+.address, .list, .remark, .summary, .bottom { background: #fff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; }
+.name { font-size: 28rpx; color: #243224; font-weight: 600; }
+.text { margin-top: 8rpx; color: #6f7d6f; font-size: 24rpx; }
+.hint { margin-top: 8rpx; color: #07c160; font-size: 22rpx; }
+.item { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 26rpx; }
+.empty-list { text-align: center; }
+.empty-list button { margin-top: 14rpx; }
+.remark-label { font-size: 24rpx; color: #526052; }
+.remark-input { margin-top: 12rpx; height: 72rpx; border-radius: 12rpx; background: #f4f7f4; padding: 0 16rpx; }
+.summary-line { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 24rpx; color: #415141; }
+.summary-line.total { font-size: 28rpx; color: #0f7b3e; font-weight: 600; }
+.bottom { display: flex; justify-content: space-between; align-items: center; }
+.submit { background: #07c160; color: #fff; border-radius: 14rpx; height: 68rpx; line-height: 68rpx; }
+.submit.submit-disabled { background: #b7c8b7; color: #eef3ee; }

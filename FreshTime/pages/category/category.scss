@@ -1,5 +1,4 @@
-// ==================== 柠檬牛油果配色 ====================
-$bg-page: #fefbf5;
+﻿$bg-page: #fefbf5;
 $primary: #8cb818;
 $primary-strong: #7cab12;
 $primary-dark: #004132;
@@ -16,7 +15,7 @@ $shadow-sm: 0 2rpx 8rpx rgba(140, 184, 24, 0.06);
 $shadow-md: 0 4rpx 16rpx rgba(140, 184, 24, 0.08);
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-// ==================== 页面基础 ====================
+// ==================== 椤甸潰鍩虹 ====================
 page {
   background: $bg-page;
   height: 100%;
@@ -29,7 +28,7 @@ page {
   background: $bg-page;
 }
 
-// ==================== 点击反馈 ====================
+// ==================== 鐐瑰嚮鍙嶉 ====================
 .press-effect {
   transition: transform 0.25s $spring-curve;
   
@@ -38,7 +37,7 @@ page {
   }
 }
 
-// ==================== 搜索区域 ====================
+// ==================== 鎼滅储鍖哄煙 ====================
 .search-section {
   padding: 24rpx 28rpx 16rpx;
   
@@ -65,14 +64,13 @@ page {
   }
 }
 
-// ==================== 主体内容区 ====================
+// ==================== 涓讳綋鍐呭鍖?====================
 .main-content {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
-// ==================== 左侧面板 ====================
 .left-panel {
   width: 220rpx;
   display: flex;
@@ -80,7 +78,6 @@ page {
   padding-left: 24rpx;
 }
 
-// 胶囊式Tab切换器
 .capsule-tab {
   display: flex;
   padding: 16rpx 0 24rpx;
@@ -115,7 +112,6 @@ page {
   }
 }
 
-// 分类导航
 .category-nav {
   flex: 1;
   
@@ -161,7 +157,7 @@ page {
   }
 }
 
-// ==================== 右侧面板 ====================
+// ==================== 鍙充晶闈㈡澘 ====================
 .right-panel {
   flex: 1;
   background: $bg-card;
@@ -191,7 +187,6 @@ page {
   }
 }
 
-// ==================== 商品列表 ====================
 .goods-list {
   display: flex;
   flex-direction: column;
@@ -305,7 +300,7 @@ page {
   }
 }
 
-// ==================== 状态展示 ====================
+// ==================== 鐘舵€佸睍绀?====================
 .empty-state,
 .loading-state {
   display: flex;
@@ -322,6 +317,15 @@ page {
 
 .safe-bottom {
   height: 40rpx;
+}
+
+.retry-btn {
+  margin-top: 14rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #ffffff;
+  background: #07c160;
 }
 
 @media (max-width: 350px) {
@@ -350,3 +354,37 @@ page {
     }
   }
 }
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 8rpx 8rpx 16rpx;
+}
+
+.filter-input {
+  flex: 1;
+  height: 60rpx;
+  padding: 0 18rpx;
+  border-radius: 14rpx;
+  background: #f2f6ed;
+  font-size: 24rpx;
+  color: #243224;
+}
+
+.filter-switch,
+.filter-clear {
+  padding: 0 14rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #4f644f;
+  background: #eef3e7;
+}
+
+.filter-switch.active {
+  background: #07c160;
+  color: #ffffff;
+}
+
+

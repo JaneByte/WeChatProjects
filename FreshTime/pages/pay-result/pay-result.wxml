@@ -1,0 +1,13 @@
+<view class='pay-result-page'>
+  <view class='card'>
+    <view class='icon {{success ? "success" : "fail"}}'>{{success ? '√' : '!'}}</view>
+    <view class='title'>{{success ? '支付成功' : '支付失败'}}</view>
+    <view class='desc'>{{message}}</view>
+    <view class='actions'>
+      <button wx:if='{{orderId && success}}' class='btn primary' bindtap='goOrderDetail'>查看订单详情</button>
+      <button wx:elif='{{orderId && !success}}' class='btn primary' bindtap='goOrderDetail'>返回订单重试</button>
+      <button wx:else class='btn primary' bindtap='goOrderList'>查看订单</button>
+      <button class='btn' bindtap='goHome'>返回首页</button>
+    </view>
+  </view>
+</view>

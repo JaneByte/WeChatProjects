@@ -1,0 +1,26 @@
+<view class='comment-page'>
+  <view class='card'>
+    <view class='goods-name'>{{goodsName || '商品评价'}}</view>
+    <view class='rating-row'>
+      <text class='label'>评分</text>
+      <view class='stars'>
+        <text
+          wx:for='{{stars}}'
+          wx:key='value'
+          class='star {{item <= rating ? "active" : ""}}'
+          data-value='{{item}}'
+          bindtap='onSelectRating'
+        >★</text>
+      </view>
+    </view>
+    <textarea
+      class='content-input'
+      placeholder='说说商品口感、新鲜度或配送体验'
+      maxlength='500'
+      value='{{content}}'
+      bindinput='onInputContent'
+    />
+    <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onSubmit'>提交评价</button>
+  </view>
+</view>
+

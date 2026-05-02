@@ -8,6 +8,8 @@ public interface OrderService {
 
     ApiResponse<?> getOrderList(Long userId, Integer limit, Integer status);
 
+    ApiResponse<?> getOrderDetail(Long userId, Long orderId);
+
     ApiResponse<?> cancelOrder(Long userId, Long orderId);
 
     ApiResponse<?> finishOrder(Long userId, Long orderId);

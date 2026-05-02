@@ -14,21 +14,11 @@
     <view class="card-head">
       <text class="card-title">我的订单</text>
       <view class="id-actions">
-        <text class="card-link" bindtap="onSwitchUserId">切换用户ID</text>
-        <text class="card-link card-link--danger" bindtap="onClearUserId">清除</text>
+        <text class="card-link" bindtap="onSwitchUserId">刷新登录</text>
       </view>
     </view>
-    <view class="user-id-row">
-      <text class="user-id-text">当前用户ID：{{currentUserIdText}}</text>
-    </view>
     <view class="order-grid">
-      <view
-        class="order-item {{activeOrderTab === item.key ? 'order-item--active' : ''}}"
-        wx:for="{{orderTabs}}"
-        wx:key="key"
-        data-key="{{item.key}}"
-        bindtap="onOrderTap"
-      >
+      <view class="order-item {{activeOrderTab === item.key ? 'order-item--active' : ''}}" wx:for="{{orderTabs}}" wx:key="key" data-key="{{item.key}}" bindtap="onOrderTap">
         <text class="order-mark">{{item.mark}}</text>
         <text class="order-label">{{item.label}}</text>
       </view>
@@ -38,7 +28,7 @@
   <view class="order-card" wx:if="{{orderList.length > 0}}">
     <view class="card-head">
       <text class="card-title">最近订单</text>
-      <text class="card-link">最多显示50条</text>
+      <text class="card-link">共{{orderTotal}}单</text>
     </view>
     <view class="recent-order" wx:for="{{orderList}}" wx:key="id">
       <view class="recent-top">
@@ -47,33 +37,12 @@
       </view>
       <view class="recent-mid">
         <text class="recent-amount">实付 ¥{{item.actualAmount}}</text>
-        <text class="recent-count">{{item.items.length}}件商品</text>
+        <text class="recent-count">{{item.itemCount}}件商品</text>
       </view>
       <view class="recent-actions">
-        <button
-          wx:if="{{item.status === 0}}"
-          class="action-btn action-btn--primary"
-          size="mini"
-          disabled="{{submittingOrderAction}}"
-          data-id="{{item.id}}"
-          bindtap="onPayOrder"
-        >去支付</button>
-        <button
-          wx:if="{{item.status === 1}}"
-          class="action-btn"
-          size="mini"
-          disabled="{{submittingOrderAction}}"
-          data-id="{{item.id}}"
-          bindtap="onDeliverOrder"
-        >模拟发货</button>
-        <button
-          wx:if="{{item.status === 2}}"
-          class="action-btn"
-          size="mini"
-          disabled="{{submittingOrderAction}}"
-          data-id="{{item.id}}"
-          bindtap="onFinishOrder"
-        >确认收货</button>
+        <button wx:if="{{item.status === 0}}" class="action-btn action-btn--primary" size="mini" disabled="{{submittingOrderAction}}" data-id="{{item.id}}" bindtap="onPayOrder">去支付</button>
+        <button wx:if="{{item.status === 0 || item.status === 1}}" class="action-btn" size="mini" disabled="{{submittingOrderAction}}" data-id="{{item.id}}" bindtap="onCancelOrder">取消订单</button>
+        <button wx:if="{{item.status === 2}}" class="action-btn" size="mini" disabled="{{submittingOrderAction}}" data-id="{{item.id}}" bindtap="onFinishOrder">确认收货</button>
       </view>
     </view>
   </view>
@@ -83,13 +52,7 @@
   </view>
 
   <view class="menu-card">
-    <view
-      class="menu-item"
-      wx:for="{{menuList}}"
-      wx:key="key"
-      data-key="{{item.key}}"
-      bindtap="onMenuTap"
-    >
+    <view class="menu-item" wx:for="{{menuList}}" wx:key="key" data-key="{{item.key}}" bindtap="onMenuTap">
       <view class="menu-main">
         <text class="menu-title">{{item.label}}</text>
         <text class="menu-desc">{{item.desc}}</text>

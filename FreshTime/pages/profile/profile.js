@@ -24,26 +24,32 @@ Page({
     ],
     activeOrderTab: '',
     currentOrderStatus: null,
-    currentUserIdText: '未设置',
+    currentUserIdText: '登录中...',
     orderList: [],
     orderTotal: 0,
     submittingOrderAction: false
   },
 
   onShow() {
-    this.refreshCurrentUserText();
-    this.loadOrderSummary(this.data.currentOrderStatus);
+    app.ensureLoginReady()
+      .then(() => {
+        this.refreshCurrentUserText();
+        this.loadOrderSummary(this.data.currentOrderStatus);
+      })
+      .catch(() => {
+        this.setData({ currentUserIdText: '登录失败', orderList: [], orderTotal: 0 });
+      });
   },
 
   refreshCurrentUserText() {
     const userId = app.getUserId();
-    this.setData({ currentUserIdText: userId ? `${userId}` : '未设置' });
+    this.setData({ currentUserIdText: userId ? `${userId}` : '未登录' });
   },
 
   getCurrentUserId() {
     const userId = app.getUserId();
     if (!userId) {
-      wx.showToast({ title: '请先设置用户ID', icon: 'none', duration: 1500 });
+      wx.showToast({ title: '登录中，请稍后重试', icon: 'none', duration: 1500 });
       return null;
     }
     return userId;
@@ -57,35 +63,33 @@ Page({
     }
 
     const params = { userId, limit: 50 };
-    if (status !== null && status !== undefined) {
-      params.status = status;
-    }
+    if (status !== null && status !== undefined) params.status = status;
 
     get('/order/list', params, { retry: 0 })
       .then((res) => {
-        const list = (res && res.data) || [];
+        const list = ((res && res.data) || []).map((item) => {
+          const items = Array.isArray(item.items) ? item.items : [];
+          const itemCount = items.reduce((sum, row) => sum + Number(row.quantity || 0), 0);
+          return {
+            ...item,
+            itemCount
+          };
+        });
         this.setData({
           currentOrderStatus: status,
           orderList: Array.isArray(list) ? list : [],
           orderTotal: Array.isArray(list) ? list.length : 0
         });
       })
-      .catch((error) => {
-        showRequestError(error, '订单加载失败');
-      });
+      .catch((error) => showRequestError(error, '订单加载失败'));
   },
 
   onOrderTap(e) {
     const { key } = e.currentTarget.dataset;
-    const statusMap = {
-      pendingPay: 0,
-      pendingShip: 1,
-      pendingReceive: 2,
-      afterSale: 5
-    };
+    const statusMap = { pendingPay: 0, pendingShip: 1, pendingReceive: 2, afterSale: 5 };
     const status = Object.prototype.hasOwnProperty.call(statusMap, key) ? statusMap[key] : null;
     this.setData({ activeOrderTab: key });
-    this.loadOrderSummary(status);
+    wx.navigateTo({ url: `/pages/order-list/order-list?status=${status}` });
   },
 
   executeOrderAction(actionRequest, successText, errorText) {
@@ -97,96 +101,72 @@ Page({
         wx.showToast({ title: successText, icon: 'success', duration: 1200 });
         this.loadOrderSummary(this.data.currentOrderStatus);
       })
-      .catch((error) => {
-        showRequestError(error, errorText);
-      })
-      .finally(() => {
-        this.setData({ submittingOrderAction: false });
-      });
+      .catch((error) => showRequestError(error, errorText))
+      .finally(() => this.setData({ submittingOrderAction: false }));
   },
 
   onCancelOrder(e) {
-    const { id } = e.currentTarget.dataset;
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
     const userId = this.getCurrentUserId();
     if (!userId) return;
-    this.executeOrderAction(
-      () => post(`/order/cancel?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
-      '取消成功',
-      '取消失败'
-    );
+    this.executeOrderAction(() => post(`/order/cancel?userId=${userId}&orderId=${id}`, {}, { retry: 0 }), '取消成功', '取消失败');
   },
 
   onFinishOrder(e) {
-    const { id } = e.currentTarget.dataset;
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
     const userId = this.getCurrentUserId();
     if (!userId) return;
-    this.executeOrderAction(
-      () => post(`/order/finish?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
-      '确认收货成功',
-      '确认收货失败'
-    );
+    this.executeOrderAction(() => post(`/order/finish?userId=${userId}&orderId=${id}`, {}, { retry: 0 }), '确认收货成功', '确认收货失败');
   },
 
   onPayOrder(e) {
-    const { id } = e.currentTarget.dataset;
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
     const userId = this.getCurrentUserId();
     if (!userId) return;
-    this.executeOrderAction(
-      () => post(`/order/pay?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
-      '支付成功',
-      '支付失败'
-    );
-  },
-
-  onDeliverOrder(e) {
-    const { id } = e.currentTarget.dataset;
-    const userId = this.getCurrentUserId();
-    if (!userId) return;
-    this.executeOrderAction(
-      () => post(`/order/deliver?userId=${userId}&orderId=${id}`, {}, { retry: 0 }),
-      '发货成功',
-      '发货失败'
-    );
+    if (this.data.submittingOrderAction) return;
+    this.setData({ submittingOrderAction: true });
+    post(`/order/pay?userId=${userId}&orderId=${id}`, {}, { retry: 0 })
+      .then(() => {
+        wx.redirectTo({ url: `/pages/pay-result/pay-result?result=success&orderId=${id}` });
+      })
+      .catch((error) => showRequestError(error, '支付失败'))
+      .finally(() => this.setData({ submittingOrderAction: false }));
   },
 
   onMenuTap(e) {
     const { key } = e.currentTarget.dataset;
-    wx.showToast({
-      title: `功能开发中：${key}`,
-      icon: 'none'
-    });
+    if (key === 'address') {
+      wx.navigateTo({ url: '/pages/address-list/address-list' });
+      return;
+    }
+    if (key === 'coupon') {
+      wx.navigateTo({ url: '/pages/coupon/coupon' });
+      return;
+    }
+    if (key === 'service') {
+      wx.navigateTo({ url: '/pages/service/service' });
+      return;
+    }
+    if (key === 'settings') {
+      wx.navigateTo({ url: '/pages/settings/settings' });
+      return;
+    }
+    wx.showToast({ title: '敬请期待', icon: 'none' });
   },
 
   onSwitchUserId() {
-    wx.showModal({
-      title: '切换用户ID',
-      editable: true,
-      placeholderText: '请输入数字用户ID',
-      success: (res) => {
-        if (!res.confirm) return;
-        const input = (res.content || '').trim();
-        const ok = app.setUserId(input);
-        if (!ok) {
-          wx.showToast({ title: '用户ID无效', icon: 'none', duration: 1500 });
-          return;
-        }
+    app.bootstrapLogin()
+      .then(() => {
         this.refreshCurrentUserText();
-        wx.showToast({ title: '用户切换成功', icon: 'success', duration: 1200 });
+        wx.showToast({ title: '登录状态已刷新', icon: 'success', duration: 1200 });
         this.loadOrderSummary(this.data.currentOrderStatus);
-      }
-    });
-  },
-
-  onClearUserId() {
-    app.clearUserId();
-    this.setData({
-      currentUserIdText: '未设置',
-      orderList: [],
-      orderTotal: 0,
-      activeOrderTab: '',
-      currentOrderStatus: null
-    });
-    wx.showToast({ title: '已清除用户ID', icon: 'none', duration: 1200 });
+      })
+      .catch(() => {
+        wx.showToast({ title: '登录中，请稍后重试', icon: 'none', duration: 1500 });
+      });
   },
 
   onPullDownRefresh() {

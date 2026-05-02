@@ -1,4 +1,4 @@
-<!-- components/flash-sale-item/flash-sale-item.wxml -->
+﻿<!-- components/flash-sale-item/flash-sale-item.wxml -->
 <view class="flash-card" bindtap="onTap" hover-class="press-effect">
   <image class="flash-img" src="{{item.image}}" mode="aspectFill"></image>
   <text class="flash-name">{{item.name}}</text>

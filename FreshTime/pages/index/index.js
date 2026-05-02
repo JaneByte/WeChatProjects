@@ -1,12 +1,11 @@
-﻿// pages/index/index.js
-const { get } = require('../../utils/request');
+﻿const { get } = require('../../utils/request');
 const { getTempFileUrls } = require('../../utils/cloud');
 const { showRequestError } = require('../../utils/ui');
 
 Page({
   data: {
     brandName: 'FreshTime',
-    brandSub: '鲜时刻',
+    brandSub: '鲜时达',
     greetingWords: '早安，新鲜蔬果已经到店',
     newArrivalCount: 0,
     searchIcon: '/assets/icon/search.png',
@@ -19,7 +18,9 @@ Page({
     priceSymbol: '¥',
     addBtnText: '+',
     loadingText: '正在加载...',
-    noMoreText: '—— 已经到底啦 ——',
+    noMoreText: '已经到底啦',
+    homeLoading: true,
+    homeError: false,
 
     paths: {
       search: '/pages/search/search',
@@ -30,7 +31,6 @@ Page({
 
     statusBarHeight: 44,
     dailyRecommend: null,
-
     flashCountdown: '00:00:00',
     flashEndTimestamp: 0,
     flashSaleList: [],
@@ -39,11 +39,10 @@ Page({
       { type: 'seasonal', text: '时令优选', iconText: '时' },
       { type: 'hot', text: '热销爆款', iconText: '热' },
       { type: 'flash', text: '限时秒杀', iconText: '秒' },
-      { type: 'category', text: '全部分类', iconText: '分' }
+      { type: 'category', text: '全部分类', iconText: '类' }
     ],
 
     traceList: [],
-
     goodsList: [],
     leftColumnList: [],
     rightColumnList: [],
@@ -55,27 +54,19 @@ Page({
 
   onLoad() {
     const systemInfo = wx.getSystemInfoSync();
-    const safeAreaTop = systemInfo.safeArea?.top || systemInfo.statusBarHeight || 44;
+    const safeAreaTop = (systemInfo.safeArea && systemInfo.safeArea.top) || systemInfo.statusBarHeight || 44;
     this.setData({ statusBarHeight: safeAreaTop + 8 });
-
     this.generateGreeting();
     this.loadHomeIndex();
     this.loadGoods(true);
   },
 
   onShow() {
-    if (this.data.flashEndTimestamp > Date.now() && !this.countdownTimer) {
-      this.startFlashCountdown();
-    }
+    if (this.data.flashEndTimestamp > Date.now() && !this.countdownTimer) this.startFlashCountdown();
   },
 
-  onHide() {
-    this.clearFlashCountdown();
-  },
-
-  onUnload() {
-    this.clearFlashCountdown();
-  },
+  onHide() { this.clearFlashCountdown(); },
+  onUnload() { this.clearFlashCountdown(); },
 
   generateGreeting() {
     const hour = new Date().getHours();
@@ -89,10 +80,10 @@ Page({
   },
 
   async loadHomeIndex(showError = false) {
+    this.setData({ homeLoading: true, homeError: false });
     try {
       const res = await get('/home/index', {}, { retry: 1 });
       const data = this.unwrapData(res);
-
       const recommend = await this.normalizeGoodsImage(data.todayRecommend || null);
       const flashRaw = data.flash || {};
       const flashList = await this.normalizeGoodsImageList(flashRaw.list || []);
@@ -103,12 +94,13 @@ Page({
         dailyRecommend: recommend,
         flashSaleList: flashList,
         traceList: data.traceList || [],
-        flashEndTimestamp
+        flashEndTimestamp,
+        homeLoading: false,
+        homeError: false
       });
 
-      if (flashEndTimestamp > Date.now() && flashList.length > 0) {
-        this.startFlashCountdown();
-      } else {
+      if (flashEndTimestamp > Date.now() && flashList.length > 0) this.startFlashCountdown();
+      else {
         this.setData({ flashCountdown: '00:00:00' });
         this.clearFlashCountdown();
       }
@@ -116,12 +108,12 @@ Page({
       this.setData({
         dailyRecommend: null,
         flashSaleList: [],
-        traceList: []
+        traceList: [],
+        homeLoading: false,
+        homeError: true
       });
       this.clearFlashCountdown();
-      if (showError) {
-        showRequestError(error, '首页数据加载失败');
-      }
+      if (showError) showRequestError(error, '首页数据加载失败');
     }
   },
 
@@ -133,15 +125,10 @@ Page({
     this.setData({ loadingMore: true });
 
     try {
-      const res = await get(
-        '/home/goods',
-        { page: nextPage, pageSize: this.data.pageSize },
-        { retry: 1 }
-      );
+      const res = await get('/home/goods', { page: nextPage, pageSize: this.data.pageSize }, { retry: 1 });
       const data = this.unwrapData(res);
       const list = await this.normalizeGoodsImageList(data.list || []);
-
-      const mergedList = reset ? list : [...this.data.goodsList, ...list];
+      const mergedList = reset ? list : this.data.goodsList.concat(list);
       const split = this.splitWaterfallColumns(mergedList);
       const hasMore = data.hasMore === true;
 
@@ -172,9 +159,7 @@ Page({
   async normalizeGoodsImage(goods) {
     if (!goods) return null;
     const image = goods.mainImage || goods.image || '';
-    if (!image || !image.startsWith('cloud://')) {
-      return { ...goods, image };
-    }
+    if (!image || !image.startsWith('cloud://')) return { ...goods, image };
     const urlMap = await getTempFileUrls([image]);
     const finalImage = urlMap[image] || image;
     return { ...goods, mainImage: finalImage, image: finalImage };
@@ -182,47 +167,32 @@ Page({
 
   async normalizeGoodsImageList(list) {
     if (!list || list.length === 0) return [];
-    const fileIds = list
-      .map((item) => item.mainImage || item.image)
-      .filter((id) => id && id.startsWith('cloud://'));
-
+    const fileIds = list.map((item) => item.mainImage || item.image).filter((id) => id && id.startsWith('cloud://'));
     const urlMap = fileIds.length > 0 ? await getTempFileUrls(fileIds) : {};
     return list.map((item) => {
       const rawImage = item.mainImage || item.image || '';
       const image = urlMap[rawImage] || rawImage;
-      const stock =
-        typeof item.stock === 'number'
-          ? item.stock
-          : (typeof item.flashStock === 'number' ? item.flashStock : 0);
+      const stock = typeof item.stock === 'number' ? item.stock : (typeof item.flashStock === 'number' ? item.flashStock : 0);
       return { ...item, mainImage: image, image, stock };
     });
   },
 
   unwrapData(response) {
-    if (
-      response &&
-      typeof response === 'object' &&
-      Object.prototype.hasOwnProperty.call(response, 'data')
-    ) {
-      return response.data || {};
-    }
+    if (response && typeof response === 'object' && Object.prototype.hasOwnProperty.call(response, 'data')) return response.data || {};
     return response || {};
   },
 
   parseTimeToTimestamp(timeValue) {
     if (!timeValue) return 0;
     if (typeof timeValue === 'number') return timeValue;
-    const normalized = `${timeValue}`.replace(/-/g, '/');
-    const ts = new Date(normalized).getTime();
+    const ts = new Date(String(timeValue).replace(/-/g, '/')).getTime();
     return Number.isNaN(ts) ? 0 : ts;
   },
 
   startFlashCountdown() {
     this.clearFlashCountdown();
     this.updateFlashCountdown();
-    this.countdownTimer = setInterval(() => {
-      this.updateFlashCountdown();
-    }, 1000);
+    this.countdownTimer = setInterval(() => this.updateFlashCountdown(), 1000);
   },
 
   clearFlashCountdown() {
@@ -239,44 +209,31 @@ Page({
       this.clearFlashCountdown();
       return;
     }
-
     const hour = Math.floor(remain / (1000 * 60 * 60));
     const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
     const second = Math.floor((remain % (1000 * 60)) / 1000);
-    const flashCountdown = `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`;
-    this.setData({ flashCountdown });
+    this.setData({ flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}` });
   },
 
-  pad2(num) {
-    return num < 10 ? `0${num}` : `${num}`;
-  },
+  pad2(num) { return num < 10 ? `0${num}` : `${num}`; },
 
-  onScrollToLower() {
-    this.loadGoods(false);
-  },
+  onScrollToLower() { this.loadGoods(false); },
 
   async onPullDownRefresh() {
-    this.setData({
-      page: 1,
-      noMore: false,
-      goodsList: [],
-      leftColumnList: [],
-      rightColumnList: []
-    });
-
+    this.setData({ page: 1, noMore: false, goodsList: [], leftColumnList: [], rightColumnList: [] });
     this.generateGreeting();
     await this.loadHomeIndex(true);
     await this.loadGoods(true);
     wx.stopPullDownRefresh();
   },
 
-  onSearchTap() {
-    wx.navigateTo({ url: this.data.paths.search });
+  onRetryHome() {
+    this.loadHomeIndex(true);
+    this.loadGoods(true);
   },
 
-  onRecommendMoreTap() {
-    wx.navigateTo({ url: `${this.data.paths.goods}?type=recommend` });
-  },
+  onSearchTap() { wx.navigateTo({ url: this.data.paths.search }); },
+  onRecommendMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=recommend` }); },
 
   onRecommendTap() {
     const { dailyRecommend, paths } = this.data;
@@ -284,13 +241,8 @@ Page({
     wx.navigateTo({ url: `${paths.goodsDetail}?id=${dailyRecommend.id}` });
   },
 
-  onRecommendAdd() {
-    wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
-  },
-
-  onFlashMoreTap() {
-    wx.navigateTo({ url: `${this.data.paths.goods}?type=flash` });
-  },
+  onRecommendAdd() { wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 }); },
+  onFlashMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=flash` }); },
 
   onFlashTap(e) {
     const { id } = e.currentTarget.dataset;
@@ -301,13 +253,7 @@ Page({
     const { id } = e.currentTarget.dataset;
     const flashSaleList = this.data.flashSaleList.map((item) => {
       const currentStock = typeof item.stock === 'number' ? item.stock : 0;
-      if (`${item.id}` === `${id}` && currentStock > 0) {
-        return {
-          ...item,
-          stock: currentStock - 1,
-          flashStock: (typeof item.flashStock === 'number' ? item.flashStock : currentStock) - 1
-        };
-      }
+      if (`${item.id}` === `${id}` && currentStock > 0) return { ...item, stock: currentStock - 1 };
       return item;
     });
     this.setData({ flashSaleList });
@@ -323,24 +269,26 @@ Page({
       flash: `${paths.goods}?type=flash`,
       category: paths.category
     };
-
     const target = urlMap[type] || paths.goods;
     if (target === paths.category) wx.switchTab({ url: target });
     else wx.navigateTo({ url: target });
   },
 
   onTraceTap(e) {
-    const { id } = e.currentTarget.dataset;
-    wx.showToast({ title: `查看 ${id} 产地信息`, icon: 'none', duration: 1200 });
+    const id = Number(e.currentTarget.dataset.id || 0);
+    const name = e.currentTarget.dataset.name || '';
+    const desc = e.currentTarget.dataset.desc || '';
+    const meta = e.currentTarget.dataset.meta || '';
+    wx.navigateTo({
+      url: `/pages/trace-detail/trace-detail?id=${id}&name=${encodeURIComponent(name)}&desc=${encodeURIComponent(desc)}&meta=${encodeURIComponent(meta)}`
+    });
   },
 
   onTraceMoreTap() {
-    wx.showToast({ title: '产地溯源功能开发中', icon: 'none', duration: 1200 });
+    wx.navigateTo({ url: '/pages/trace-detail/trace-detail' });
   },
 
-  onMoreTap() {
-    wx.navigateTo({ url: `${this.data.paths.goods}?type=weeklyHot` });
-  },
+  onMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=weeklyHot` }); },
 
   onGoodsTap(e) {
     const { item } = e.detail;

@@ -1,6 +1,4 @@
-// cart.scss
-// 购物车样式 · 100%对齐分类页配色体系
-// ==================== 主题变量（与分类页完全一致） ====================
+﻿// cart.scss
 $bg-page: #fefbf5;
 $primary: #8cb818;
 $primary-dark: #004132;
@@ -17,7 +15,7 @@ $spacing-sm: 20rpx;
 $spacing-md: 28rpx;
 $spacing-lg: 36rpx;
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-// ==================== 页面容器 ====================
+// ==================== 椤甸潰瀹瑰櫒 ====================
 page {
   background-color: $bg-page;
   height: 100%;
@@ -30,7 +28,7 @@ page {
   height: 100vh;
   background-color: $bg-page;
 }
-/* 顶部一体化标题栏 */
+/* 椤堕儴涓€浣撳寲鏍囬鏍?*/
 .top-header-bar {
   display: flex;
   justify-content: space-between;
@@ -56,7 +54,7 @@ page {
   border: 1rpx solid rgba(107, 122, 94, 0.35);
   background: rgba(255, 255, 255, 0.7);
 }
-// ==================== 空状态 ====================
+// ==================== 绌虹姸鎬?====================
 .empty-state {
   flex: 1;
   display: flex;
@@ -85,13 +83,12 @@ page {
     transition: all 0.25s $spring-curve;
   }
 }
-// ==================== 滚动区域 ====================
+// ==================== 婊氬姩鍖哄煙 ====================
 .cart-scroll {
   flex: 1;
   width: 100%;
   padding: 0 $spacing-sm;
   box-sizing: border-box;
-  height: 0; // 修复flex布局下安卓滚动失效问题
   min-height: 0;
   flex-shrink: 1;
 }
@@ -132,7 +129,7 @@ page {
     min-width: 0;
   }
 }
-// 复选框
+// 澶嶉€夋
 .checkbox-wrapper {
   display: flex;
   align-items: center;
@@ -218,7 +215,6 @@ page {
     }
   }
 }
-// 数量控制器（对齐分类页风格）
 .quantity-ctrl {
   display: flex;
   align-items: center;
@@ -251,7 +247,6 @@ page {
     margin: 0 $spacing-xs;
   }
 }
-// 左滑删除区域
 .delete-area {
   position: absolute;
   right: 0;
@@ -270,7 +265,7 @@ page {
     font-weight: 400;
   }
 }
-// ==================== 底部结算栏 ====================
+// ==================== 搴曢儴缁撶畻鏍?====================
 .cart-footer {
   display: flex;
   justify-content: space-between;
@@ -340,7 +335,6 @@ page {
     }
   }
 }
-// ==================== 点击反馈（与分类页一致） ====================
 .press-effect {
   transition: transform 0.25s $spring-curve;
   &:active {
@@ -382,3 +376,7 @@ page {
     }
   }
 }
+
+
+
+

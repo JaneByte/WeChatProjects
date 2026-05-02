@@ -1,13 +1,13 @@
-/* 公共样式 - 可以放一些通用的动画或重置样式 */
+﻿/* 公共样式：通用动画与基础重置 */
 
-/* 重置默认样式 */
+/* 閲嶇疆榛樿鏍峰紡 */
 view, text, image, input, button {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* 去除 button 默认样式 */
+/* 鍘婚櫎 button 榛樿鏍峰紡 */
 button {
   background: transparent;
   border: none;
@@ -21,14 +21,14 @@ button {
   }
 }
 
-/* 去除 input 默认样式 */
+/* 鍘婚櫎 input 榛樿鏍峰紡 */
 input {
   outline: none;
   border: none;
   background: transparent;
 }
 
-/* 图片默认样式 */
+/* 鍥剧墖榛樿鏍峰紡 */
 image {
   display: block;
 }
@@ -70,3 +70,6 @@ image {
 .slide-up {
   animation: slideUp var(--transition-normal) ease;
 }
+
+
+

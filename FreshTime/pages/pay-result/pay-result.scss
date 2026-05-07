@@ -1,7 +1,7 @@
-.pay-result-page {
+﻿.pay-result-page {
   min-height: 100vh;
   padding: 40rpx 24rpx;
-  background: #f5f8f5;
+  background: #f8faf5;
 }
 
 .card {
@@ -22,26 +22,26 @@
 }
 
 .icon.success {
-  background: #e8f8ee;
-  color: #07c160;
+  background: #edf6e0;
+  color: #73a937;
 }
 
 .icon.fail {
-  background: #fff0ef;
-  color: #e54d42;
+  background: #edf6e0;
+  color: #5a8a28;
 }
 
 .title {
   margin-top: 24rpx;
   font-size: 34rpx;
-  color: #1f2f1f;
+  color: #1e3311;
   font-weight: 600;
 }
 
 .desc {
   margin-top: 12rpx;
   font-size: 24rpx;
-  color: #667766;
+  color: #647457;
 }
 
 .actions {
@@ -58,13 +58,14 @@
   font-size: 28rpx;
   border-radius: 40rpx;
   background: #ffffff;
-  color: #2e3e2e;
-  border: 1rpx solid #d8e5d8;
+  color: #1e3311;
+  border: 1rpx solid #e4eadf;
 }
 
 .btn.primary {
-  background: #07c160;
-  border-color: #07c160;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
+  border-color: #73a937;
   color: #ffffff;
 }
+
 

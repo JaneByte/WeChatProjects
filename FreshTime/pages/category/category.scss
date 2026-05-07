@@ -1,18 +1,18 @@
-﻿$bg-page: #fefbf5;
-$primary: #8cb818;
-$primary-strong: #7cab12;
-$primary-dark: #004132;
-$primary-light: #d0ebb7;
-$accent-warm: #fdf4d6;
-$accent-price: #fadf2e;
+﻿$bg-page: #f8faf5;
+$primary: #73a937;
+$primary-strong: #5a8a28;
+$primary-dark: #1e3311;
+$primary-light: #edf6e0;
+$accent-warm: #edf6e0;
+$accent-price: #ffd84d;
 $bg-card: #ffffff;
-$text-dark: #004132;
-$text-deep: #003322;
-$text-secondary: #6b7a5e;
-$text-placeholder: #9aaa8a;
-$border-light: #e0e6c8;
-$shadow-sm: 0 2rpx 8rpx rgba(140, 184, 24, 0.06);
-$shadow-md: 0 4rpx 16rpx rgba(140, 184, 24, 0.08);
+$text-dark: #1e3311;
+$text-deep: #1e3311;
+$text-secondary: #647457;
+$text-placeholder: #b8c2ae;
+$border-light: #e4eadf;
+$shadow-sm: 0 4rpx 12rpx rgba(31, 43, 36, 0.05);
+$shadow-md: 0 8rpx 20rpx rgba(31, 43, 36, 0.06);
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
 // ==================== 页面基础 ====================
@@ -102,7 +102,7 @@ page {
     
     &.active {
       background: linear-gradient(135deg, $primary, $primary-strong);
-      box-shadow: 0 6rpx 14rpx rgba(140, 184, 24, 0.28);
+      box-shadow: 0 6rpx 14rpx rgba(115, 169, 55, 0.22);
       
       .capsule-text {
         color: #ffffff;
@@ -142,7 +142,7 @@ page {
     }
     
     &.active {
-      background: rgba(140, 184, 24, 0.12);
+      background: rgba(115, 169, 55, 0.12);
 
       .nav-indicator {
         height: 38rpx;
@@ -164,7 +164,7 @@ page {
   border-top-left-radius: 32rpx;
   border-bottom-left-radius: 32rpx;
   padding: 24rpx 24rpx 0;
-  box-shadow: -2rpx 0 12rpx rgba(140, 184, 24, 0.06);
+  box-shadow: -2rpx 0 12rpx rgba(31, 43, 36, 0.05);
 }
 
 .section-header {
@@ -279,8 +279,8 @@ page {
         align-items: center;
         justify-content: center;
         background: linear-gradient(135deg, $primary, $primary-strong);
-        border: 1rpx solid rgba(122, 171, 18, 0.38);
-        box-shadow: 0 6rpx 14rpx rgba(140, 184, 24, 0.26);
+        border: 1rpx solid rgba(90, 138, 40, 0.32);
+        box-shadow: 0 6rpx 14rpx rgba(115, 169, 55, 0.22);
         border-radius: 50%;
         transition: all 0.25s $spring-curve;
         
@@ -325,7 +325,7 @@ page {
   border-radius: 999rpx;
   font-size: 22rpx;
   color: #ffffff;
-  background: #07c160;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
 }
 
 @media (max-width: 350px) {
@@ -366,9 +366,9 @@ page {
   height: 60rpx;
   padding: 0 18rpx;
   border-radius: 14rpx;
-  background: #f2f6ed;
+  background: #f8faf5;
   font-size: 24rpx;
-  color: #243224;
+  color: #1e3311;
 }
 
 .filter-switch,
@@ -378,13 +378,15 @@ page {
   line-height: 56rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
-  color: #4f644f;
-  background: #eef3e7;
+  color: #647457;
+  background: #edf6e0;
 }
 
 .filter-switch.active {
-  background: #07c160;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
   color: #ffffff;
 }
+
+
 
 

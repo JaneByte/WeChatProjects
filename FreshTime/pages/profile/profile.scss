@@ -1,10 +1,10 @@
-$bg-page: #fefbf5;
+﻿$bg-page: #f8faf5;
 $bg-card: #ffffff;
-$primary: #8cb818;
-$primary-dark: #004132;
-$text-secondary: #6b7a5e;
-$text-placeholder: #9aaa8a;
-$border-light: #e0e6c8;
+$primary: #73a937;
+$primary-dark: #1e3311;
+$text-secondary: #647457;
+$text-placeholder: #b8c2ae;
+$border-light: #e4eadf;
 
 page {
   background: $bg-page;
@@ -16,10 +16,13 @@ page {
 }
 
 .profile-hero {
-  background: linear-gradient(135deg, #8cb818, #7cab12);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(165deg, #86cb58 0%, #6db97f 44%, #62ae78 100%);
   border-radius: 24rpx;
   padding: 28rpx;
-  box-shadow: 0 8rpx 22rpx rgba(124, 171, 18, 0.28);
+  border: 1rpx solid rgba(90, 138, 40, 0.3);
+  box-shadow: 0 14rpx 30rpx rgba(43, 76, 32, 0.2);
 }
 
 .user-card {
@@ -56,10 +59,10 @@ page {
 .order-card,
 .menu-card {
   margin-top: 20rpx;
-  background: $bg-card;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faf5 100%);
   border-radius: 20rpx;
   border: 1rpx solid $border-light;
-  box-shadow: 0 4rpx 14rpx rgba(0, 65, 50, 0.06);
+  box-shadow: 0 10rpx 22rpx rgba(31, 43, 36, 0.08);
   padding: 20rpx;
 }
 
@@ -72,7 +75,7 @@ page {
 .card-title {
   font-size: 28rpx;
   color: $primary-dark;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .id-actions {
@@ -87,7 +90,7 @@ page {
 }
 
 .card-link--danger {
-  color: #d94848;
+  color: #5a8a28;
 }
 
 .user-id-row {
@@ -113,7 +116,7 @@ page {
 }
 
 .order-item--active .order-mark {
-  background: $primary;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
   color: #ffffff;
 }
 
@@ -129,7 +132,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(140, 184, 24, 0.14);
+  background: rgba(115, 169, 55, 0.14);
   color: $primary-dark;
   font-size: 24rpx;
   font-weight: 600;
@@ -146,7 +149,7 @@ page {
   justify-content: space-between;
   align-items: center;
   padding: 18rpx 6rpx;
-  border-bottom: 1rpx solid rgba(224, 230, 200, 0.7);
+  border-bottom: 1rpx solid rgba(228, 234, 223, 0.85);
 
   &:last-child {
     border-bottom: none;
@@ -172,15 +175,15 @@ page {
 
 .menu-arrow {
   font-size: 24rpx;
-  color: #9aaa8a;
+  color: #b8c2ae;
 }
 
 .recent-order {
   margin-top: 16rpx;
   padding: 16rpx;
   border-radius: 14rpx;
-  background: #f9fbf1;
-  border: 1rpx solid rgba(224, 230, 200, 0.9);
+  background: #f8faf5;
+  border: 1rpx solid rgba(228, 234, 223, 0.9);
 }
 
 .recent-top,
@@ -215,7 +218,7 @@ page {
 
 .action-btn {
   color: $primary-dark;
-  border: 1rpx solid rgba(0, 65, 50, 0.25);
+  border: 1rpx solid rgba(30, 51, 17, 0.25);
   background: #ffffff;
   border-radius: 999rpx;
   font-size: 22rpx;
@@ -223,9 +226,10 @@ page {
 }
 
 .action-btn--primary {
-  background: $primary;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
   color: #ffffff;
   border-color: $primary;
+  box-shadow: 0 8rpx 18rpx rgba(115, 169, 55, 0.22);
 }
 
 .empty-order-card {
@@ -263,3 +267,4 @@ page {
 
   .menu-item { padding: 14rpx 4rpx; }
 }
+

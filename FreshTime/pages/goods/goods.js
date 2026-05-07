@@ -11,6 +11,7 @@ Page({
     const type = options.type || '';
     const titleMap = {
       recommend: '今日推荐',
+      newArrival: '今日上新',
       flash: '限时秒杀',
       hot: '热销爆款',
       seasonal: '时令优选',
@@ -23,6 +24,16 @@ Page({
 
   loadList(type) {
     this.setData({ loading: true });
+    if (type === 'newArrival') {
+      get('/home/index', {}, { retry: 0 })
+        .then((res) => {
+          const data = (res && res.data) || {};
+          const list = data.newArrivalList || [];
+          this.setData({ list: Array.isArray(list) ? list : [] });
+        })
+        .finally(() => this.setData({ loading: false }));
+      return;
+    }
     const endpoint = type === 'recommend' ? '/goods/recommend' : '/goods/list';
     get(endpoint, {}, { retry: 0 })
       .then((res) => {

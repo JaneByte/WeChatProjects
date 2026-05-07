@@ -15,6 +15,7 @@ Page({
     heroTitle: '今日推荐',
     heroBadge: '每日精选',
     moreText: '更多 >',
+    noticePrefix: '公告',
     waterfallTitle: '本周热销',
     priceSymbol: '¥',
     addBtnText: '+',
@@ -35,6 +36,13 @@ Page({
     flashCountdown: '00:00:00',
     flashEndTimestamp: 0,
     flashSaleList: [],
+    bannerList: [],
+    noticeList: [],
+    newArrivalList: [],
+    seasonalLabel: '',
+    seasonalHint: '',
+    seasonalThemes: [],
+    hotKeyword: '',
 
     navList: [
       { type: 'seasonal', text: '时令优选', iconText: '时' },
@@ -57,18 +65,69 @@ Page({
   onLoad() {
     const systemInfo = wx.getSystemInfoSync();
     const statusBar = systemInfo.statusBarHeight || 20;
-    let navSafeHeight = statusBar + 44;
+    let compactSafeHeight = statusBar + 28;
     try {
       const menuRect = wx.getMenuButtonBoundingClientRect();
       if (menuRect && menuRect.top && menuRect.height) {
-        const topGap = menuRect.top - statusBar;
-        navSafeHeight = statusBar + topGap * 2 + menuRect.height;
+        const topGap = Math.max(menuRect.top - statusBar, 2);
+        compactSafeHeight = statusBar + topGap + 20;
       }
     } catch (error) {}
-    this.setData({ statusBarHeight: navSafeHeight + 4 });
+    compactSafeHeight = Math.max(statusBar + 24, Math.min(compactSafeHeight, statusBar + 36));
+    this.setData({ statusBarHeight: compactSafeHeight });
     this.generateGreeting();
+    this.initSeasonMeta();
     this.loadHomeIndex();
     this.loadGoods(true);
+  },
+
+  initSeasonMeta() {
+    const month = new Date().getMonth() + 1;
+    let seasonalLabel = '春季';
+    let seasonalHint = '清新脆嫩，适合轻食搭配';
+    if (month >= 6 && month <= 8) {
+      seasonalLabel = '夏季';
+      seasonalHint = '清爽补水，解暑好选择';
+    } else if (month >= 9 && month <= 11) {
+      seasonalLabel = '秋季';
+      seasonalHint = '甜润丰收，口感更浓郁';
+    } else if (month === 12 || month <= 2) {
+      seasonalLabel = '冬季';
+      seasonalHint = '暖补耐储，营养更扎实';
+    }
+    const seasonalThemes = this.buildSeasonalThemes(seasonalLabel);
+    this.setData({ seasonalLabel, seasonalHint, seasonalThemes });
+  },
+
+  buildSeasonalThemes(seasonalLabel) {
+    const defaultThemes = [
+      { id: 1, title: '清爽补水', desc: '瓜果类优先', keyword: '西瓜', badge: '清' },
+      { id: 2, title: '轻食沙拉', desc: '低负担蔬果', keyword: '生菜', badge: '轻' },
+      { id: 3, title: '炖煮暖补', desc: '耐煮更入味', keyword: '萝卜', badge: '暖' },
+      { id: 4, title: '维C补给', desc: '酸甜更开胃', keyword: '橙子', badge: 'C' }
+    ];
+    const seasonMap = {
+      '春季': [
+        { id: 1, title: '春日清新', desc: '嫩叶鲜蔬', keyword: '菠菜', badge: '春' },
+        { id: 2, title: '轻食沙拉', desc: '低负担蔬果', keyword: '生菜', badge: '轻' },
+        { id: 3, title: '维C补给', desc: '提神醒脑', keyword: '柠檬', badge: 'C' },
+        { id: 4, title: '当季果盘', desc: '香甜多汁', keyword: '草莓', badge: '鲜' }
+      ],
+      '夏季': defaultThemes,
+      '秋季': [
+        { id: 1, title: '秋润鲜果', desc: '甜润多汁', keyword: '梨', badge: '秋' },
+        { id: 2, title: '炖煮暖补', desc: '汤煲更香', keyword: '南瓜', badge: '暖' },
+        { id: 3, title: '纤维轻食', desc: '清爽解腻', keyword: '玉米', badge: '轻' },
+        { id: 4, title: '维C补给', desc: '酸甜开胃', keyword: '橙子', badge: 'C' }
+      ],
+      '冬季': [
+        { id: 1, title: '暖冬炖菜', desc: '耐煮更香', keyword: '白萝卜', badge: '冬' },
+        { id: 2, title: '汤锅食材', desc: '补给能量', keyword: '白菜', badge: '暖' },
+        { id: 3, title: '高纤轻负担', desc: '平衡膳食', keyword: '西兰花', badge: '纤' },
+        { id: 4, title: '维C补给', desc: '抵御干燥', keyword: '橙子', badge: 'C' }
+      ]
+    };
+    return seasonMap[seasonalLabel] || defaultThemes;
   },
 
   onShow() {
@@ -97,12 +156,22 @@ Page({
       const recommend = await this.normalizeGoodsImage(data.todayRecommend || null);
       const flashRaw = data.flash || {};
       const flashList = await this.normalizeGoodsImageList(flashRaw.list || []);
+      const bannerList = await this.normalizeBannerImageList(data.banners || []);
+      const newArrivalList = await this.normalizeGoodsImageList(data.newArrivalList || []);
       const flashEndTimestamp = this.parseTimeToTimestamp(flashRaw.endTime);
+      const noticeList = Array.isArray(data.notices) ? data.notices : [];
+      const navList = this.normalizeNavList(data.navList);
+      const hotKeyword = this.buildHotKeyword(newArrivalList);
 
       this.setData({
         newArrivalCount: data.newArrivalCount || 0,
         dailyRecommend: recommend,
         flashSaleList: flashList,
+        bannerList,
+        newArrivalList,
+        noticeList,
+        navList,
+        hotKeyword,
         traceList: data.traceList || [],
         flashEndTimestamp,
         homeLoading: false,
@@ -118,6 +187,9 @@ Page({
       this.setData({
         dailyRecommend: null,
         flashSaleList: [],
+        bannerList: [],
+        newArrivalList: [],
+        noticeList: [],
         traceList: [],
         homeLoading: false,
         homeError: true
@@ -188,6 +260,33 @@ Page({
     });
   },
 
+  async normalizeBannerImageList(list) {
+    if (!Array.isArray(list) || list.length === 0) return [];
+    const fileIds = list.map((item) => item.image).filter((id) => id && id.startsWith('cloud://'));
+    const urlMap = fileIds.length > 0 ? await getTempFileUrls(fileIds) : {};
+    return list.map((item) => {
+      const image = urlMap[item.image] || item.image || '';
+      return { ...item, image };
+    });
+  },
+
+  normalizeNavList(sourceList = []) {
+    if (!Array.isArray(sourceList) || sourceList.length === 0) return this.data.navList;
+    return sourceList.map((item) => ({
+      type: item.type || '',
+      text: item.text || '',
+      iconText: item.iconText || '类',
+      linkType: item.linkType || 'goods',
+      linkValue: item.linkValue || item.type || ''
+    }));
+  },
+
+  buildHotKeyword(newArrivalList) {
+    if (!Array.isArray(newArrivalList) || newArrivalList.length === 0) return '';
+    const first = newArrivalList[0] || {};
+    return (first.name || '').trim();
+  },
+
   unwrapData(response) {
     if (response && typeof response === 'object' && Object.prototype.hasOwnProperty.call(response, 'data')) return response.data || {};
     return response || {};
@@ -243,7 +342,11 @@ Page({
     this.loadGoods(true);
   },
 
-  onSearchTap() { wx.navigateTo({ url: this.data.paths.search }); },
+  onSearchTap() {
+    const keyword = this.data.hotKeyword;
+    const query = keyword ? `?keyword=${encodeURIComponent(keyword)}` : '';
+    wx.navigateTo({ url: `${this.data.paths.search}${query}` });
+  },
   onRecommendMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=recommend` }); },
 
   onRecommendTap() {
@@ -278,15 +381,71 @@ Page({
   onNavTap(e) {
     const { type } = e.currentTarget.dataset;
     const { paths } = this.data;
-    const urlMap = {
-      seasonal: `${paths.goods}?type=seasonal`,
-      hot: `${paths.goods}?type=hot`,
-      flash: `${paths.goods}?type=flash`,
-      category: paths.category
-    };
-    const target = urlMap[type] || paths.goods;
+    const targetConfig = this.data.navList.find((item) => `${item.type}` === `${type}`) || {};
+    const linkType = targetConfig.linkType || 'goods';
+    const linkValue = targetConfig.linkValue || type;
+    const target = this.buildTargetUrl(linkType, linkValue, paths);
     if (target === paths.category) wx.switchTab({ url: target });
     else wx.navigateTo({ url: target });
+  },
+
+  onBannerTap(e) {
+    const { linkType = 0, linkValue = '' } = e.currentTarget.dataset;
+    this.navigateByLinkType(linkType, linkValue);
+  },
+
+  onNoticeTap(e) {
+    const { linkType = 'none', linkValue = '' } = e.currentTarget.dataset;
+    this.navigateByLinkType(linkType, linkValue);
+  },
+
+  onNewArrivalTap(e) {
+    const { id } = e.currentTarget.dataset;
+    if (!id) return;
+    wx.navigateTo({ url: `${this.data.paths.goodsDetail}?id=${id}` });
+  },
+
+  onNewArrivalMoreTap() {
+    wx.navigateTo({ url: `${this.data.paths.goods}?type=newArrival` });
+  },
+
+  onSeasonThemeTap(e) {
+    const { keyword = '' } = e.currentTarget.dataset;
+    const query = keyword ? `?keyword=${encodeURIComponent(keyword)}` : '';
+    wx.navigateTo({ url: `${this.data.paths.search}${query}` });
+  },
+
+  buildTargetUrl(linkType, linkValue, paths) {
+    if (linkType === 'category') return paths.category;
+    if (linkType === 'search') return `${paths.search}?keyword=${encodeURIComponent(linkValue || '')}`;
+    return `${paths.goods}?type=${encodeURIComponent(linkValue || 'hot')}`;
+  },
+
+  navigateByLinkType(linkType, linkValue) {
+    const { paths } = this.data;
+    const type = `${linkType}`;
+    const value = `${linkValue || ''}`;
+    if (type === '1' || type === 'goodsDetail') {
+      if (!value) return;
+      wx.navigateTo({ url: `${paths.goodsDetail}?id=${value}` });
+      return;
+    }
+    if (type === '2' || type === 'category') {
+      wx.switchTab({ url: paths.category });
+      return;
+    }
+    if (type === 'goods') {
+      wx.navigateTo({ url: `${paths.goods}?type=${encodeURIComponent(value || 'hot')}` });
+      return;
+    }
+    if (type === 'search') {
+      wx.navigateTo({ url: `${paths.search}?keyword=${encodeURIComponent(value)}` });
+      return;
+    }
+    if (type === '3' || type === 'url') {
+      if (!value) return;
+      wx.navigateTo({ url: `/pages/webview/webview?url=${encodeURIComponent(value)}` });
+    }
   },
 
   onTraceTap(e) {

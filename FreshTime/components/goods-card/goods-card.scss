@@ -1,13 +1,13 @@
 // components/goods-card/goods-card.scss
 $bg-card: #ffffff;
-$primary: #8cb818;
-$primary-dark: #004132;
-$primary-light: #d0ebb7;
-$accent-price: #fadf2e;
-$accent-warm: #fdf4d6;
-$text-dark: #004132;
-$text-secondary: #6b7a5e;
-$shadow-sm: 0 4rpx 16rpx rgba(140, 184, 24, 0.08);
+$primary: #73a937;
+$primary-dark: #1e3311;
+$primary-light: #edf6e0;
+$accent-price: #ffd84d;
+$accent-warm: #fff8e9;
+$text-dark: #1e3311;
+$text-secondary: #647457;
+$shadow-sm: 0 8rpx 20rpx rgba(31, 43, 36, 0.05);
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
 .goods-card {
@@ -17,7 +17,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   overflow: hidden;
   box-shadow: $shadow-sm;
   box-sizing: border-box;
-  border: 1rpx solid #e0e6c8;
+  border: 1rpx solid #e4eadf;
 }
 
 .press-effect {
@@ -49,15 +49,15 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: absolute;
   bottom: 16rpx; right: 16rpx;
   width: 72rpx; height: 72rpx;
-  background: $accent-price;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6rpx 14rpx rgba(115, 169, 55, 0.26);
   transition: transform 0.25s $spring-curve, background 0.25s $spring-curve;
-  .add-icon { font-size: 40rpx; color: $primary-dark; font-weight: 600; }
-  &:active { transform: scale(0.9); background: darken($accent-price, 5%); }
+  .add-icon { font-size: 40rpx; color: #ffffff; font-weight: 600; }
+  &:active { transform: scale(0.9); background: linear-gradient(135deg, darken($primary, 4%), darken(#5a8a28, 4%)); }
 }
 
 .goods-info {
@@ -95,7 +95,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 .price {
   font-size: 34rpx;
   font-weight: 700;
-  color: $primary-dark;
+  color: $accent-price;
 }
 
 .unit {

@@ -1,6 +1,6 @@
-.comment-page {
+﻿.comment-page {
   min-height: 100vh;
-  background: #f5f8f5;
+  background: #f8faf5;
   padding: 24rpx;
 }
 
@@ -12,7 +12,7 @@
 
 .goods-name {
   font-size: 30rpx;
-  color: #1f2f1f;
+  color: #1e3311;
   font-weight: 600;
 }
 
@@ -24,7 +24,7 @@
 
 .label {
   font-size: 26rpx;
-  color: #455545;
+  color: #647457;
   margin-right: 16rpx;
 }
 
@@ -35,11 +35,11 @@
 
 .star {
   font-size: 44rpx;
-  color: #d8e2d8;
+  color: #b8c2ae;
 }
 
 .star.active {
-  color: #ffb300;
+  color: #ffd84d;
 }
 
 .content-input {
@@ -47,10 +47,10 @@
   width: 100%;
   height: 240rpx;
   border-radius: 12rpx;
-  background: #f7faf7;
+  background: #edf6e0;
   padding: 16rpx;
   font-size: 26rpx;
-  color: #2e3e2e;
+  color: #1e3311;
   box-sizing: border-box;
 }
 
@@ -59,8 +59,9 @@
   height: 80rpx;
   line-height: 80rpx;
   border-radius: 40rpx;
-  background: #07c160;
+  background: #73a937;
   color: #ffffff;
   font-size: 28rpx;
 }
+
 

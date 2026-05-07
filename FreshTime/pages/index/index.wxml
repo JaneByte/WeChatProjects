@@ -1,5 +1,7 @@
-﻿<view class="index-page">
+<view class="index-page">
   <view class="top-shell" style="padding-top: {{statusBarHeight}}px;">
+    <view class="brand-orb brand-orb-a"></view>
+    <view class="brand-orb brand-orb-b"></view>
     <view class="top-row">
       <view class="brand-wrap">
         <text class="brand-name">{{brandName}}</text>
@@ -9,19 +11,12 @@
 
     <view class="hello-block">
       <text class="hello-text">{{greetingWords}}</text>
-      <view class="top-tags">
-        <view class="fresh-pill">
-          <text class="fresh-pill-text">今日上新 {{newArrivalCount}} 款</text>
-        </view>
-        <view class="fresh-pill fresh-pill-soft">
-          <text class="fresh-pill-text">产地直采</text>
-        </view>
-      </view>
     </view>
-
-    <view class="search-bar press-effect" bindtap="onSearchTap">
-      <image class="search-icon" src="{{searchIcon}}" mode="aspectFit"></image>
-      <text class="search-text">{{searchPlaceholder}}</text>
+    <view class="search-float-wrap">
+      <view class="search-bar press-effect" bindtap="onSearchTap">
+        <image class="search-icon" src="{{searchIcon}}" mode="aspectFit"></image>
+        <text class="search-text">{{searchPlaceholder}}</text>
+      </view>
     </view>
   </view>
 
@@ -51,31 +46,42 @@
     </view>
 
     <block wx:else>
-      <view class="hero-section" wx:if="{{dailyRecommend}}">
+      <swiper wx:if="{{bannerList.length > 0}}" class="banner-swiper" indicator-dots circular autoplay interval="3000" duration="500">
+        <swiper-item wx:for="{{bannerList}}" wx:key="id">
+          <view class="banner-item press-effect" bindtap="onBannerTap" data-link-type="{{item.linkType}}" data-link-value="{{item.linkValue}}">
+            <image class="banner-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+          </view>
+        </swiper-item>
+      </swiper>
+
+      <view wx:if="{{noticeList.length > 0}}" class="notice-bar">
+        <text class="notice-prefix">{{noticePrefix}}</text>
+        <scroll-view class="notice-scroll" scroll-x show-scrollbar="{{false}}">
+          <view class="notice-list">
+            <view class="notice-item press-effect" wx:for="{{noticeList}}" wx:key="id" bindtap="onNoticeTap" data-link-type="{{item.linkType}}" data-link-value="{{item.linkValue}}">
+              <text class="notice-text">{{item.text}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="seasonal-section" wx:if="{{seasonalThemes.length > 0}}">
         <view class="section-head">
           <view class="head-left">
-            <text class="head-title">{{heroTitle}}</text>
-            <text class="head-badge">{{heroBadge}}</text>
+            <text class="head-title">当季优选</text>
+            <text class="head-badge">主题导购</text>
+            <text class="season-pill">{{seasonalLabel}}</text>
           </view>
-          <text class="head-more press-effect" bindtap="onRecommendMoreTap">{{moreText}}</text>
+          <text class="head-more press-effect" bindtap="onMoreTap">{{moreText}}</text>
         </view>
+        <text class="season-hint">{{seasonalHint}}</text>
 
-        <view class="hero-card press-effect" bindtap="onRecommendTap">
-          <image class="hero-image" src="{{dailyRecommend.image}}" mode="aspectFill" lazy-load></image>
-          <view class="hero-mask"></view>
-          <view class="hero-tag">今日主推</view>
-          <view class="hero-info">
-            <text class="hero-name">{{dailyRecommend.name}}</text>
-            <text class="hero-desc">{{dailyRecommend.desc}}</text>
-            <view class="hero-foot">
-              <view class="hero-price">
-                <text class="price-symbol">{{priceSymbol}}</text>
-                <text class="price-value">{{dailyRecommend.price}}</text>
-                <text class="price-unit">/{{dailyRecommend.unit}}</text>
-              </view>
-              <view class="hero-add" catchtap="onRecommendAdd">
-                <text class="hero-add-text">{{addBtnText}}</text>
-              </view>
+        <view class="seasonal-grid">
+          <view class="seasonal-item press-effect" wx:for="{{seasonalThemes}}" wx:key="id" bindtap="onSeasonThemeTap" data-keyword="{{item.keyword}}">
+            <view class="seasonal-meta">
+              <view class="season-item-tag">{{item.badge}}</view>
+              <text class="seasonal-name">{{item.title}}</text>
+              <text class="seasonal-desc">{{item.desc}}</text>
             </view>
           </view>
         </view>
@@ -97,11 +103,57 @@
         </view>
       </view>
 
+      <view class="hero-lite-section" wx:if="{{dailyRecommend}}">
+        <view class="section-head section-head-mini">
+          <view class="head-left">
+            <text class="head-title">今日主推</text>
+            <text class="head-badge">轻推荐</text>
+          </view>
+          <text class="head-more press-effect" bindtap="onRecommendMoreTap">{{moreText}}</text>
+        </view>
+        <view class="hero-lite-card press-effect" bindtap="onRecommendTap">
+          <image class="hero-lite-image" src="{{dailyRecommend.image}}" mode="aspectFill" lazy-load></image>
+          <view class="hero-lite-info">
+            <text class="hero-lite-name">{{dailyRecommend.name}}</text>
+            <text class="hero-lite-desc">{{dailyRecommend.desc}}</text>
+            <view class="hero-lite-foot">
+              <view class="hero-lite-price">
+                <text class="price-symbol">{{priceSymbol}}</text>
+                <text class="price-value">{{dailyRecommend.price}}</text>
+                <text class="price-unit">/{{dailyRecommend.unit}}</text>
+              </view>
+              <view class="hero-lite-add" catchtap="onRecommendAdd">
+                <text class="hero-lite-add-text">{{addBtnText}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="new-arrival-section" wx:if="{{newArrivalList.length > 0}}">
+        <view class="section-head">
+          <view class="head-left">
+            <text class="head-title">今日上新</text>
+          </view>
+          <text class="head-more press-effect" bindtap="onNewArrivalMoreTap">{{moreText}}</text>
+        </view>
+        <scroll-view class="new-arrival-scroll" scroll-x show-scrollbar="{{false}}">
+          <view class="new-arrival-list">
+            <view class="new-arrival-item press-effect" wx:for="{{newArrivalList}}" wx:key="id" bindtap="onNewArrivalTap" data-id="{{item.id}}">
+              <image class="new-arrival-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+              <text class="new-arrival-name">{{item.name}}</text>
+              <text class="new-arrival-price">{{priceSymbol}}{{item.price}}/{{item.unit}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
       <view class="flash-section" wx:if="{{flashSaleList.length > 0}}">
         <view class="section-head">
           <view class="head-left">
             <text class="head-title">限时秒杀</text>
             <view class="flash-countdown">
+              <text class="flash-countdown-label">距结束</text>
               <text class="flash-countdown-text">{{flashCountdown}}</text>
             </view>
           </view>
@@ -121,7 +173,7 @@
                 <view class="flash-foot">
                   <text class="flash-stock">剩余 {{item.stock}}</text>
                   <view class="flash-add" catchtap="onFlashAdd" data-id="{{item.id}}">
-                    <text class="flash-add-text">{{addBtnText}}</text>
+                    <text class="flash-add-text">抢</text>
                   </view>
                 </view>
               </view>

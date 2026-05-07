@@ -22,11 +22,11 @@
   ],
   "window": {
     "navigationBarTitleText": "FreshTime 鲜时刻",
-    "navigationBarBackgroundColor": "#8cb818",
+    "navigationBarBackgroundColor": "#62AE78",
     "navigationBarTextStyle": "white",
     "enablePullDownRefresh": true,
     "backgroundTextStyle": "dark",
-    "backgroundColor": "#fefbf5"
+    "backgroundColor": "#62AE78"
   },
   "style": "v2",
   "rendererOptions": {
@@ -39,10 +39,10 @@
     }
   },
   "tabBar": {
-    "selectedColor": "#004132",
-    "color": "rgba(255, 255, 255, 0.8)",
-    "backgroundColor": "#8cb818",
-    "borderStyle": "black",
+    "selectedColor": "#FFD84D",
+    "color": "rgba(255, 255, 255, 0.74)",
+    "backgroundColor": "#62AE78",
+    "borderStyle": "white",
     "list": [
       {
         "text": "首页",

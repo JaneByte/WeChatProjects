@@ -1,11 +1,11 @@
-.page { padding: 24rpx; }
-.state { text-align: center; color: #8f9f8f; padding: 80rpx 0; }
+﻿.page { padding: 24rpx; }
+.state { text-align: center; color: #b8c2ae; padding: 80rpx 0; }
 .state button { margin-top: 16rpx; }
 .list { display: flex; flex-direction: column; gap: 16rpx; }
-.card { background: #fff; border-radius: 16rpx; padding: 20rpx; }
-.line { font-size: 24rpx; color: #344334; margin-top: 8rpx; }
+.card { background: #ffffff; border-radius: 16rpx; padding: 20rpx; border: 1rpx solid #e4eadf; }
+.line { font-size: 24rpx; color: #647457; margin-top: 8rpx; }
 .skeleton-list { display: flex; flex-direction: column; gap: 16rpx; }
-.skeleton-card { height: 148rpx; border-radius: 16rpx; background: #edf2ed; }
+.skeleton-card { height: 148rpx; border-radius: 16rpx; background: #edf6e0; }
 .shimmer { position: relative; overflow: hidden; }
 .shimmer::after {
   content: '';
@@ -31,18 +31,18 @@
   padding: 12rpx 20rpx;
   margin-right: 10rpx;
   border-radius: 999rpx;
-  background: #eef3ef;
-  color: #4c5c4c;
+  background: #edf6e0;
+  color: #647457;
   font-size: 24rpx;
 }
 
 .tab.active {
-  background: #07c160;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
   color: #ffffff;
 }
 
 .danger {
-  color: #e54d42;
+  color: #5a8a28;
 }
 
 .actions {
@@ -58,19 +58,20 @@
   line-height: 56rpx;
   padding: 0 18rpx;
   border-radius: 999rpx;
-  border: 1rpx solid #d8e3d8;
+  border: 1rpx solid #e4eadf;
   background: #ffffff;
-  color: #3a4a3a;
+  color: #647457;
   font-size: 22rpx;
 }
 
 .mini-btn.primary {
-  background: #07c160;
-  border-color: #07c160;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
+  border-color: #73a937;
   color: #ffffff;
 }
 
 .mini-btn.danger {
-  border-color: #f3c5c1;
-  color: #d43c33;
+  border-color: #b8c2ae;
+  color: #5a8a28;
 }
+

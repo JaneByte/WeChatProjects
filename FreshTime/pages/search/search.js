@@ -14,8 +14,19 @@ Page({
     loadError: false
   },
 
-  onLoad() {
+  onLoad(options = {}) {
     this.loadHistory();
+    const rawKeyword = (options.keyword || '').trim();
+    let keyword = rawKeyword;
+    if (rawKeyword) {
+      try {
+        keyword = decodeURIComponent(rawKeyword);
+      } catch (error) {
+        keyword = rawKeyword;
+      }
+    }
+    if (!keyword) return;
+    this.setData({ keyword }, () => this.onSearch());
   },
 
   loadHistory() {

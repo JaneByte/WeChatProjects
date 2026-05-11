@@ -173,6 +173,7 @@ public class OrderServiceImpl implements OrderService {
         orderInfo.setReceiverPhone(receiverPhone);
         orderInfo.setReceiverAddress(receiverAddress);
         orderInfo.setRemark(request.getRemark());
+        orderInfo.setCouponId(couponId);
         orderInfo.setStatus(0);
         orderInfo.setPayStatus(0);
 
@@ -254,6 +255,7 @@ public class OrderServiceImpl implements OrderService {
         if (updated <= 0) {
             return ApiResponse.badRequest("取消失败，请重试");
         }
+        restoreCouponIfNeeded(order);
 
         return ApiResponse.success("取消成功", null);
     }
@@ -393,6 +395,7 @@ public class OrderServiceImpl implements OrderService {
         if (updated <= 0) {
             return ApiResponse.badRequest("过期取消失败，请重试");
         }
+        restoreCouponIfNeeded(order);
         return ApiResponse.success("订单已过期取消", null);
     }
 
@@ -457,6 +460,7 @@ public class OrderServiceImpl implements OrderService {
         if (updated <= 0) {
             return ApiResponse.badRequest("退款完成失败，请重试");
         }
+        restoreCouponIfNeeded(order);
         return ApiResponse.success("退款已完成", null);
     }
 
@@ -547,7 +551,17 @@ public class OrderServiceImpl implements OrderService {
             return;
         }
         orderMapper.restoreGoodsStockByOrderId(order.getId());
-        orderMapper.updateOrderStatus(order.getId(), order.getUserId(), 0, 4);
+        int updated = orderMapper.updateOrderStatus(order.getId(), order.getUserId(), 0, 4);
+        if (updated > 0) {
+            restoreCouponIfNeeded(order);
+        }
+    }
+
+    private void restoreCouponIfNeeded(OrderInfo order) {
+        if (order == null || order.getCouponId() == null || order.getUserId() == null) {
+            return;
+        }
+        couponMapper.markUnused(order.getCouponId(), order.getUserId());
     }
 
     private String emptyToDefault(String value, String fallback) {

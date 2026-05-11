@@ -16,6 +16,7 @@
     "pages/pay-result/pay-result",
     "pages/comment-edit/comment-edit",
     "pages/trace-detail/trace-detail",
+    "pages/knowledge-detail/knowledge-detail",
     "pages/coupon/coupon",
     "pages/service/service",
     "pages/settings/settings"

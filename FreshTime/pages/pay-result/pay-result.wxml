@@ -1,13 +1,16 @@
 <view class='pay-result-page'>
   <view class='card'>
+    <view wx:if='{{loading}}' class='desc'>正在同步订单状态...</view>
+    <view wx:elif='{{loadError}}' class='desc'>订单状态获取失败，请返回订单列表查看</view>
+    <block wx:else>
     <view class='icon {{success ? "success" : "fail"}}'>{{success ? '√' : '!'}}</view>
     <view class='title'>{{success ? '支付成功' : '支付失败'}}</view>
     <view class='desc'>{{message}}</view>
     <view wx:if='{{success && payTradeNo}}' class='desc'>支付单号：{{payTradeNo}}</view>
     <view wx:if='{{success && payChannel}}' class='desc'>支付渠道：{{payChannel}}</view>
+    </block>
     <view class='actions'>
-      <button wx:if='{{orderId && success}}' class='btn primary' bindtap='goOrderDetail'>查看订单详情</button>
-      <button wx:elif='{{orderId && !success}}' class='btn primary' bindtap='goOrderDetail'>返回订单重试</button>
+      <button wx:if='{{orderId}}' class='btn primary' bindtap='goOrderDetail'>查看订单详情</button>
       <button wx:else class='btn primary' bindtap='goOrderList'>查看订单</button>
       <button class='btn' bindtap='goHome'>返回首页</button>
     </view>

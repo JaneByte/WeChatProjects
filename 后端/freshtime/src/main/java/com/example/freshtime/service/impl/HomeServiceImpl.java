@@ -2,7 +2,6 @@ package com.example.freshtime.service.impl;
 
 import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.entity.Goods;
-import com.example.freshtime.entity.HomeOriginCard;
 import com.example.freshtime.mapper.HomeMapper;
 import com.example.freshtime.service.HomeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import java.util.Map;
 
 @Service
 public class HomeServiceImpl implements HomeService {
-
     @Autowired
     private HomeMapper homeMapper;
 
@@ -27,7 +25,7 @@ public class HomeServiceImpl implements HomeService {
 
         Goods todayRecommend = homeMapper.selectTodayRecommend();
         List<Goods> flashList = homeMapper.selectFlashSaleList(now, 10);
-        List<HomeOriginCard> traceList = homeMapper.selectOriginCards(10);
+        List<Object> traceList = new ArrayList<>();
         Integer newArrivalCount = homeMapper.countNewArrivals(sevenDaysAgo);
         List<Map<String, Object>> bannerList = homeMapper.selectActiveBanners(5);
         List<Map<String, Object>> noticeList = homeMapper.selectActiveNotices(6);
@@ -39,8 +37,8 @@ public class HomeServiceImpl implements HomeService {
         data.put("todayRecommend", todayRecommend);
         data.put("banners", bannerList == null ? new ArrayList<>() : bannerList);
         data.put("newArrivalList", newArrivalList == null ? new ArrayList<>() : newArrivalList);
-        data.put("notices", (noticeList == null || noticeList.isEmpty()) ? buildDefaultNotices() : noticeList);
-        data.put("navList", (navList == null || navList.isEmpty()) ? buildDefaultNavList() : navList);
+        data.put("notices", noticeList == null ? new ArrayList<>() : noticeList);
+        data.put("navList", navList == null ? new ArrayList<>() : navList);
 
         Map<String, Object> flash = new HashMap<>();
         if (flashList != null && !flashList.isEmpty()) {
@@ -57,42 +55,8 @@ public class HomeServiceImpl implements HomeService {
         data.put("flash", flash);
 
         data.put("traceList", traceList);
+        data.put("traceVisible", false);
         return ApiResponse.success(data);
-    }
-
-    private List<Map<String, Object>> buildDefaultNotices() {
-        List<Map<String, Object>> notices = new ArrayList<>();
-        notices.add(buildNoticeItem("1", "今日上新优先发货，最快次日达", "none", ""));
-        notices.add(buildNoticeItem("2", "限时秒杀库存有限，先到先得", "goods", "flash"));
-        return notices;
-    }
-
-    private Map<String, Object> buildNoticeItem(String id, String text, String linkType, String linkValue) {
-        Map<String, Object> item = new HashMap<>();
-        item.put("id", id);
-        item.put("text", text);
-        item.put("linkType", linkType);
-        item.put("linkValue", linkValue);
-        return item;
-    }
-
-    private List<Map<String, Object>> buildDefaultNavList() {
-        List<Map<String, Object>> navList = new ArrayList<>();
-        navList.add(buildNavItem("seasonal", "时令优选", "时", "goods", "seasonal"));
-        navList.add(buildNavItem("hot", "热销爆款", "热", "goods", "hot"));
-        navList.add(buildNavItem("flash", "限时秒杀", "秒", "goods", "flash"));
-        navList.add(buildNavItem("category", "全部分类", "类", "category", "category"));
-        return navList;
-    }
-
-    private Map<String, Object> buildNavItem(String type, String text, String iconText, String linkType, String linkValue) {
-        Map<String, Object> item = new HashMap<>();
-        item.put("type", type);
-        item.put("text", text);
-        item.put("iconText", iconText);
-        item.put("linkType", linkType);
-        item.put("linkValue", linkValue);
-        return item;
     }
 
     @Override
@@ -112,6 +76,21 @@ public class HomeServiceImpl implements HomeService {
         data.put("pageSize", safePageSize);
         data.put("total", totalCount);
         data.put("hasMore", hasMore);
+        return ApiResponse.success(data);
+    }
+
+    @Override
+    public ApiResponse<?> getRecommendGoodsByKeyword(String keyword, Integer limit) {
+        String clean = keyword == null ? "" : keyword.trim();
+        if (clean.isEmpty()) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("list", new ArrayList<>());
+            return ApiResponse.success(data);
+        }
+        int safeLimit = (limit == null || limit < 1) ? 4 : Math.min(limit, 10);
+        List<Goods> list = homeMapper.selectRecommendGoodsByKeyword(clean, safeLimit);
+        Map<String, Object> data = new HashMap<>();
+        data.put("list", list == null ? new ArrayList<>() : list);
         return ApiResponse.success(data);
     }
 }

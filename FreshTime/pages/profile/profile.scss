@@ -1,4 +1,4 @@
-﻿$bg-page: #f8faf5;
+$bg-page: #f8faf5;
 $bg-card: #ffffff;
 $primary: #73a937;
 $primary-dark: #1e3311;
@@ -87,19 +87,6 @@ page {
 .card-link {
   font-size: 24rpx;
   color: $text-placeholder;
-}
-
-.card-link--danger {
-  color: #5a8a28;
-}
-
-.user-id-row {
-  margin-top: 10rpx;
-}
-
-.user-id-text {
-  font-size: 22rpx;
-  color: $text-secondary;
 }
 
 .order-grid {

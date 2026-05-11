@@ -1,21 +1,62 @@
+const { get } = require('../../utils/request');
+const { showRequestError } = require('../../utils/ui');
+const app = getApp();
+
 Page({
   data: {
-    success: true,
-    message: '订单支付已完成，可前往订单列表查看状态',
+    success: false,
+    loading: true,
+    loadError: false,
+    message: '正在同步订单状态...',
     orderId: null,
     payTradeNo: '',
     payChannel: ''
   },
 
   onLoad(options) {
-    const success = options.result !== 'fail';
     const orderId = Number(options.orderId || 0) || null;
-    const payTradeNo = options.payTradeNo ? decodeURIComponent(options.payTradeNo) : '';
-    const payChannel = options.payChannel ? decodeURIComponent(options.payChannel) : '';
-    const message = success
-      ? '订单支付已完成，可前往订单列表查看状态'
-      : '支付未完成，请返回订单页重试';
-    this.setData({ success, message, orderId, payTradeNo, payChannel });
+    this.setData({ orderId }, () => this.loadOrderStatus());
+  },
+
+  loadOrderStatus() {
+    const userId = app.getUserId && app.getUserId();
+    const orderId = this.data.orderId;
+    if (!userId || !orderId) {
+      this.setData({
+        loading: false,
+        loadError: true,
+        success: false,
+        message: '订单状态获取失败，请返回订单列表查看'
+      });
+      return;
+    }
+
+    this.setData({ loading: true, loadError: false });
+    get('/order/detail', { userId, orderId }, { retry: 0 })
+      .then((res) => {
+        const detail = (res && res.data) || {};
+        const status = Number(detail.status);
+        const payStatus = Number(detail.payStatus);
+        const success = payStatus === 2 || status === 1 || status === 2 || status === 3 || status === 6 || status === 5;
+        const message = success
+          ? '订单支付已完成，可前往订单详情查看状态'
+          : '支付未完成，请返回订单页重试';
+        this.setData({
+          success,
+          message,
+          payTradeNo: detail.payTradeNo || '',
+          payChannel: detail.payChannel || ''
+        });
+      })
+      .catch((error) => {
+        this.setData({
+          success: false,
+          loadError: true,
+          message: '订单状态获取失败，请返回订单列表查看'
+        });
+        showRequestError(error, '订单状态获取失败');
+      })
+      .finally(() => this.setData({ loading: false }));
   },
 
   goOrderList() {

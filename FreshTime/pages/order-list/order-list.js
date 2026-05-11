@@ -1,4 +1,4 @@
-﻿const { get, post } = require('../../utils/request');
+const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
 const app = getApp();
 
@@ -151,18 +151,10 @@ Page({
     if (!userId) return;
     if (this.data.actionLoading) return;
     this.setData({ actionLoading: true });
-    post(`/order/pay/mock-create?userId=${userId}&orderId=${id}`, {}, { retry: 0 })
-      .then((payRes) => {
-        const payData = (payRes && payRes.data) || {};
-        return post('/order/pay/mock-confirm', {
-          userId,
-          orderId: id,
-          payTradeNo: payData.payTradeNo
-        }, { retry: 0 }).then((confirmRes) => {
-          const confirmData = (confirmRes && confirmRes.data) || {};
-          wx.redirectTo({
-            url: `/pages/pay-result/pay-result?result=success&orderId=${id}&payTradeNo=${encodeURIComponent(confirmData.payTradeNo || '')}&payChannel=${encodeURIComponent(confirmData.payChannel || '')}`
-          });
+    post(`/order/pay?userId=${userId}&orderId=${id}`, {}, { retry: 0 })
+      .then(() => {
+        wx.redirectTo({
+          url: `/pages/pay-result/pay-result?result=success&orderId=${id}`
         });
       })
       .catch((error) => showRequestError(error, '支付失败'))

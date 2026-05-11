@@ -9,13 +9,9 @@ Page({
       desc: '查看蔬果来源、采收与检测信息',
       meta: 'FreshTime 溯源中心'
     },
-    list: [
-      { label: '产地位置', value: '广西百色' },
-      { label: '采收日期', value: '2026-04-26' },
-      { label: '质检批次', value: 'FT-TRACE-240426' },
-      { label: '冷链状态', value: '全程冷链在途' }
-    ],
-    loading: false
+    list: [],
+    loading: false,
+    loadError: false
   },
 
   onLoad(options) {
@@ -34,20 +30,27 @@ Page({
     });
     if (goodsId) {
       this.loadTraceDetail(goodsId);
+    } else {
+      this.setData({ list: [], loadError: true });
     }
   },
 
   loadTraceDetail(goodsId) {
-    this.setData({ loading: true });
+    this.setData({ loading: true, loadError: false });
     get('/trace/detail', { goodsId }, { retry: 0 })
       .then((res) => {
         const data = (res && res.data) || {};
+        const list = Array.isArray(data.list) ? data.list : [];
         this.setData({
           trace: data.trace || this.data.trace,
-          list: Array.isArray(data.list) ? data.list : this.data.list
+          list,
+          loadError: list.length === 0
         });
       })
-      .catch((error) => showRequestError(error, '溯源信息加载失败'))
+      .catch((error) => {
+        this.setData({ list: [], loadError: true });
+        showRequestError(error, '溯源信息加载失败');
+      })
       .finally(() => this.setData({ loading: false }));
   }
 });

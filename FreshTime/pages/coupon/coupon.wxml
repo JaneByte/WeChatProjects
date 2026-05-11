@@ -1,8 +1,41 @@
 <view class='page'>
-  <view class='coupon' wx:for='{{list}}' wx:key='id'>
-    <view class='amount'>{{item.title}}</view>
-    <view class='desc'>{{item.condition}}</view>
+  <view class='hero'>
+    <text class='hero-title'>领券福利</text>
+    <text class='hero-sub'>先领券再下单，结算更划算</text>
+  </view>
+
+  <view class='section-title'>可领取</view>
+  <view class='coupon' wx:for='{{availableList}}' wx:key='id'>
+    <view class='coupon-top'>
+      <view>
+        <view class='amount'>{{item.title}}</view>
+        <view class='desc'>{{item.condition}}</view>
+      </view>
+      <view class='badge'>可领</view>
+    </view>
     <view class='expire'>有效期至：{{item.expireAt}}</view>
+    <button
+      class='claim-btn'
+      size='mini'
+      disabled='{{item.claimed || claimLoadingId === item.id}}'
+      data-id='{{item.id}}'
+      bindtap='onClaimTap'
+    >
+      {{item.claimed ? '已领取' : (claimLoadingId === item.id ? '领取中...' : '立即领取')}}
+    </button>
+    <button class='use-btn' size='mini' bindtap='onUseTap'>去使用</button>
+  </view>
+
+  <view class='section-title'>我的优惠券</view>
+  <view class='coupon' wx:for='{{list}}' wx:key='id'>
+    <view class='coupon-top'>
+      <view>
+        <view class='amount'>{{item.title}}</view>
+        <view class='desc'>{{item.condition}}</view>
+      </view>
+      <view class='badge owned'>已领取</view>
+    </view>
+    <view class='expire'>有效期至：{{item.expireAt}}</view>
+    <button class='use-btn' size='mini' bindtap='onUseTap'>去使用</button>
   </view>
 </view>
-

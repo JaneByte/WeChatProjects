@@ -1,7 +1,6 @@
 package com.example.freshtime.mapper;
 
 import com.example.freshtime.entity.Goods;
-import com.example.freshtime.entity.HomeOriginCard;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -22,11 +21,8 @@ public interface HomeMapper {
             "WHERE status = 1 AND is_flash = 1 AND flash_stock > 0 " +
             "AND flash_start_time IS NOT NULL AND flash_end_time IS NOT NULL " +
             "AND flash_start_time <= #{now} AND flash_end_time >= #{now} " +
-            "ORDER BY home_sort ASC, flash_price ASC, create_time DESC LIMIT #{limit}")
+            "ORDER BY flash_end_time ASC, home_sort ASC, flash_price ASC, sales_volume DESC LIMIT #{limit}")
     List<Goods> selectFlashSaleList(@Param("now") LocalDateTime now, @Param("limit") Integer limit);
-
-    @Select("SELECT * FROM home_origin_card WHERE status = 1 ORDER BY sort ASC, create_time DESC LIMIT #{limit}")
-    List<HomeOriginCard> selectOriginCards(@Param("limit") Integer limit);
 
     @Select("SELECT id, title, image, link_type AS linkType, link_value AS linkValue " +
             "FROM banner WHERE status = 1 ORDER BY sort ASC, create_time DESC LIMIT #{limit}")
@@ -50,10 +46,16 @@ public interface HomeMapper {
 
     @Select("SELECT * FROM goods " +
             "WHERE status = 1 AND show_in_home = 1 " +
-            "ORDER BY home_sort ASC, sales_volume DESC, create_time DESC " +
+            "ORDER BY sales_volume DESC, home_sort ASC, create_time DESC " +
             "LIMIT #{offset}, #{pageSize}")
     List<Goods> selectHomeGoodsPage(@Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
 
     @Select("SELECT COUNT(1) FROM goods WHERE status = 1 AND show_in_home = 1")
     Integer countHomeGoods();
+
+    @Select("SELECT * FROM goods " +
+            "WHERE status = 1 AND show_in_home = 1 AND stock > 0 AND " +
+            "(name LIKE CONCAT('%', #{keyword}, '%') OR keywords LIKE CONCAT('%', #{keyword}, '%')) " +
+            "ORDER BY sales_volume DESC, home_sort ASC, create_time DESC LIMIT #{limit}")
+    List<Goods> selectRecommendGoodsByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
 }

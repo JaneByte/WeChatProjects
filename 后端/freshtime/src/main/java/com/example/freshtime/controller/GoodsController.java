@@ -18,7 +18,12 @@ public class GoodsController {
     private GoodsService goodsService;
 
     @GetMapping("/list")
-    public ApiResponse<?> getGoodsList(@RequestParam(required = false) Long categoryId) {
+    public ApiResponse<?> getGoodsList(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String scene) {
+        if (scene != null && !scene.trim().isEmpty()) {
+            return goodsService.getGoodsListByScene(scene);
+        }
         if (categoryId != null) {
             return goodsService.getGoodsList(categoryId);
         }
@@ -36,7 +41,10 @@ public class GoodsController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<?> searchGoods(@RequestParam String keyword) {
-        return goodsService.searchGoods(keyword);
+    public ApiResponse<?> searchGoods(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize) {
+        return goodsService.searchGoods(keyword, page, pageSize);
     }
 }

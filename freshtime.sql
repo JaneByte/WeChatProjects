@@ -11,7 +11,7 @@
  Target Server Version : 50562 (5.5.62)
  File Encoding         : 65001
 
- Date: 07/05/2026 16:26:46
+ Date: 09/05/2026 18:13:51
 */
 
 SET NAMES utf8mb4;
@@ -33,14 +33,14 @@ CREATE TABLE `address`  (
   `is_default` tinyint(4) NULL DEFAULT 0 COMMENT '是否默认地址 0否 1是',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '收货地址表' ROW_FORMAT = Compact;
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  CONSTRAINT `fk_address_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 99004 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '收货地址表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of address
 -- ----------------------------
 INSERT INTO `address` VALUES (1, 2, '陈女士', '123456', '湖南省', '长沙', '天心区', '中南林业科技大学', 0, '2026-04-28 16:22:17');
-INSERT INTO `address` VALUES (2, 3693519, 'jiannvshi', '123', 'q', 'a', 'a', '1', 0, '2026-04-28 16:26:07');
 INSERT INTO `address` VALUES (3, 22, 'abc', '12345678910', '北京市', '海淀区', 'a', 'xxxx', 0, '2026-04-28 18:42:09');
 INSERT INTO `address` VALUES (4, 25, 'a', '18229656601', 'a', 'xx', 'avbc', 'iii', 0, '2026-04-28 18:50:13');
 INSERT INTO `address` VALUES (5, 25, 'a', '18229656601', 'a', 'xx', 'avbc', 'iii', 0, '2026-04-28 18:50:14');
@@ -51,26 +51,9 @@ INSERT INTO `address` VALUES (9, 51, '1', '12345678910', 'a', 'a', 'a', 'a', 0, 
 INSERT INTO `address` VALUES (11, 60, 'a', '12345678910', 'a', 'a', 's', 'f', 0, '2026-05-02 17:37:14');
 INSERT INTO `address` VALUES (12, 66, '1', '12345678910', '1', '1', '1', '1', 0, '2026-05-02 17:52:49');
 INSERT INTO `address` VALUES (13, 68, '1', '12345678909', '1', '1', 's', 'x', 0, '2026-05-02 18:11:28');
-
--- ----------------------------
--- Table structure for admin
--- ----------------------------
-DROP TABLE IF EXISTS `admin`;
-CREATE TABLE `admin`  (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '管理员ID',
-  `username` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '登录账号',
-  `password` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '登录密码（加密存储）',
-  `name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '姓名',
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '手机号',
-  `status` tinyint(4) NULL DEFAULT 1 COMMENT '状态 0禁用 1正常',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_username`(`username`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '管理员表' ROW_FORMAT = Compact;
-
--- ----------------------------
--- Records of admin
--- ----------------------------
+INSERT INTO `address` VALUES (99001, 999001, '联调收货人', '13800000001', '湖南省', '长沙市', '天心区', '芙蓉南路 88 号', 1, '2026-05-07 16:38:30');
+INSERT INTO `address` VALUES (99002, 999001, '联调备选地址', '13800000002', '湖南省', '长沙市', '岳麓区', '麓谷大道 66 号', 0, '2026-05-07 16:38:30');
+INSERT INTO `address` VALUES (99003, 999009, '1', '12312341234', 'a', 'b', 'a', 'j', 0, '2026-05-07 21:02:47');
 
 -- ----------------------------
 -- Table structure for banner
@@ -80,17 +63,20 @@ CREATE TABLE `banner`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '轮播图ID',
   `title` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '标题',
   `image` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '图片URL',
-  `link_type` tinyint(4) NULL DEFAULT 0 COMMENT '跳转类型 0无 1商品详情 2分类 3外链',
+  `link_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'none' COMMENT '跳转类型：none/goodsDetail/category/url/knowledge/search/goods',
   `link_value` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '跳转值（商品ID/分类ID/URL）',
   `sort` int(11) NULL DEFAULT 0 COMMENT '排序值',
   `status` tinyint(4) NULL DEFAULT 1 COMMENT '状态 0禁用 1启用',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '轮播图表' ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '轮播图表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of banner
 -- ----------------------------
+INSERT INTO `banner` VALUES (1, '品牌主题', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/鲜时刻品牌主题.jpg', 'knowledge', '1', 1, 1, '2026-05-07 16:38:20');
+INSERT INTO `banner` VALUES (2, '当季维C补给', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/1.jpg', 'knowledge', '2', 2, 1, '2026-05-07 16:38:20');
+INSERT INTO `banner` VALUES (3, '一周轻食搭配', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/banner/2.jpg', 'knowledge', '3', 3, 1, '2026-05-07 16:38:20');
 
 -- ----------------------------
 -- Table structure for cart
@@ -106,8 +92,11 @@ CREATE TABLE `cart`  (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_user_goods`(`user_id`, `goods_id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '购物车表' ROW_FORMAT = Compact;
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  INDEX `fk_cart_goods`(`goods_id`) USING BTREE,
+  CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_cart_goods` FOREIGN KEY (`goods_id`) REFERENCES `goods` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 99017 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '购物车表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of cart
@@ -120,6 +109,9 @@ INSERT INTO `cart` VALUES (15, 60, 2, 1, 1, 1, '2026-05-02 17:43:26');
 INSERT INTO `cart` VALUES (16, 65, 1, 1, 1, 1, '2026-05-02 17:48:18');
 INSERT INTO `cart` VALUES (17, 65, 3, 1, 1, 1, '2026-05-02 17:48:18');
 INSERT INTO `cart` VALUES (24, 136, 2, 1, 1, 1, '2026-05-03 18:27:02');
+INSERT INTO `cart` VALUES (99001, 999001, 1, 1, 2, 1, '2026-05-07 16:38:30');
+INSERT INTO `cart` VALUES (99002, 999001, 4, 1, 1, 1, '2026-05-07 16:38:30');
+INSERT INTO `cart` VALUES (99003, 999001, 13, 1, 3, 1, '2026-05-07 16:38:30');
 
 -- ----------------------------
 -- Table structure for category
@@ -181,6 +173,29 @@ CREATE TABLE `comment`  (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for coupon
+-- ----------------------------
+DROP TABLE IF EXISTS `coupon`;
+CREATE TABLE `coupon`  (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '优惠券名称',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '优惠说明',
+  `threshold_amount` decimal(10, 2) NOT NULL DEFAULT 0.00 COMMENT '使用门槛',
+  `discount_amount` decimal(10, 2) NOT NULL DEFAULT 0.00 COMMENT '优惠金额',
+  `expire_date` date NULL DEFAULT NULL COMMENT '过期日期',
+  `status` tinyint(4) NOT NULL DEFAULT 1 COMMENT '状态 0禁用 1启用',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9004 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '优惠券模板表' ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of coupon
+-- ----------------------------
+INSERT INTO `coupon` VALUES (9001, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-09 17:10:08');
+INSERT INTO `coupon` VALUES (9002, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-09 17:10:08');
+INSERT INTO `coupon` VALUES (9003, '满39减5', '新人专享', 39.00, 5.00, '2026-12-31', 1, '2026-05-09 17:10:08');
+
+-- ----------------------------
 -- Table structure for goods
 -- ----------------------------
 DROP TABLE IF EXISTS `goods`;
@@ -215,48 +230,31 @@ CREATE TABLE `goods`  (
   INDEX `idx_status`(`status`) USING BTREE,
   INDEX `idx_goods_home`(`show_in_home`, `status`, `home_sort`) USING BTREE,
   INDEX `idx_goods_flash`(`is_flash`, `flash_start_time`, `flash_end_time`, `status`) USING BTREE,
-  INDEX `idx_goods_sales`(`sales_volume`, `status`) USING BTREE
+  INDEX `idx_goods_sales`(`sales_volume`, `status`) USING BTREE,
+  CONSTRAINT `fk_goods_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '商品表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of goods
 -- ----------------------------
-INSERT INTO `goods` VALUES (1, 1, 11, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', NULL, NULL, 25.80, 32.80, 89, '斤', 903, 1, 0, NULL, NULL, NULL, 0, 3, 1, 1, '2026-04-26 23:44:33', '草莓,奶油草莓,浆果', '山东');
+INSERT INTO `goods` VALUES (1, 1, 11, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', NULL, NULL, 25.80, 32.80, 86, '斤', 906, 1, 1, 23.22, '2026-05-07 00:00:00', '2026-12-31 23:59:59', 50, 3, 1, 1, '2026-04-26 23:44:33', '草莓,奶油草莓,浆果', '山东');
 INSERT INTO `goods` VALUES (2, 1, 11, '蓝莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/蓝莓.jpg', NULL, NULL, 38.80, 45.80, 74, '盒', 462, 0, 0, NULL, NULL, NULL, 0, 5, 1, 1, '2026-04-25 23:44:33', '蓝莓,浆果,护眼', '云南');
 INSERT INTO `goods` VALUES (3, 1, 11, '巨峰葡萄', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/巨峰葡萄.jpg', NULL, NULL, 18.80, NULL, 139, '斤', 1035, 1, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '葡萄,巨峰,多汁', '新疆');
-INSERT INTO `goods` VALUES (4, 1, 12, '橙子', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/橙子.jpg', NULL, NULL, 8.80, 10.80, 300, '斤', 1567, 1, 0, NULL, NULL, NULL, 0, 2, 1, 1, '2026-04-26 23:44:33', '橙子,柑橘,维C', '江西');
+INSERT INTO `goods` VALUES (4, 1, 12, '橙子', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/橙子.jpg', NULL, NULL, 8.80, 10.80, 299, '斤', 1568, 1, 1, 7.92, '2026-05-07 00:00:00', '2026-12-31 23:59:59', 50, 2, 1, 1, '2026-04-26 23:44:33', '橙子,柑橘,维C', '江西');
 INSERT INTO `goods` VALUES (5, 1, 12, '丑橘', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/丑橘.jpg', NULL, NULL, 7.50, NULL, 247, '斤', 1027, 1, 1, 7.90, '2026-04-27 23:44:33', '2026-04-28 05:44:33', 22, 0, 1, 1, '2026-04-21 15:33:25', '丑橘,柑橘,果冻橙', '四川');
 INSERT INTO `goods` VALUES (6, 1, 12, '柠檬', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/柠檬.jpg', NULL, NULL, 6.80, 8.80, 180, '斤', 567, 0, 1, 6.90, '2026-04-27 23:44:33', '2026-04-28 05:44:33', 30, 0, 1, 1, '2026-04-21 15:33:25', '柠檬,泡水,维C', '海南');
 INSERT INTO `goods` VALUES (7, 1, 13, '西瓜', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/瓜类/西瓜.jpg', NULL, NULL, 3.80, NULL, 300, '斤', 1567, 0, 0, NULL, NULL, NULL, 0, 6, 1, 1, '2026-04-21 15:33:25', '西瓜,瓜类,夏季', '河南');
 INSERT INTO `goods` VALUES (8, 1, 13, '哈密瓜', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/瓜类/哈密瓜.jpg', NULL, NULL, 8.80, 10.80, 150, '个', 678, 1, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '哈密瓜,瓜类,香甜', '新疆');
 INSERT INTO `goods` VALUES (9, 1, 13, '香瓜', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/瓜类/香瓜.jpg', NULL, NULL, 6.80, NULL, 120, '斤', 345, 0, 1, 5.90, '2026-04-27 23:44:33', '2026-04-28 05:44:33', 36, 0, 1, 1, '2026-04-21 15:33:25', '香瓜,瓜类,清甜', '海南');
-INSERT INTO `goods` VALUES (10, 1, 14, '水蜜桃', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/水蜜桃.jpg', NULL, NULL, 18.80, 22.80, 120, '斤', 678, 1, 0, NULL, NULL, NULL, 0, 4, 1, 1, '2026-04-25 23:44:33', '水蜜桃,核果,香甜', '浙江');
+INSERT INTO `goods` VALUES (10, 1, 14, '水蜜桃', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/水蜜桃.jpg', NULL, NULL, 18.80, 22.80, 119, '斤', 679, 1, 1, 16.92, '2026-05-07 00:00:00', '2026-12-31 23:59:59', 50, 4, 1, 1, '2026-04-25 23:44:33', '水蜜桃,核果,香甜', '浙江');
 INSERT INTO `goods` VALUES (11, 1, 14, '黑布李', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/黑布李.jpg', NULL, NULL, 12.80, NULL, 150, '斤', 345, 0, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '黑布李,李子,核果', '广东');
 INSERT INTO `goods` VALUES (12, 1, 14, '樱桃', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/樱桃.jpg', NULL, NULL, 48.80, 58.80, 60, '斤', 234, 1, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '樱桃,核果,高端水果', '山东');
-INSERT INTO `goods` VALUES (13, 1, 15, '红富士苹果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/红富士苹果.jpg', NULL, NULL, 9.80, 12.80, 299, '斤', 2049, 1, 0, NULL, NULL, NULL, 0, 1, 1, 1, '2026-04-26 23:44:33', '苹果,红富士,脆甜', '陕西');
+INSERT INTO `goods` VALUES (13, 1, 15, '红富士苹果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/红富士苹果.jpg', NULL, NULL, 9.80, 12.80, 298, '斤', 2050, 1, 1, 8.82, '2026-05-07 00:00:00', '2026-12-31 23:59:59', 50, 1, 1, 1, '2026-04-26 23:44:33', '苹果,红富士,脆甜', '陕西');
 INSERT INTO `goods` VALUES (14, 1, 15, '皇冠梨', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/皇冠梨.jpg', NULL, NULL, 7.80, NULL, 250, '斤', 1024, 0, 0, NULL, NULL, NULL, 0, 7, 1, 1, '2026-04-21 15:33:25', '皇冠梨,梨,多汁', '河北');
 INSERT INTO `goods` VALUES (15, 1, 15, '枇杷', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/枇杷.jpg', NULL, NULL, 8.80, 10.80, 180, '斤', 567, 0, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '枇杷,仁果,润喉', '福建');
 INSERT INTO `goods` VALUES (16, 1, 16, '菠萝', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/聚花果及其他/菠萝.jpg', NULL, NULL, 12.80, 15.80, 100, '个', 678, 0, 0, NULL, NULL, NULL, 0, 8, 1, 1, '2026-04-25 23:44:33', '菠萝,热带水果,酸甜', '海南');
 INSERT INTO `goods` VALUES (17, 1, 16, '无花果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/聚花果及其他/无花果.jpg', NULL, NULL, 22.80, 28.80, 60, '斤', 234, 1, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '无花果,聚花果,软糯', '四川');
 INSERT INTO `goods` VALUES (18, 1, 16, '桑葚', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/聚花果及其他/桑葚.jpg', NULL, NULL, 15.80, NULL, 76, '盒', 349, 0, 0, NULL, NULL, NULL, 0, 0, 1, 1, '2026-04-21 15:33:25', '桑葚,浆果,花青素', '广西');
-
--- ----------------------------
--- Table structure for goods_sku
--- ----------------------------
-DROP TABLE IF EXISTS `goods_sku`;
-CREATE TABLE `goods_sku`  (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '规格ID',
-  `goods_id` bigint(20) NOT NULL COMMENT '商品ID',
-  `spec_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '规格名称（如：500g、1000g）',
-  `price` decimal(10, 2) NOT NULL COMMENT '规格价格',
-  `stock` int(11) NOT NULL DEFAULT 0 COMMENT '规格库存',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_goods_id`(`goods_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '商品规格表' ROW_FORMAT = Compact;
-
--- ----------------------------
--- Records of goods_sku
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for goods_tag
@@ -266,12 +264,30 @@ CREATE TABLE `goods_tag`  (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `goods_id` bigint(20) NOT NULL,
   `tag_id` bigint(20) NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_goods_tag_goods_tag`(`goods_id`, `tag_id`) USING BTREE,
+  INDEX `fk_goods_tag_tag`(`tag_id`) USING BTREE,
+  CONSTRAINT `fk_goods_tag_goods` FOREIGN KEY (`goods_id`) REFERENCES `goods` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_goods_tag_tag` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of goods_tag
 -- ----------------------------
+INSERT INTO `goods_tag` VALUES (1, 1, 101);
+INSERT INTO `goods_tag` VALUES (9, 2, 102);
+INSERT INTO `goods_tag` VALUES (17, 3, 103);
+INSERT INTO `goods_tag` VALUES (2, 4, 101);
+INSERT INTO `goods_tag` VALUES (18, 5, 103);
+INSERT INTO `goods_tag` VALUES (10, 6, 102);
+INSERT INTO `goods_tag` VALUES (19, 9, 103);
+INSERT INTO `goods_tag` VALUES (3, 10, 101);
+INSERT INTO `goods_tag` VALUES (20, 11, 103);
+INSERT INTO `goods_tag` VALUES (11, 12, 102);
+INSERT INTO `goods_tag` VALUES (4, 13, 101);
+INSERT INTO `goods_tag` VALUES (21, 14, 103);
+INSERT INTO `goods_tag` VALUES (22, 16, 103);
+INSERT INTO `goods_tag` VALUES (12, 18, 102);
 
 -- ----------------------------
 -- Table structure for home_nav
@@ -293,10 +309,10 @@ CREATE TABLE `home_nav`  (
 -- ----------------------------
 -- Records of home_nav
 -- ----------------------------
-INSERT INTO `home_nav` VALUES (1, 'seasonal', '时令优选', '时', 'goods', 'seasonal', 1, 1, '2026-05-03 15:53:16');
-INSERT INTO `home_nav` VALUES (2, 'hot', '热销爆款', '热', 'goods', 'hot', 2, 1, '2026-05-03 15:53:16');
-INSERT INTO `home_nav` VALUES (3, 'flash', '限时秒杀', '秒', 'goods', 'flash', 3, 1, '2026-05-03 15:53:16');
-INSERT INTO `home_nav` VALUES (4, 'category', '全部分类', '类', 'category', 'category', 4, 1, '2026-05-03 15:53:16');
+INSERT INTO `home_nav` VALUES (1, 'couponZone', '领券福利', '券', 'goods', 'coupon', 1, 1, '2026-05-09 17:08:18');
+INSERT INTO `home_nav` VALUES (2, 'seasonalFresh', '当季鲜选', '时', 'search', '时令', 2, 1, '2026-05-09 17:08:18');
+INSERT INTO `home_nav` VALUES (3, 'smallPortion', '一人食小份', '小', 'scene', '小份量', 3, 1, '2026-05-09 17:08:18');
+INSERT INTO `home_nav` VALUES (4, 'comboMix', '蔬果搭配', '搭', 'scene', '搭配', 4, 1, '2026-05-09 17:08:18');
 
 -- ----------------------------
 -- Table structure for home_notice
@@ -318,29 +334,6 @@ CREATE TABLE `home_notice`  (
 -- ----------------------------
 INSERT INTO `home_notice` VALUES (1, '今日上新优先发货，最快次日达', 'none', '', 1, 1, '2026-05-03 15:53:16');
 INSERT INTO `home_notice` VALUES (2, '限时秒杀库存有限，先到先得', 'goods', 'flash', 2, 1, '2026-05-03 15:53:16');
-
--- ----------------------------
--- Table structure for home_origin_card
--- ----------------------------
-DROP TABLE IF EXISTS `home_origin_card`;
-CREATE TABLE `home_origin_card`  (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `origin_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '产地名称',
-  `card_desc` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '卡片描述',
-  `card_meta` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '卡片标签',
-  `status` tinyint(4) NULL DEFAULT 1 COMMENT '状态 0禁用1启用',
-  `sort` int(11) NULL DEFAULT 0 COMMENT '排序（越小越靠前）',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_status_sort`(`status`, `sort`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '首页产地溯源卡片' ROW_FORMAT = Compact;
-
--- ----------------------------
--- Records of home_origin_card
--- ----------------------------
-INSERT INTO `home_origin_card` VALUES (1, '山东寿光', '当日采收，次日发货', '蔬菜基地直采', 1, 1, '2026-04-27 23:38:01');
-INSERT INTO `home_origin_card` VALUES (2, '云南高原', '高海拔慢生长，更香甜', '水果产区直供', 1, 2, '2026-04-27 23:38:01');
-INSERT INTO `home_origin_card` VALUES (3, '海南乐东', '热带日照足，口感更稳定', '产地溯源可查', 1, 3, '2026-04-27 23:38:01');
 
 -- ----------------------------
 -- Table structure for merchant
@@ -396,8 +389,11 @@ CREATE TABLE `order`  (
   UNIQUE INDEX `uk_order_no`(`order_no`) USING BTREE,
   INDEX `idx_user_id`(`user_id`) USING BTREE,
   INDEX `idx_merchant_id`(`merchant_id`) USING BTREE,
-  INDEX `idx_status`(`status`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 23 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '订单表' ROW_FORMAT = Compact;
+  INDEX `idx_status`(`status`) USING BTREE,
+  INDEX `fk_order_coupon`(`coupon_id`) USING BTREE,
+  CONSTRAINT `fk_order_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_order_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `coupon` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 99004 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '订单表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of order
@@ -409,7 +405,6 @@ INSERT INTO `order` VALUES (4, 'FT17773607735249F833F', 1, 1, 47.60, 0.00, 47.60
 INSERT INTO `order` VALUES (5, 'FT1777361007976374D76', 1, 1, 44.60, 0.00, 44.60, '默认收货人', '13800000000', '默认收货地址', NULL, NULL, 3, 'mock_wechat', 'MOCK17773610075', 2, '2026-04-28 15:23:30', '2026-04-28 15:23:32', NULL, NULL, '2026-04-28 15:23:27');
 INSERT INTO `order` VALUES (6, 'FT17773617211284CAFD3', 2, 1, 25.80, 0.00, 25.80, '默认收货人', '13800000000', '默认收货地址', NULL, NULL, 3, 'mock_wechat', 'MOCK17773617216', 2, '2026-04-28 15:35:22', '2026-04-28 15:35:23', NULL, NULL, '2026-04-28 15:35:21');
 INSERT INTO `order` VALUES (7, 'FT1777364541652D0D827', 2, 1, 25.80, 0.00, 25.80, '陈女士', '123456', '湖南省长沙天心区中南林业科技大学', NULL, NULL, 3, 'mock_wechat', 'MOCK17773645417', 2, '2026-04-28 16:22:30', '2026-04-28 16:23:17', NULL, NULL, '2026-04-28 16:22:21');
-INSERT INTO `order` VALUES (8, 'FT1777364771407C062B3', 3693519, 1, 48.60, 0.00, 48.60, 'jiannvshi', '123', 'qaa1', NULL, NULL, 3, 'mock_wechat', 'MOCK17773647718', 2, '2026-04-28 16:26:26', '2026-04-28 16:26:33', NULL, NULL, '2026-04-28 16:26:11');
 INSERT INTO `order` VALUES (9, 'FT1777372943976293DFC', 22, 1, 36.40, 0.00, 36.40, 'abc', '12345678910', '北京市海淀区axxxx', '配送到家', NULL, 4, NULL, NULL, 0, NULL, NULL, NULL, NULL, '2026-04-28 18:42:23');
 INSERT INTO `order` VALUES (10, 'FT17773729701201DC438', 22, 1, 6.80, 0.00, 6.80, 'abc', '12345678910', '北京市海淀区axxxx', '', NULL, 4, NULL, NULL, 0, NULL, NULL, NULL, NULL, '2026-04-28 18:42:50');
 INSERT INTO `order` VALUES (11, 'FT17773734250435E781A', 25, 1, 37.60, 0.00, 37.60, 'a', '18229656601', 'axxavbciii', '快速送达', NULL, 3, 'mock_wechat', 'MOCK177737342511', 2, '2026-04-28 18:50:46', '2026-04-28 18:50:57', NULL, NULL, '2026-04-28 18:50:25');
@@ -423,6 +418,9 @@ INSERT INTO `order` VALUES (19, 'FT17777146405748499AC', 60, 1, 25.80, 0.00, 25.
 INSERT INTO `order` VALUES (20, 'FT1777714995557072313', 60, 1, 64.60, 0.00, 64.60, 'a', '12345678910', 'aasf', '', NULL, 4, 'mock_wechat', 'MOCK177771499560266D9F595', 2, '2026-05-02 17:43:15', NULL, NULL, NULL, '2026-05-02 17:43:15');
 INSERT INTO `order` VALUES (21, 'FT17777155968477A16A3', 66, 1, 83.40, 8.00, 75.40, '1', '12345678910', '1111', '', NULL, 6, 'mock_wechat', 'MOCK1777715596875CD01CC67', 2, '2026-05-02 17:53:16', NULL, NULL, NULL, '2026-05-02 17:53:16');
 INSERT INTO `order` VALUES (22, 'FT1777716700709E41306', 68, 1, 83.40, 8.00, 75.40, '1', '12345678909', '11sx', '', NULL, 1, 'mock_wechat', 'MOCK17777167007423EE796E2', 2, '2026-05-02 18:11:40', NULL, NULL, NULL, '2026-05-02 18:11:40');
+INSERT INTO `order` VALUES (99001, 'FT202605070001', 999001, 1, 69.40, 8.00, 61.40, '联调收货人', '13800000001', '湖南省长沙市天心区芙蓉南路88号', '联调样例订单', NULL, 3, 'mock_wechat', 'MOCK_TRADE_99001', 2, '2026-05-07 10:30:00', '2026-05-07 11:00:00', '2026-05-07 18:00:00', NULL, '2026-05-07 16:38:30');
+INSERT INTO `order` VALUES (99002, 'FT202605070002', 999001, 1, 28.60, 0.00, 28.60, '联调收货人', '13800000001', '湖南省长沙市天心区芙蓉南路88号', '待发货样例', NULL, 1, 'mock_wechat', 'MOCK_TRADE_99002', 2, '2026-05-07 12:00:00', NULL, NULL, NULL, '2026-05-07 16:38:30');
+INSERT INTO `order` VALUES (99003, 'FT177815900700687530C', 999009, 1, 114.80, 15.00, 99.80, '1', '12312341234', 'abaj', '', NULL, 6, 'mock_wechat', 'MOCK17781590070484EEFB355', 2, '2026-05-07 21:03:27', NULL, NULL, NULL, '2026-05-07 21:03:27');
 
 -- ----------------------------
 -- Table structure for order_item
@@ -439,8 +437,10 @@ CREATE TABLE `order_item`  (
   `total_price` decimal(10, 2) NOT NULL COMMENT '小计金额',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_order_id`(`order_id`) USING BTREE,
-  INDEX `idx_order_item_goods_id`(`goods_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '订单明细表' ROW_FORMAT = Compact;
+  INDEX `idx_order_item_goods_id`(`goods_id`) USING BTREE,
+  CONSTRAINT `fk_order_item_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_order_item_goods` FOREIGN KEY (`goods_id`) REFERENCES `goods` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 99010 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '订单明细表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of order_item
@@ -458,8 +458,6 @@ INSERT INTO `order_item` VALUES (10, 5, 1, '草莓', 'cloud://cloudbase-0gymwbii
 INSERT INTO `order_item` VALUES (11, 5, 3, '巨峰葡萄', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/巨峰葡萄.jpg', 18.80, 1, 18.80);
 INSERT INTO `order_item` VALUES (12, 6, 1, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', 25.80, 1, 25.80);
 INSERT INTO `order_item` VALUES (13, 7, 1, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', 25.80, 1, 25.80);
-INSERT INTO `order_item` VALUES (14, 8, 2, '蓝莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/蓝莓.jpg', 38.80, 1, 38.80);
-INSERT INTO `order_item` VALUES (15, 8, 13, '红富士苹果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/红富士苹果.jpg', 9.80, 1, 9.80);
 INSERT INTO `order_item` VALUES (16, 9, 3, '巨峰葡萄', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/巨峰葡萄.jpg', 18.80, 1, 18.80);
 INSERT INTO `order_item` VALUES (17, 9, 15, '枇杷', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/枇杷.jpg', 8.80, 2, 17.60);
 INSERT INTO `order_item` VALUES (18, 10, 9, '香瓜', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/瓜类/香瓜.jpg', 6.80, 1, 6.80);
@@ -479,27 +477,15 @@ INSERT INTO `order_item` VALUES (32, 21, 3, '巨峰葡萄', 'cloud://cloudbase-0
 INSERT INTO `order_item` VALUES (33, 22, 1, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', 25.80, 1, 25.80);
 INSERT INTO `order_item` VALUES (34, 22, 2, '蓝莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/蓝莓.jpg', 38.80, 1, 38.80);
 INSERT INTO `order_item` VALUES (35, 22, 3, '巨峰葡萄', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/巨峰葡萄.jpg', 18.80, 1, 18.80);
-
--- ----------------------------
--- Table structure for service_faq
--- ----------------------------
-DROP TABLE IF EXISTS `service_faq`;
-CREATE TABLE `service_faq`  (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'FAQ ID',
-  `question` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '问题',
-  `answer` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '回答',
-  `sort` int(11) NOT NULL DEFAULT 0 COMMENT '排序值',
-  `status` tinyint(4) NOT NULL DEFAULT 1 COMMENT '状态 0禁用 1启用',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '客服常见问题表' ROW_FORMAT = Compact;
-
--- ----------------------------
--- Records of service_faq
--- ----------------------------
-INSERT INTO `service_faq` VALUES (1, '配送多久可以送达？', '默认当日或次日送达，具体以下单页为准。', 1, 1, '2026-05-02 15:38:31');
-INSERT INTO `service_faq` VALUES (2, '商品不新鲜怎么办？', '签收后24小时内可在订单页申请售后。', 2, 1, '2026-05-02 15:38:31');
-INSERT INTO `service_faq` VALUES (3, '如何联系客服？', '你可以拨打 400-888-1024（9:00-21:00）。', 3, 1, '2026-05-02 15:38:31');
+INSERT INTO `order_item` VALUES (99001, 99001, 1, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', 25.80, 1, 25.80);
+INSERT INTO `order_item` VALUES (99002, 99001, 4, '橙子', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/橙子.jpg', 8.80, 2, 17.60);
+INSERT INTO `order_item` VALUES (99003, 99001, 13, '红富士苹果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/红富士苹果.jpg', 9.80, 1, 9.80);
+INSERT INTO `order_item` VALUES (99004, 99002, 10, '水蜜桃', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/水蜜桃.jpg', 18.80, 1, 18.80);
+INSERT INTO `order_item` VALUES (99005, 99002, 5, '丑橘', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/丑橘.jpg', 7.90, 1, 7.90);
+INSERT INTO `order_item` VALUES (99006, 99003, 1, '草莓', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/浆果类/草莓.jpg', 25.80, 3, 77.40);
+INSERT INTO `order_item` VALUES (99007, 99003, 4, '橙子', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/柑橘类/橙子.jpg', 8.80, 1, 8.80);
+INSERT INTO `order_item` VALUES (99008, 99003, 10, '水蜜桃', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/核果类/水蜜桃.jpg', 18.80, 1, 18.80);
+INSERT INTO `order_item` VALUES (99009, 99003, 13, '红富士苹果', 'cloud://cloudbase-0gymwbii3e34c141.636c-cloudbase-0gymwbii3e34c141-1422222822/分类展示图片/fruits/仁果类/红富士苹果.jpg', 9.80, 1, 9.80);
 
 -- ----------------------------
 -- Table structure for tag
@@ -510,36 +496,15 @@ CREATE TABLE `tag`  (
   `tag_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '标签名称',
   `type` tinyint(4) NULL DEFAULT 1 COMMENT '类型 1产地 2属性 3营销',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 105 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of tag
 -- ----------------------------
-
--- ----------------------------
--- Table structure for trace_record
--- ----------------------------
-DROP TABLE IF EXISTS `trace_record`;
-CREATE TABLE `trace_record`  (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '溯源记录ID',
-  `goods_id` bigint(20) NOT NULL COMMENT '商品ID',
-  `origin_card_id` bigint(20) NOT NULL COMMENT '产地卡片ID',
-  `location` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '产地位置',
-  `harvest_date` date NOT NULL COMMENT '采收日期',
-  `batch_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '质检批次号',
-  `cold_chain_status` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '冷链状态',
-  `status` tinyint(4) NOT NULL DEFAULT 1 COMMENT '状态 0禁用 1启用',
-  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_goods_id`(`goods_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '商品溯源记录表' ROW_FORMAT = Compact;
-
--- ----------------------------
--- Records of trace_record
--- ----------------------------
-INSERT INTO `trace_record` VALUES (1, 3, 2, '云南红河', '2026-04-28', 'FT-TRACE-260428-003', '全程冷链在途', 1, '2026-05-02 15:38:31');
-INSERT INTO `trace_record` VALUES (2, 13, 1, '山东烟台', '2026-04-27', 'FT-TRACE-260427-013', '冷库待配货', 1, '2026-05-02 15:38:31');
-INSERT INTO `trace_record` VALUES (3, 5, 3, '海南乐东', '2026-04-29', 'FT-TRACE-260429-005', '冷链已签收', 1, '2026-05-02 15:38:31');
+INSERT INTO `tag` VALUES (101, '时令', 2);
+INSERT INTO `tag` VALUES (102, '小份量', 2);
+INSERT INTO `tag` VALUES (103, '搭配', 3);
+INSERT INTO `tag` VALUES (104, '领券专区', 3);
 
 -- ----------------------------
 -- Table structure for user
@@ -555,7 +520,7 @@ CREATE TABLE `user`  (
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_openid`(`openid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 149 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户表' ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 999062 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of user
@@ -708,6 +673,67 @@ INSERT INTO `user` VALUES (145, 'wxcode_0c33oSkl2YRCFh4P5Wml2ALeq713oSkF', '微�
 INSERT INTO `user` VALUES (146, 'wxcode_0d3emzFa1mHHFL0pwKHa1tTvxC2emzFZ', '微信用户', NULL, NULL, 1, '2026-05-07 15:57:39');
 INSERT INTO `user` VALUES (147, 'wxcode_0d3XIWGa1bxSEL0mz9Ja1UDh6E3XIWGu', '微信用户', NULL, NULL, 1, '2026-05-07 15:59:38');
 INSERT INTO `user` VALUES (148, 'wxcode_0a38Z7Ga1VsgGL0G4pIa1LAiYv08Z7G7', '微信用户', NULL, NULL, 1, '2026-05-07 16:06:20');
+INSERT INTO `user` VALUES (999001, 'wxcode_codex_home_seed_999001', '联调用户A', NULL, '13800000001', 1, '2026-05-07 16:38:30');
+INSERT INTO `user` VALUES (999002, 'wxcode_0c35jcll2Ju5Gh45Odnl2ZolUD05jclM', '微信用户', NULL, NULL, 1, '2026-05-07 16:40:19');
+INSERT INTO `user` VALUES (999003, 'wxcode_0e3cOt2w3jDeY63YOH1w3WoSr42cOt2Q', '微信用户', NULL, NULL, 1, '2026-05-07 17:27:14');
+INSERT INTO `user` VALUES (999004, 'wxcode_0f3avYkl22YJFh4Ojpnl2W0s2b4avYkW', '微信用户', NULL, NULL, 1, '2026-05-07 17:33:31');
+INSERT INTO `user` VALUES (999005, 'wxcode_0c3ZefGa1QblGL0NFCHa1niEBk0ZefGP', '微信用户', NULL, NULL, 1, '2026-05-07 18:05:21');
+INSERT INTO `user` VALUES (999006, 'wxcode_0e3YCPll20xlEh4wbzll2uUv9G0YCPlM', '微信用户', NULL, NULL, 1, '2026-05-07 18:05:59');
+INSERT INTO `user` VALUES (999007, 'wxcode_0b3L9H1w3TXAZ63jdK3w3vK31S1L9H11', '微信用户', NULL, NULL, 1, '2026-05-07 18:08:09');
+INSERT INTO `user` VALUES (999008, 'wxcode_0b3cPyll2YFhGh4Q3Hnl2aHHQB3cPylv', '微信用户', NULL, NULL, 1, '2026-05-07 18:10:02');
+INSERT INTO `user` VALUES (999009, 'wxcode_0f3sU8Ga1A7uGL0SnEJa1dbfLs3sU8G1', '微信用户', NULL, NULL, 1, '2026-05-07 21:01:07');
+INSERT INTO `user` VALUES (999010, 'wxcode_0e3tgSFa1twcGL0m2cHa1O8W2b4tgSFH', '微信用户', NULL, NULL, 1, '2026-05-07 21:07:44');
+INSERT INTO `user` VALUES (999011, 'wxcode_0f3nfkFa12eEFL0zGFFa1QX4rr0nfkF8', '微信用户', NULL, NULL, 1, '2026-05-07 21:09:03');
+INSERT INTO `user` VALUES (999012, 'wxcode_0a3CRBFa1BKVFL0n0AJa1FL7RL0CRBFy', '微信用户', NULL, NULL, 1, '2026-05-07 21:18:22');
+INSERT INTO `user` VALUES (999013, 'wxcode_0e3p1f0w3KEy073alL2w38UrCk0p1f0v', '微信用户', NULL, NULL, 1, '2026-05-07 21:27:34');
+INSERT INTO `user` VALUES (999014, 'wxcode_0a3XyCFa1WAYFL0tNJIa1WZSpX3XyCF2', '微信用户', NULL, NULL, 1, '2026-05-07 21:29:50');
+INSERT INTO `user` VALUES (999015, 'wxcode_0c3FkI1w374OZ63Dij2w3aIvW94FkI1K', '微信用户', NULL, NULL, 1, '2026-05-07 23:07:03');
+INSERT INTO `user` VALUES (999016, 'wxcode_0c31BgGa1FIyGL0ZLTHa1cSQEX11BgGE', '微信用户', NULL, NULL, 1, '2026-05-07 23:07:10');
+INSERT INTO `user` VALUES (999017, 'wxcode_0d3OAPkl2V3NFh4YUsol2m94Fo4OAPkJ', '微信用户', NULL, NULL, 1, '2026-05-08 14:25:30');
+INSERT INTO `user` VALUES (999018, 'wxcode_0f3t990w37Xt073GXK0w33dJVj1t990y', '微信用户', NULL, NULL, 1, '2026-05-08 14:29:46');
+INSERT INTO `user` VALUES (999019, 'wxcode_0d3mBoGa1i3cGL00B2Ha12WY9Q2mBoGm', '微信用户', NULL, NULL, 1, '2026-05-08 15:17:20');
+INSERT INTO `user` VALUES (999020, 'wxcode_0f3pC7Ga1qbtGL0zF3Ga1V5pMC0pC7GW', '微信用户', NULL, NULL, 1, '2026-05-08 15:18:25');
+INSERT INTO `user` VALUES (999021, 'wxcode_0e3PVc0w3OFw073YFK2w3fU5dN3PVc0Z', '微信用户', NULL, NULL, 1, '2026-05-08 15:31:45');
+INSERT INTO `user` VALUES (999022, 'wxcode_0d3NHall2pnqGh4eULol2cOWyE4NHalA', '微信用户', NULL, NULL, 1, '2026-05-08 15:32:09');
+INSERT INTO `user` VALUES (999023, 'wxcode_0b3TrRFa1juuGL06FCGa1wN0ph3TrRFg', '微信用户', NULL, NULL, 1, '2026-05-08 15:32:50');
+INSERT INTO `user` VALUES (999024, 'wxcode_0d3odu0w3247173bln1w3b7UQa1odu0c', '微信用户', NULL, NULL, 1, '2026-05-08 15:35:36');
+INSERT INTO `user` VALUES (999025, 'wxcode_0d3Letll21YVFh4Mm0ll2PwNTm0Letl-', '微信用户', NULL, NULL, 1, '2026-05-09 15:14:33');
+INSERT INTO `user` VALUES (999026, 'wxcode_0a3UlIGa15lvFL00uDFa1miRJU2UlIGk', '微信用户', NULL, NULL, 1, '2026-05-09 15:19:44');
+INSERT INTO `user` VALUES (999027, 'wxcode_0c3IF5Ia1i3ADL0H6KGa1GUxMM2IF5Il', '微信用户', NULL, NULL, 1, '2026-05-09 15:20:58');
+INSERT INTO `user` VALUES (999028, 'wxcode_0c3UwlFa1oygGL05VRGa1Ywstj0UwlF2', '微信用户', NULL, NULL, 1, '2026-05-09 15:26:40');
+INSERT INTO `user` VALUES (999029, 'wxcode_0f3Bcdll2DPEFh44trll2fb27x0Bcdl-', '微信用户', NULL, NULL, 1, '2026-05-09 15:31:11');
+INSERT INTO `user` VALUES (999030, 'wxcode_0f3KFdll2WSEFh4Q7dnl22pCib2KFdlv', '微信用户', NULL, NULL, 1, '2026-05-09 15:38:54');
+INSERT INTO `user` VALUES (999031, 'wxcode_0a3vfU1w30xwZ63Nxh4w3dE5rB2vfU1Y', '微信用户', NULL, NULL, 1, '2026-05-09 15:39:27');
+INSERT INTO `user` VALUES (999032, 'wxcode_0d37EFkl2K2dGh4YoXkl2r6LC017EFkG', '微信用户', NULL, NULL, 1, '2026-05-09 15:40:04');
+INSERT INTO `user` VALUES (999033, 'wxcode_0d3QVFkl242eGh45UUll2MTLLs3QVFk2', '微信用户', NULL, NULL, 1, '2026-05-09 15:44:46');
+INSERT INTO `user` VALUES (999034, 'wxcode_0f3FNbGa1FQ0GL0mhiGa1LKynz0FNbGD', '微信用户', NULL, NULL, 1, '2026-05-09 15:45:05');
+INSERT INTO `user` VALUES (999035, 'wxcode_0d3iZsGa1EBbFL0HjkGa18QWSD0iZsGk', '微信用户', NULL, NULL, 1, '2026-05-09 15:47:22');
+INSERT INTO `user` VALUES (999036, 'wxcode_0c3KFell20FFFh4XUbnl2kwSQa1KFelA', '微信用户', NULL, NULL, 1, '2026-05-09 15:55:19');
+INSERT INTO `user` VALUES (999037, 'wxcode_0e3rzZkl2pTsGh417xnl2NsKDr3rzZkr', '微信用户', NULL, NULL, 1, '2026-05-09 16:27:16');
+INSERT INTO `user` VALUES (999038, 'wxcode_0d3umGFa1r9wGL04YjGa1kpyD74umGFy', '微信用户', NULL, NULL, 1, '2026-05-09 16:28:43');
+INSERT INTO `user` VALUES (999039, 'wxcode_0c3fzXFa1Q8HFL0wT3Ia1F09SS3fzXFt', '微信用户', NULL, NULL, 1, '2026-05-09 16:31:18');
+INSERT INTO `user` VALUES (999040, 'wxcode_0c3oJGFa1cqwGL0sOFHa1KSf2o0oJGFN', '微信用户', NULL, NULL, 1, '2026-05-09 16:34:46');
+INSERT INTO `user` VALUES (999041, 'wxcode_0d3l7HFa1nPuGL0IT7Ja1h3W7O0l7HFW', '微信用户', NULL, NULL, 1, '2026-05-09 16:41:06');
+INSERT INTO `user` VALUES (999042, 'wxcode_0c38nDHa1Ih0EL0UHoFa1s1REG18nDHV', '微信用户', NULL, NULL, 1, '2026-05-09 16:56:04');
+INSERT INTO `user` VALUES (999043, 'wxcode_0c3cisFa1R3cGL0SKhHa1KvWFj3cisFL', '微信用户', NULL, NULL, 1, '2026-05-09 17:17:35');
+INSERT INTO `user` VALUES (999044, 'wxcode_0b3ABiGa1iPFFL0jysJa1kJApm4ABiGG', '微信用户', NULL, NULL, 1, '2026-05-09 17:36:42');
+INSERT INTO `user` VALUES (999045, 'wxcode_0f3qL7Ha1cHQEL0BguJa18yLED2qL7Hx', '微信用户', NULL, NULL, 1, '2026-05-09 17:36:54');
+INSERT INTO `user` VALUES (999046, 'wxcode_0a3rZ7Ha1EYQEL0tItHa19GQyC2rZ7H-', '微信用户', NULL, NULL, 1, '2026-05-09 17:40:37');
+INSERT INTO `user` VALUES (999047, 'wxcode_0e36XzGa1i1pFL0Cc3Ha1mXDg446XzGJ', '微信用户', NULL, NULL, 1, '2026-05-09 17:41:36');
+INSERT INTO `user` VALUES (999048, 'wxcode_0e3PYKFa1sieGL0NPNIa11hfok2PYKFc', '微信用户', NULL, NULL, 1, '2026-05-09 17:44:27');
+INSERT INTO `user` VALUES (999049, 'wxcode_0e3xFn0w3leR073mto0w3Xok2P2xFn0V', '微信用户', NULL, NULL, 1, '2026-05-09 17:45:58');
+INSERT INTO `user` VALUES (999050, 'wxcode_0c3OBlll2SjTFh4FhMnl2YixZi4OBllm', '微信用户', NULL, NULL, 1, '2026-05-09 17:49:04');
+INSERT INTO `user` VALUES (999051, 'wxcode_0b3jjLFa1WVeGL03u8Ga1VcKTt3jjLFg', '微信用户', NULL, NULL, 1, '2026-05-09 17:49:53');
+INSERT INTO `user` VALUES (999052, 'wxcode_0c3jLCll2IBCFh4alJkl2xCsGj3jLClz', '微信用户', NULL, NULL, 1, '2026-05-09 17:50:47');
+INSERT INTO `user` VALUES (999053, 'wxcode_0c3OvjGa1rGGFL0YpxFa1GPdf44OvjGZ', '微信用户', NULL, NULL, 1, '2026-05-09 17:51:35');
+INSERT INTO `user` VALUES (999054, 'wxcode_0b32v2Ga1XIXFL0ppfGa1IaRcI22v2Gg', '微信用户', NULL, NULL, 1, '2026-05-09 17:52:12');
+INSERT INTO `user` VALUES (999055, 'wxcode_0c3Jb0nl2oLfEh4p6mml2Zj2g44Jb0n2', '微信用户', NULL, NULL, 1, '2026-05-09 17:53:46');
+INSERT INTO `user` VALUES (999056, 'wxcode_0b3aSpHa1rYAEL0L5uFa1wP0Wv0aSpHi', '微信用户', NULL, NULL, 1, '2026-05-09 17:54:17');
+INSERT INTO `user` VALUES (999057, 'wxcode_0d3WCLFa1whfGL0z9dHa1UHsge1WCLFr', '微信用户', NULL, NULL, 1, '2026-05-09 17:55:04');
+INSERT INTO `user` VALUES (999058, 'wxcode_0d3W5Ull2q2mFh4ogxol2SVTln1W5Ul8', '微信用户', NULL, NULL, 1, '2026-05-09 17:55:26');
+INSERT INTO `user` VALUES (999059, 'wxcode_0b3UUNkl2hfsGh4RMFol26FW0P2UUNk8', '微信用户', NULL, NULL, 1, '2026-05-09 17:55:43');
+INSERT INTO `user` VALUES (999060, 'wxcode_0b3kSRGa1ab9FL06wcHa1k6FSI1kSRGK', '微信用户', NULL, NULL, 1, '2026-05-09 17:55:56');
+INSERT INTO `user` VALUES (999061, 'wxcode_0c3Gamll2QSTFh4OEKkl2GYFGS0GamlG', '微信用户', NULL, NULL, 1, '2026-05-09 17:58:18');
 
 -- ----------------------------
 -- Table structure for user_coupon
@@ -724,8 +750,9 @@ CREATE TABLE `user_coupon`  (
   `status` tinyint(4) NOT NULL DEFAULT 1 COMMENT '状态 0失效 1可用 2已使用',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 298 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户优惠券表' ROW_FORMAT = Compact;
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  CONSTRAINT `fk_user_coupon_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 99043 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户优惠券表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of user_coupon
@@ -1025,6 +1052,48 @@ INSERT INTO `user_coupon` VALUES (294, 143, '满50减8', '全场可用', 50.00, 
 INSERT INTO `user_coupon` VALUES (295, 143, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-03 18:55:42');
 INSERT INTO `user_coupon` VALUES (296, 144, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-03 18:55:42');
 INSERT INTO `user_coupon` VALUES (297, 144, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-03 18:55:42');
+INSERT INTO `user_coupon` VALUES (99001, 999001, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 16:38:39');
+INSERT INTO `user_coupon` VALUES (99002, 999001, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 16:38:39');
+INSERT INTO `user_coupon` VALUES (99003, 999001, '满39减5', '新人专享', 39.00, 5.00, '2026-12-31', 1, '2026-05-07 16:38:39');
+INSERT INTO `user_coupon` VALUES (99004, 145, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99005, 145, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99006, 146, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99007, 146, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99008, 147, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99009, 147, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99010, 148, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99011, 148, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99012, 999002, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99013, 999002, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99014, 999003, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99015, 999003, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99016, 999004, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99017, 999004, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99018, 999005, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99019, 999005, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99020, 999006, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99021, 999006, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99022, 999007, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99023, 999007, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99024, 999008, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99025, 999008, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99026, 999009, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99027, 999009, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 2, '2026-05-07 21:03:00');
+INSERT INTO `user_coupon` VALUES (99028, 999009, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99029, 999010, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99030, 999010, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99031, 999011, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99032, 999011, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99033, 999012, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99034, 999012, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99035, 999013, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99036, 999013, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99037, 999014, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99038, 999014, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99039, 999015, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99040, 999015, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99041, 999016, '满50减8', '全场可用', 50.00, 8.00, '2026-12-31', 1, '2026-05-07 23:09:02');
+INSERT INTO `user_coupon` VALUES (99042, 999016, '满99减15', '生鲜专区', 99.00, 15.00, '2026-12-31', 1, '2026-05-07 23:09:02');
 
 -- ----------------------------
 -- Table structure for user_setting
@@ -1037,8 +1106,9 @@ CREATE TABLE `user_setting`  (
   `notify_promo` tinyint(4) NOT NULL DEFAULT 0 COMMENT '活动通知',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_user_id`(`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户设置表' ROW_FORMAT = Compact;
+  UNIQUE INDEX `uk_user_id`(`user_id`) USING BTREE,
+  CONSTRAINT `fk_user_setting_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户设置表' ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of user_setting
@@ -1053,5 +1123,8 @@ INSERT INTO `user_setting` VALUES (7, 68, 1, 0, '2026-05-02 18:10:57');
 INSERT INTO `user_setting` VALUES (8, 136, 1, 0, '2026-05-03 18:28:12');
 INSERT INTO `user_setting` VALUES (9, 144, 1, 0, '2026-05-03 18:55:39');
 INSERT INTO `user_setting` VALUES (10, 145, 1, 0, '2026-05-07 15:53:45');
+INSERT INTO `user_setting` VALUES (11, 999009, 1, 0, '2026-05-07 21:02:57');
+INSERT INTO `user_setting` VALUES (12, 999016, 1, 0, '2026-05-07 23:09:00');
+INSERT INTO `user_setting` VALUES (13, 999035, 1, 0, '2026-05-09 15:49:25');
 
 SET FOREIGN_KEY_CHECKS = 1;

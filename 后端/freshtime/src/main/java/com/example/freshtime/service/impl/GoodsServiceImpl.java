@@ -7,7 +7,9 @@ import com.example.freshtime.service.GoodsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GoodsServiceImpl implements GoodsService {
@@ -18,6 +20,26 @@ public class GoodsServiceImpl implements GoodsService {
     @Override
     public ApiResponse<?> getGoodsList(Long categoryId) {
         List<Goods> list = goodsMapper.selectByCategoryId(categoryId);
+        return ApiResponse.success(list);
+    }
+
+    @Override
+    public ApiResponse<?> getGoodsListByScene(String scene) {
+        String cleanScene = scene == null ? "" : scene.trim();
+        if (cleanScene.isEmpty()) {
+            return ApiResponse.success(goodsMapper.selectRecommendList());
+        }
+        String tagName;
+        if ("小份量".equals(cleanScene)) {
+            tagName = "小份量";
+        } else if ("搭配".equals(cleanScene)) {
+            tagName = "搭配";
+        } else if ("时令".equals(cleanScene)) {
+            tagName = "时令";
+        } else {
+            tagName = "";
+        }
+        List<Goods> list = tagName.isEmpty() ? goodsMapper.selectBySceneKeyword(cleanScene) : goodsMapper.selectByTagName(tagName);
         return ApiResponse.success(list);
     }
 
@@ -37,8 +59,21 @@ public class GoodsServiceImpl implements GoodsService {
     }
 
     @Override
-    public ApiResponse<?> searchGoods(String keyword) {
-        List<Goods> list = goodsMapper.searchByKeyword(keyword);
-        return ApiResponse.success(list);
+    public ApiResponse<?> searchGoods(String keyword, Integer page, Integer pageSize) {
+        String cleanKeyword = keyword == null ? "" : keyword.trim();
+        int safePage = (page == null || page < 1) ? 1 : page;
+        int safePageSize = (pageSize == null || pageSize < 1) ? 20 : Math.min(pageSize, 50);
+        int offset = (safePage - 1) * safePageSize;
+        List<Goods> list = goodsMapper.searchByKeyword(cleanKeyword, offset, safePageSize);
+        Integer total = goodsMapper.countByKeyword(cleanKeyword);
+        int totalCount = total == null ? 0 : total;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("list", list);
+        data.put("page", safePage);
+        data.put("pageSize", safePageSize);
+        data.put("total", totalCount);
+        data.put("hasMore", offset + safePageSize < totalCount);
+        return ApiResponse.success(data);
     }
 }

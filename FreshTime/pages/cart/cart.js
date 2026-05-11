@@ -178,8 +178,6 @@ Page({
     this.data.currentSlideId = null;
   },
 
-  onScroll() {},
-
   deleteItem(e) {
     if (this.data.actionLoading) return;
     const id = Number(e.currentTarget.dataset.id);

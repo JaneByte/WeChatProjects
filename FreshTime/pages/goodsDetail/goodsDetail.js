@@ -1,4 +1,4 @@
-﻿const { get, post } = require('../../utils/request');
+const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
 const app = getApp();
 
@@ -7,6 +7,7 @@ Page({
     id: null,
     detail: null,
     loading: false,
+    loadError: false,
     quantity: 1
   },
 
@@ -21,13 +22,20 @@ Page({
   },
 
   loadDetail() {
-    this.setData({ loading: true });
+    this.setData({ loading: true, loadError: false });
     get('/goods/detail', { id: this.data.id }, { retry: 0 })
       .then((res) => {
         const detail = (res && res.data) || null;
+        if (!detail || !detail.id || Number(detail.status) === 0) {
+          this.setData({ detail: null, quantity: 1 });
+          return;
+        }
         this.setData({ detail, quantity: 1 });
       })
-      .catch((error) => showRequestError(error, '商品加载失败'))
+      .catch((error) => {
+        this.setData({ detail: null, loadError: true });
+        showRequestError(error, '商品加载失败');
+      })
       .finally(() => this.setData({ loading: false }));
   },
 
@@ -63,18 +71,17 @@ Page({
 
     const detail = this.data.detail;
     if (!detail || !detail.id) return;
-    if (Number(detail.stock || 0) <= 0) {
-      wx.showToast({ title: '商品已售罄', icon: 'none' });
-      return;
-    }
-
     const addQty = Number(this.data.quantity || 1);
-    post(`/cart/add?userId=${userId}&goodsId=${detail.id}&quantity=${addQty}`, {}, { retry: 0 })
-      .then(() => {
-        wx.showToast({ title: '已加入购物车', icon: 'success' });
-        if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+    this.recheckGoodsAvailability(detail.id, addQty)
+      .then((freshDetail) => {
+        post(`/cart/add?userId=${userId}&goodsId=${freshDetail.id}&quantity=${addQty}`, {}, { retry: 0 })
+          .then(() => {
+            wx.showToast({ title: '已加入购物车', icon: 'success' });
+            if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+          })
+          .catch((error) => showRequestError(error, '加入购物车失败'));
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'));
+      .catch((error) => showRequestError(error, error.message || '商品状态已变更，请重试'));
   },
 
   onBuyNow() {
@@ -86,20 +93,34 @@ Page({
 
     const detail = this.data.detail;
     if (!detail || !detail.id) return;
-    if (Number(detail.stock || 0) <= 0) {
-      wx.showToast({ title: '商品已售罄', icon: 'none' });
-      return;
-    }
+    const buyQty = Number(this.data.quantity || 1);
+    this.recheckGoodsAvailability(detail.id, buyQty)
+      .then((freshDetail) => {
+        wx.setStorageSync('checkoutItems', [{
+          id: freshDetail.id,
+          name: freshDetail.name,
+          image: freshDetail.mainImage || '',
+          price: freshDetail.price,
+          quantity: buyQty,
+          merchantId: freshDetail.merchantId || 1
+        }]);
+        wx.navigateTo({ url: '/pages/checkout/checkout' });
+      })
+      .catch((error) => showRequestError(error, error.message || '商品状态已变更，请重试'));
+  },
 
-    wx.setStorageSync('checkoutItems', [{
-      id: detail.id,
-      name: detail.name,
-      image: detail.mainImage || '',
-      price: detail.price,
-      quantity: Number(this.data.quantity || 1),
-      merchantId: detail.merchantId || 1
-    }]);
-    wx.navigateTo({ url: '/pages/checkout/checkout' });
+  recheckGoodsAvailability(goodsId, expectQty) {
+    return get('/goods/detail', { id: goodsId }, { retry: 0 }).then((res) => {
+      const fresh = (res && res.data) || null;
+      if (!fresh || !fresh.id || Number(fresh.status) !== 1) {
+        throw new Error('商品已下架');
+      }
+      if (Number(fresh.stock || 0) < Number(expectQty || 1)) {
+        throw new Error('库存不足，请调整数量');
+      }
+      this.setData({ detail: fresh });
+      return fresh;
+    });
   },
 
   onGoTrace() {

@@ -13,7 +13,7 @@
       </view>
     </view>
 
-    <scroll-view class="cart-scroll" scroll-y bindscroll="onScroll">
+    <scroll-view class="cart-scroll" scroll-y>
       <view class="cart-list">
         <view wx:for="{{cartItems}}" wx:key="id" class="cart-item-wrapper">
           <view

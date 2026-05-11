@@ -1,5 +1,6 @@
 const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
+const { API_BASE_URL_MAP } = require('../../utils/config/env');
 const app = getApp();
 
 Page({
@@ -7,7 +8,16 @@ Page({
     notifyOrder: true,
     notifyPromo: false,
     loading: false,
-    submitting: false
+    submitting: false,
+    showDevTools: false
+  },
+
+  onLoad() {
+    const accountInfo = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null;
+    const envVersion = (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release';
+    const baseUrl = API_BASE_URL_MAP[envVersion] || API_BASE_URL_MAP.release || '';
+    const showDevTools = envVersion !== 'release' || String(baseUrl).includes('localhost') || String(baseUrl).includes('10.');
+    this.setData({ showDevTools });
   },
 
   onShow() {

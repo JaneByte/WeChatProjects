@@ -1,4 +1,4 @@
-﻿<view class='page'>
+<view class='page'>
   <view wx:if='{{loading}}' class='state'>加载中...</view>
   <view wx:elif='{{!detail}}' class='state'>商品不存在</view>
 

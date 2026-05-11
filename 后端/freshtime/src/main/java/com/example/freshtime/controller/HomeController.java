@@ -28,4 +28,11 @@ public class HomeController {
             @RequestParam(defaultValue = "10") Integer pageSize) {
         return homeService.getHomeGoods(page, pageSize);
     }
+
+    @GetMapping("/recommend-goods")
+    public ApiResponse<?> getRecommendGoods(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "4") Integer limit) {
+        return homeService.getRecommendGoodsByKeyword(keyword, limit);
+    }
 }

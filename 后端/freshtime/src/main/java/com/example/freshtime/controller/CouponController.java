@@ -5,6 +5,7 @@ import com.example.freshtime.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,16 @@ public class CouponController {
     @GetMapping("/list")
     public ApiResponse<?> list(@RequestParam Long userId) {
         return couponService.list(userId);
+    }
+
+    @GetMapping("/available")
+    public ApiResponse<?> available(@RequestParam Long userId) {
+        return couponService.listAvailable(userId);
+    }
+
+    @PostMapping("/claim")
+    public ApiResponse<?> claim(@RequestParam Long userId, @RequestParam Long couponId) {
+        return couponService.claim(userId, couponId);
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/dev/grant-default")

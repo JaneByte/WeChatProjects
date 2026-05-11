@@ -1,4 +1,4 @@
-﻿const { get, post } = require('../../utils/request');
+const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
 const app = getApp();
 
@@ -167,25 +167,17 @@ Page({
           wx.redirectTo({ url: '/pages/order-list/order-list' });
           return;
         }
-        return post(`/order/pay/mock-create?userId=${userId}&orderId=${orderId}`, {}, { retry: 0 })
-          .then((payRes) => {
-            const payData = (payRes && payRes.data) || {};
-            return post('/order/pay/mock-confirm', {
-              userId,
-              orderId,
-              payTradeNo: payData.payTradeNo
-            }, { retry: 0 }).then((confirmRes) => {
-              const confirmData = (confirmRes && confirmRes.data) || {};
-              post(`/cart/delete-selected?userId=${userId}`, {}, { retry: 0 }).catch(() => {});
-              wx.removeStorageSync('checkoutItems');
-              wx.removeStorageSync('selectedAddress');
-              wx.showToast({ title: '支付成功', icon: 'success' });
-              setTimeout(() => {
-                wx.redirectTo({
-                  url: `/pages/pay-result/pay-result?result=success&orderId=${orderId}&payTradeNo=${encodeURIComponent(confirmData.payTradeNo || '')}&payChannel=${encodeURIComponent(confirmData.payChannel || '')}`
-                });
-              }, 600);
-            });
+        return post(`/order/pay?userId=${userId}&orderId=${orderId}`, {}, { retry: 0 })
+          .then(() => {
+            post(`/cart/delete-selected?userId=${userId}`, {}, { retry: 0 }).catch(() => {});
+            wx.removeStorageSync('checkoutItems');
+            wx.removeStorageSync('selectedAddress');
+            wx.showToast({ title: '支付成功', icon: 'success' });
+            setTimeout(() => {
+              wx.redirectTo({
+                url: `/pages/pay-result/pay-result?result=success&orderId=${orderId}`
+              });
+            }, 600);
           });
       })
       .catch((error) => showRequestError(error, '下单失败'))

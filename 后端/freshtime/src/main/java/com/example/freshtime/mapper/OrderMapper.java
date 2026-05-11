@@ -23,9 +23,9 @@ public interface OrderMapper {
     int deductGoodsStock(@Param("goodsId") Long goodsId, @Param("quantity") Integer quantity);
 
     @Insert("INSERT INTO `order`(order_no, user_id, merchant_id, total_amount, discount_amount, actual_amount, " +
-            "receiver_name, receiver_phone, receiver_address, remark, status, pay_status) " +
+            "receiver_name, receiver_phone, receiver_address, remark, coupon_id, status, pay_status) " +
             "VALUES(#{orderNo}, #{userId}, #{merchantId}, #{totalAmount}, #{discountAmount}, #{actualAmount}, " +
-            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{status}, #{payStatus})")
+            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{couponId}, #{status}, #{payStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertOrder(OrderInfo orderInfo);
 

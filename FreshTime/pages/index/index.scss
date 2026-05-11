@@ -108,13 +108,6 @@ page {
   margin-bottom: 6rpx;
 }
 
-.hello-sub {
-  display: block;
-  margin-top: 6rpx;
-  font-size: 21rpx;
-  color: rgba(255, 255, 255, 0.84);
-}
-
 .search-bar {
   display: flex;
   align-items: center;
@@ -145,7 +138,6 @@ page {
 }
 
 .quick-entry,
-.new-arrival-section,
 .trace-section,
 .goods-section {
   background: #fff;
@@ -154,23 +146,18 @@ page {
   box-shadow: $card-shadow;
 }
 
-.new-arrival-scroll,
-.trace-scroll,
 .flash-scroll,
 .notice-scroll {
   white-space: nowrap;
 }
 
-.new-arrival-list,
-.trace-list,
 .flash-list {
   display: inline-flex;
   gap: 14rpx;
   padding-right: 14rpx;
 }
 
-.flash-add,
-.hero-lite-add {
+.flash-add {
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -182,8 +169,7 @@ page {
   }
 }
 
-.flash-name,
-.new-arrival-name {
+.flash-name {
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -205,16 +191,17 @@ page {
 }
 
 .banner-swiper {
-  height: 252rpx;
   border-radius: 20rpx;
   overflow: hidden;
   margin-bottom: 24rpx;
   box-shadow: 0 14rpx 28rpx rgba(31, 43, 36, 0.1);
+  background: #eef3ea;
 }
 
 .banner-item {
   width: 100%;
   height: 100%;
+  background: #eef3ea;
 }
 
 .banner-image {
@@ -263,10 +250,6 @@ page {
   color: #748173;
 }
 
-.section-head-mini {
-  margin-bottom: 10rpx;
-}
-
 .head-left {
   display: flex;
   align-items: center;
@@ -279,171 +262,9 @@ page {
   color: $text-dark;
 }
 
-.head-badge {
-  font-size: 22rpx;
-  color: #2f7a4c;
-  background: $primary-soft;
-  padding: 4rpx 10rpx;
-  border-radius: 999rpx;
-}
-
 .head-more {
   font-size: 22rpx;
   color: $text-secondary;
-}
-
-.season-pill {
-  padding: 2rpx 10rpx;
-  border-radius: 999rpx;
-  font-size: 20rpx;
-  color: #7a5a1f;
-  background: #f8e5bf;
-}
-
-.season-hint {
-  display: block;
-  margin: -6rpx 0 14rpx;
-  font-size: 22rpx;
-  color: #6a7d72;
-}
-
-.seasonal-section {
-  margin-bottom: 30rpx;
-  margin-top: 6rpx;
-}
-
-.seasonal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
-}
-
-.seasonal-item {
-  background: linear-gradient(165deg, #f7fbf7 0%, #eff5f0 100%);
-  border: 1rpx solid $card-border;
-  border-radius: 18rpx;
-  overflow: hidden;
-  box-shadow: $card-shadow;
-}
-
-.seasonal-meta {
-  padding: 16rpx 14rpx 14rpx;
-}
-
-.season-item-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 2rpx 10rpx;
-  border-radius: 999rpx;
-  font-size: 18rpx;
-  color: #7a5a1f;
-  background: #f8e5bf;
-  margin-bottom: 6rpx;
-}
-
-.seasonal-name {
-  display: block;
-  font-size: 24rpx;
-  color: $text-dark;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.seasonal-desc {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 21rpx;
-  color: #6a7d72;
-}
-
-.seasonal-link {
-  display: inline-block;
-  margin-top: 10rpx;
-  font-size: 21rpx;
-  color: #2f7a4c;
-  font-weight: 600;
-}
-
-.hero-lite-section {
-  margin-bottom: 24rpx;
-}
-
-.hero-lite-card {
-  display: flex;
-  background: $bg-card;
-  border: 1rpx solid $card-border;
-  border-radius: 20rpx;
-  overflow: hidden;
-  box-shadow: $card-shadow;
-}
-
-.hero-lite-image {
-  width: 220rpx;
-  height: 188rpx;
-  flex-shrink: 0;
-}
-
-.hero-lite-info {
-  flex: 1;
-  padding: 14rpx 14rpx 16rpx;
-}
-
-.hero-lite-name {
-  font-size: 30rpx;
-  color: $text-dark;
-  font-weight: 700;
-}
-
-.hero-lite-desc {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: $text-secondary;
-  line-height: 1.35;
-}
-
-.hero-lite-foot {
-  margin-top: 12rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.hero-lite-price {
-  display: flex;
-  align-items: baseline;
-}
-
-.price-symbol {
-  font-size: 28rpx;
-  color: $accent-gold;
-}
-
-.price-value {
-  font-size: 50rpx;
-  color: $accent-gold;
-  font-weight: 700;
-  margin-left: 2rpx;
-}
-
-.price-unit {
-  font-size: 22rpx;
-  color: $text-light;
-  margin-left: 6rpx;
-}
-
-.hero-lite-add {
-  width: 62rpx;
-  height: 62rpx;
-  background: linear-gradient(135deg, $primary, $primary-strong);
-  box-shadow: 0 8rpx 16rpx rgba(47, 122, 76, 0.22);
-}
-
-.hero-lite-add-text {
-  color: #ffffff;
-  font-size: 36rpx;
-  line-height: 1;
 }
 
 .flash-section {
@@ -480,7 +301,7 @@ page {
 }
 
 .flash-item {
-  width: 250rpx;
+  width: 280rpx;
   background: linear-gradient(180deg, #ffffff 0%, #fcf9ee 100%);
   border-radius: 18rpx;
   border: 1rpx solid #ebe1c3;
@@ -490,7 +311,7 @@ page {
 
 .flash-image {
   width: 100%;
-  height: 168rpx;
+  height: 196rpx;
   display: block;
 }
 
@@ -533,6 +354,7 @@ page {
 .flash-stock {
   font-size: 21rpx;
   color: #5d7f60;
+  font-weight: 500;
 }
 
 .flash-add {
@@ -553,37 +375,6 @@ page {
   padding: 18rpx 16rpx 20rpx;
   margin-bottom: 24rpx;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbf7 100%);
-}
-
-.new-arrival-section {
-  margin-bottom: 24rpx;
-  padding: 18rpx 16rpx 16rpx;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbf7 100%);
-}
-
-.new-arrival-item {
-  width: 200rpx;
-}
-
-.new-arrival-image {
-  width: 200rpx;
-  height: 140rpx;
-  border-radius: 14rpx;
-  display: block;
-}
-
-.new-arrival-name {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  color: $text-dark;
-  font-weight: 600;
-}
-
-.new-arrival-price {
-  display: block;
-  margin-top: 4rpx;
-  font-size: 22rpx;
-  color: #5a8a28;
 }
 
 .entry-grid {
@@ -626,46 +417,29 @@ page {
   background: linear-gradient(180deg, #ffffff 0%, #f8fbf7 100%);
 }
 
-.trace-item {
-  width: 230rpx;
-  padding: 16rpx 16rpx 18rpx;
-  border-radius: 16rpx;
-  background: linear-gradient(135deg, #f0f7f2 0%, #e7f1ea 65%, #dfece3 100%);
+.trace-compact {
+  padding-bottom: 18rpx;
+}
+
+.trace-quick {
+  height: 72rpx;
+  border-radius: 14rpx;
   border: 1rpx solid $card-border;
-  box-shadow: $card-shadow;
-  position: relative;
+  background: #ffffff;
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.trace-label {
-  display: inline-block;
-  font-size: 18rpx;
-  color: #3c5d4c;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8rpx;
-  padding: 2rpx 8rpx;
-  margin-bottom: 8rpx;
-}
-
-.trace-name {
-  font-size: 26rpx;
-  color: $text-dark;
-  font-weight: 600;
-  display: block;
-}
-
-.trace-desc {
-  margin-top: 6rpx;
-  font-size: 22rpx;
+.trace-quick-text {
+  font-size: 24rpx;
   color: $text-secondary;
-  display: block;
 }
 
-.trace-meta {
-  margin-top: 10rpx;
-  font-size: 22rpx;
+.trace-quick-arrow {
+  font-size: 24rpx;
   color: #5a8a28;
-  display: block;
 }
 
 .goods-section {
@@ -805,20 +579,7 @@ page {
     margin-top: 6rpx;
   }
 
-  .seasonal-grid {
-    gap: 12rpx;
-  }
-
-  .hero-lite-image {
-    width: 188rpx;
-    height: 168rpx;
-  }
-
   .flash-item {
-    width: 220rpx;
-  }
-
-  .trace-item {
-    width: 210rpx;
+    width: 248rpx;
   }
 }

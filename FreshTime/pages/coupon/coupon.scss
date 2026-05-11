@@ -1,5 +1,26 @@
 .page { padding: 24rpx; background: #f8faf5; min-height: 100vh; }
+.hero {
+  margin-bottom: 16rpx;
+  padding: 20rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(160deg, #86cb58 0%, #6db97f 45%, #62ae78 100%);
+  border: 1rpx solid rgba(90, 138, 40, 0.28);
+}
+.hero-title { display: block; font-size: 34rpx; font-weight: 700; color: #ffffff; }
+.hero-sub { display: block; margin-top: 8rpx; font-size: 23rpx; color: rgba(255, 255, 255, 0.92); }
+.section-title { margin: 10rpx 0 14rpx; font-size: 26rpx; font-weight: 600; color: #1e3311; }
 .coupon { background: #ffffff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; border-left: 8rpx solid #73a937; border: 1rpx solid #e4eadf; }
+.coupon-top { display: flex; align-items: flex-start; justify-content: space-between; }
 .amount { font-size: 30rpx; color: #1e3311; font-weight: 600; }
 .desc { margin-top: 8rpx; font-size: 24rpx; color: #647457; }
 .expire { margin-top: 8rpx; font-size: 22rpx; color: #b8c2ae; }
+.badge {
+  font-size: 20rpx;
+  color: #1e3311;
+  background: #e9f5d8;
+  border-radius: 999rpx;
+  padding: 2rpx 10rpx;
+}
+.badge.owned { background: #f1f3ef; color: #647457; }
+.claim-btn { margin-top: 12rpx; background: #73a937; color: #ffffff; border: none; }
+.use-btn { margin-top: 10rpx; background: #ffffff; color: #5a8a28; border: 1rpx solid #73a937; }

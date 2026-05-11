@@ -18,6 +18,7 @@ public class OrderInfo {
     private String receiverPhone;
     private String receiverAddress;
     private String remark;
+    private Long couponId;
     private Integer status;
     private String payChannel;
     private String payTradeNo;

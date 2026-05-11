@@ -1,4 +1,4 @@
-﻿const { get } = require('../../utils/request');
+const { get } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
@@ -11,7 +11,11 @@ Page({
     loading: false,
     searched: false,
     history: [],
-    loadError: false
+    loadError: false,
+    page: 1,
+    pageSize: 20,
+    hasMore: false,
+    loadingMore: false
   },
 
   onLoad(options = {}) {
@@ -49,7 +53,10 @@ Page({
         keyword: '',
         list: [],
         searched: false,
-        loadError: false
+        loadError: false,
+        page: 1,
+        hasMore: false,
+        loadingMore: false
       });
       return;
     }
@@ -59,15 +66,21 @@ Page({
   onSearch() {
     const keyword = (this.data.keyword || '').trim();
     if (!keyword) {
-      this.setData({ list: [], searched: false, loadError: false });
+      this.setData({ list: [], searched: false, loadError: false, page: 1, hasMore: false, loadingMore: false });
       return;
     }
 
-    this.setData({ loading: true, searched: true, loadError: false, list: [] });
-    get('/goods/search', { keyword }, { retry: 0 })
+    this.setData({ loading: true, searched: true, loadError: false, list: [], page: 1, hasMore: false, loadingMore: false });
+    get('/goods/search', { keyword, page: 1, pageSize: this.data.pageSize }, { retry: 0 })
       .then((res) => {
-        const list = (res && res.data) || [];
-        this.setData({ list: Array.isArray(list) ? list : [], loadError: false });
+        const data = (res && res.data) || {};
+        const list = data.list || [];
+        this.setData({
+          list: Array.isArray(list) ? list : [],
+          loadError: false,
+          page: 2,
+          hasMore: data.hasMore === true
+        });
         this.saveHistory(keyword);
       })
       .catch((error) => {
@@ -75,6 +88,29 @@ Page({
         showRequestError(error, '搜索失败');
       })
       .finally(() => this.setData({ loading: false }));
+  },
+
+  onReachBottom() {
+    if (this.data.loading || this.data.loadingMore || !this.data.hasMore || this.data.loadError) return;
+    const keyword = (this.data.keyword || '').trim();
+    if (!keyword) return;
+    this.setData({ loadingMore: true });
+    get('/goods/search', { keyword, page: this.data.page, pageSize: this.data.pageSize }, { retry: 0 })
+      .then((res) => {
+        const data = (res && res.data) || {};
+        const appendList = Array.isArray(data.list) ? data.list : [];
+        this.setData({
+          list: this.data.list.concat(appendList),
+          page: this.data.page + 1,
+          hasMore: data.hasMore === true,
+          loadError: false
+        });
+      })
+      .catch((error) => {
+        this.setData({ loadError: true });
+        showRequestError(error, '加载更多失败');
+      })
+      .finally(() => this.setData({ loadingMore: false }));
   },
 
   onRetrySearch() {
@@ -86,7 +122,10 @@ Page({
       keyword: '',
       list: [],
       searched: false,
-      loadError: false
+      loadError: false,
+      page: 1,
+      hasMore: false,
+      loadingMore: false
     });
   },
 

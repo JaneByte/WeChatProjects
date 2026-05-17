@@ -7,7 +7,6 @@ import java.util.List;
 @Data
 public class SubmitOrderRequest {
     private Long userId;
-    private Long merchantId;
     private Long addressId;
     private Long couponId;
     private String receiverName;
@@ -19,6 +18,10 @@ public class SubmitOrderRequest {
     @Data
     public static class Item {
         private Long goodsId;
+        private Long skuId;
         private Integer quantity;
+        private String sourceType;
+        private Long sourcePlanId;
+        private String sourceScene;
     }
 }

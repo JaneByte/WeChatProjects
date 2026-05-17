@@ -1,5 +1,6 @@
 const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
+const { runMockPayFlow } = require('../../utils/mock-pay');
 const app = getApp();
 
 Page({
@@ -15,11 +16,19 @@ Page({
     availableCouponList: [],
     unavailableCouponList: [],
     selectedCouponId: null,
-    selectedCouponIndex: -1
+    selectedCouponIndex: -1,
+    pendingOrderId: null
   },
+  submitLock: false,
 
   onShow() {
     const items = wx.getStorageSync('checkoutItems') || [];
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/checkout/checkout', silent: true }).catch((error) => {
+        showRequestError(error, '登录状态失效，请重新登录');
+      });
+      return;
+    }
     const amount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
     const selectedAddress = wx.getStorageSync('selectedAddress');
     this.setData({
@@ -37,28 +46,30 @@ Page({
   },
 
   loadCoupons() {
-    const userId = app.getUserId();
-    if (!userId) return;
-    get('/coupon/list', { userId }, { retry: 0 })
+    if (!app.getUserId()) return;
+    get('/coupon/list', {}, { retry: 0 })
       .then((res) => {
         const list = Array.isArray(res && res.data) ? res.data : [];
         this.setData({ couponList: list }, () => this.recalculateCoupons(true));
       })
-      .catch(() => {});
+      .catch((error) => {
+        showRequestError(error, '优惠券加载失败');
+      });
   },
 
   loadDefaultAddress() {
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) return;
 
-    get('/address/list', { userId }, { retry: 0 })
+    get('/address/list', {}, { retry: 0 })
       .then((res) => {
         const list = (res && res.data) || [];
         if (!Array.isArray(list) || list.length === 0) return;
         const def = list.find((item) => Number(item.isDefault) === 1) || list[0];
         this.setData({ address: def });
       })
-      .catch(() => {});
+      .catch((error) => {
+        showRequestError(error, '默认地址加载失败');
+      });
   },
 
   onChooseAddress() {
@@ -132,10 +143,15 @@ Page({
   },
 
   onSubmit() {
-    if (this.data.submitting) return;
-    const userId = app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+    if (this.data.submitting || this.submitLock) return;
+    if (this.data.pendingOrderId) {
+      wx.redirectTo({ url: `/pages/order-detail/order-detail?id=${this.data.pendingOrderId}` });
+      return;
+    }
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/checkout/checkout' }).catch((error) => {
+        showRequestError(error, '登录状态失效，请重新登录');
+      });
       return;
     }
     if (!this.data.items.length) {
@@ -143,22 +159,29 @@ Page({
       return;
     }
     if (!this.data.address || !this.data.address.id) {
-      wx.showToast({ title: '请选择收货地址', icon: 'none' });
+      wx.showToast({ title: '请先选择收货地址', icon: 'none' });
       return;
     }
-
     const payload = {
-      userId,
-      merchantId: this.data.items[0].merchantId || 1,
       addressId: this.data.address.id,
       couponId: this.data.selectedCouponId,
       remark: (this.data.remark || '').trim(),
       items: this.data.items.map((item) => ({
         goodsId: item.id,
-        quantity: item.quantity
+        skuId: Number(item.skuId || 0),
+        quantity: Number(item.quantity || 0),
+        sourceType: item.sourceType || 'NORMAL',
+        sourcePlanId: item.sourcePlanId || null,
+        sourceScene: item.sourceScene || ''
       }))
     };
+    const invalidItem = payload.items.find((item) => !item.goodsId || !item.skuId || !item.quantity || Number(item.quantity) <= 0);
+    if (invalidItem) {
+      wx.showToast({ title: '商品规格异常，请返回重选', icon: 'none' });
+      return;
+    }
 
+    this.submitLock = true;
     this.setData({ submitting: true });
     post('/order/submit', payload, { retry: 0 })
       .then((res) => {
@@ -167,11 +190,22 @@ Page({
           wx.redirectTo({ url: '/pages/order-list/order-list' });
           return;
         }
-        return post(`/order/pay?userId=${userId}&orderId=${orderId}`, {}, { retry: 0 })
+        this.setData({ pendingOrderId: orderId });
+        wx.removeStorageSync('checkoutItems');
+        wx.removeStorageSync('selectedAddress');
+        return post('/cart/delete-selected', {}, { retry: 0 })
+          .catch((error) => {
+            showRequestError(error, '清理购物车选中项失败');
+          })
+          .then(() => app.refreshCartBadgeFromServer().catch((error) => {
+            showRequestError(error, '购物车角标刷新失败');
+          }))
+          .then(() => runMockPayFlow({
+          orderId,
+          orderNo: res && res.data && res.data.orderNo,
+          actualAmount: this.data.actualAmount
+          }))
           .then(() => {
-            post(`/cart/delete-selected?userId=${userId}`, {}, { retry: 0 }).catch(() => {});
-            wx.removeStorageSync('checkoutItems');
-            wx.removeStorageSync('selectedAddress');
             wx.showToast({ title: '支付成功', icon: 'success' });
             setTimeout(() => {
               wx.redirectTo({
@@ -180,12 +214,31 @@ Page({
             }, 600);
           });
       })
-      .catch((error) => showRequestError(error, '下单失败'))
-      .finally(() => this.setData({ submitting: false }));
+      .catch((error) => {
+        const pendingId = this.data.pendingOrderId;
+        if (error && error.code === 'PAY_CANCELLED') {
+          wx.showToast({ title: '你已取消支付', icon: 'none' });
+          if (pendingId) {
+            setTimeout(() => {
+              wx.redirectTo({ url: `/pages/order-detail/order-detail?id=${pendingId}` });
+            }, 400);
+          }
+          return;
+        }
+        showRequestError(error, '支付失败，请在订单详情继续支付');
+        if (pendingId) {
+          setTimeout(() => {
+            wx.redirectTo({ url: `/pages/order-detail/order-detail?id=${pendingId}` });
+          }, 500);
+        }
+      })
+      .finally(() => {
+        this.submitLock = false;
+        this.setData({ submitting: false });
+      });
   },
 
   onGoCart() {
     wx.switchTab({ url: '/pages/cart/cart' });
   }
 });
-

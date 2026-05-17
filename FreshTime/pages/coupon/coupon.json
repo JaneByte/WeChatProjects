@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "我的优惠券"
+  "navigationBarTitleText": "领券福利",
+  "usingComponents": {
+    "goods-card": "/components/goods-card/goods-card"
+  }
 }
-

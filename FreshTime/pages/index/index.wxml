@@ -72,6 +72,7 @@
               <text class="entry-icon-text">{{item.iconText}}</text>
             </view>
             <text class="entry-text">{{item.text}}</text>
+            <text class="entry-subtext" wx:if="{{item.subText}}">{{item.subText}}</text>
           </view>
         </view>
       </view>
@@ -87,6 +88,9 @@
           </view>
           <text class="head-more press-effect" bindtap="onFlashMoreTap">{{moreText}}</text>
         </view>
+        <view class="flash-tip-row">
+          <text class="flash-tip-text">库存实时变化，秒杀价仅在本场有效</text>
+        </view>
 
         <scroll-view class="flash-scroll" scroll-x show-scrollbar="{{false}}">
           <view class="flash-list">
@@ -95,8 +99,14 @@
               <view class="flash-item-info">
                 <text class="flash-name">{{item.name}}</text>
                 <view class="flash-price-row">
-                  <text class="flash-price">{{priceSymbol}}{{item.price}}</text>
+                  <text class="flash-price">{{priceSymbol}}{{item.flashPrice || item.price}}</text>
                   <text class="flash-origin">{{priceSymbol}}{{item.originPrice}}</text>
+                </view>
+                <view class="flash-progress">
+                  <view class="flash-progress-track">
+                    <view class="flash-progress-inner" style="width: {{item.soldPercent}}%;"></view>
+                  </view>
+                  <text class="flash-progress-text">已抢{{item.soldPercent}}%</text>
                 </view>
                 <view class="flash-foot">
                   <text class="flash-stock">限时优选</text>
@@ -108,19 +118,6 @@
             </view>
           </view>
         </scroll-view>
-      </view>
-
-      <view class="trace-section trace-compact" wx:if="{{traceList.length > 0}}">
-        <view class="section-head">
-          <view class="head-left">
-            <text class="head-title">产地溯源</text>
-          </view>
-          <text class="head-more press-effect" bindtap="onTraceMoreTap">{{moreText}}</text>
-        </view>
-        <view class="trace-quick press-effect" bindtap="onTraceMoreTap">
-          <text class="trace-quick-text">查看本周产地与冷链信息</text>
-          <text class="trace-quick-arrow">></text>
-        </view>
       </view>
 
       <view class="goods-section">

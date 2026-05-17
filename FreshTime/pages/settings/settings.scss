@@ -1,3 +1,20 @@
 .page { padding: 24rpx; background: #f8faf5; min-height: 100vh; }
-.item { background: #ffffff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; display: flex; justify-content: space-between; align-items: center; font-size: 26rpx; color: #1e3311; border: 1rpx solid #e4eadf; }
-.tip { font-size: 22rpx; color: #647457; padding: 4rpx 6rpx; }
+.hero-card, .section-card { border-radius: 24rpx; border: 1rpx solid #e4eadf; box-shadow: 0 14rpx 30rpx rgba(31, 43, 36, 0.06); }
+.hero-card { padding: 30rpx 28rpx; background: radial-gradient(circle at 88% 16%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 34%), linear-gradient(145deg, #7dc556 0%, #64af79 100%); }
+.hero-title { display: block; font-size: 40rpx; color: #ffffff; font-weight: 700; }
+.hero-subtitle { display: block; margin-top: 14rpx; font-size: 24rpx; line-height: 1.7; color: rgba(255, 255, 255, 0.9); }
+.section-card { margin-top: 20rpx; padding: 24rpx; background: linear-gradient(180deg, #ffffff 0%, #f8faf5 100%); }
+.section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20rpx; }
+.section-title { font-size: 28rpx; color: #1e3311; font-weight: 700; }
+.section-desc { display: block; margin-top: 10rpx; font-size: 22rpx; line-height: 1.7; color: #647457; }
+.account-main { margin-top: 14rpx; font-size: 30rpx; color: #1e3311; font-weight: 600; }
+.account-sub { margin-top: 8rpx; font-size: 22rpx; color: #647457; }
+.setting-item { margin-top: 18rpx; padding: 20rpx 4rpx 0; display: flex; justify-content: space-between; align-items: center; border-top: 1rpx solid rgba(228, 234, 223, 0.9); }
+.setting-copy { flex: 1; padding-right: 20rpx; }
+.setting-title { display: block; font-size: 26rpx; color: #1e3311; }
+.setting-sub { display: block; margin-top: 8rpx; font-size: 22rpx; color: #7a8570; }
+.action-card .section-desc { margin-top: 12rpx; }
+.logout-btn, .dev-btn { margin-top: 20rpx; border-radius: 18rpx; font-size: 26rpx; }
+.logout-btn { background: #ffffff; color: #8b2f2f; border: 1rpx solid #f0d6d6; }
+.dev-btn { background: #f7fbf2; color: #58773b; border: 1rpx solid #deead1; }
+.dev-btn--danger { background: #fff7f7; color: #8b2f2f; border-color: #f0d6d6; }

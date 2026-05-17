@@ -6,8 +6,11 @@
     <view class='icon {{success ? "success" : "fail"}}'>{{success ? '√' : '!'}}</view>
     <view class='title'>{{success ? '支付成功' : '支付失败'}}</view>
     <view class='desc'>{{message}}</view>
+    <view wx:if='{{success && orderNo}}' class='desc'>订单号：{{orderNo}}</view>
+    <view wx:if='{{success}}' class='desc'>支付金额：¥{{actualAmount}}</view>
+    <view wx:if='{{success && payTime}}' class='desc'>支付时间：{{payTime}}</view>
     <view wx:if='{{success && payTradeNo}}' class='desc'>支付单号：{{payTradeNo}}</view>
-    <view wx:if='{{success && payChannel}}' class='desc'>支付渠道：{{payChannel}}</view>
+    <view wx:if='{{success && payChannel}}' class='desc'>支付渠道：{{payChannel === "mock_wechat" ? "微信支付（模拟）" : payChannel}}</view>
     </block>
     <view class='actions'>
       <button wx:if='{{orderId}}' class='btn primary' bindtap='goOrderDetail'>查看订单详情</button>

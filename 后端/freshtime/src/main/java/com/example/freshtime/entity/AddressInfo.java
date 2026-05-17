@@ -2,8 +2,6 @@ package com.example.freshtime.entity;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 public class AddressInfo {
     private Long id;
@@ -15,5 +13,4 @@ public class AddressInfo {
     private String district;
     private String detail;
     private Integer isDefault;
-    private LocalDateTime createTime;
 }

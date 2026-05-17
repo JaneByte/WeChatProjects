@@ -1,6 +1,5 @@
 const { get, post } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
-const { API_BASE_URL_MAP } = require('../../utils/config/env');
 const app = getApp();
 
 Page({
@@ -9,26 +8,32 @@ Page({
     notifyPromo: false,
     loading: false,
     submitting: false,
-    showDevTools: false
+    accountSummary: '未登录'
   },
 
-  onLoad() {
-    const accountInfo = wx.getAccountInfoSync ? wx.getAccountInfoSync() : null;
-    const envVersion = (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release';
-    const baseUrl = API_BASE_URL_MAP[envVersion] || API_BASE_URL_MAP.release || '';
-    const showDevTools = envVersion !== 'release' || String(baseUrl).includes('localhost') || String(baseUrl).includes('10.');
-    this.setData({ showDevTools });
-  },
+  onLoad() {},
 
   onShow() {
+    this.refreshAccountSummary();
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/settings/settings', silent: true }).catch(() => {});
+      return;
+    }
     this.loadSettings();
   },
 
-  loadSettings() {
+  refreshAccountSummary() {
+    const profile = app.getLoginProfile() || {};
     const userId = app.getUserId();
-    if (!userId) return;
+    this.setData({
+      accountSummary: userId ? `${profile.nickname || '微信用户'} · ID ${userId}` : '未登录'
+    });
+  },
+
+  loadSettings() {
+    if (!app.getUserId()) return;
     this.setData({ loading: true });
-    get('/settings/detail', { userId }, { retry: 0 })
+    get('/settings/detail', {}, { retry: 0 })
       .then((res) => {
         const data = (res && res.data) || {};
         this.setData({
@@ -49,11 +54,10 @@ Page({
   },
 
   saveSettings(notifyOrder, notifyPromo) {
-    const userId = app.getUserId();
-    if (!userId || this.data.submitting) return;
+    if (!app.getUserId() || this.data.submitting) return;
 
     this.setData({ submitting: true });
-    post('/settings/save', { userId, notifyOrder, notifyPromo }, { retry: 0 })
+    post('/settings/save', { notifyOrder, notifyPromo }, { retry: 0 })
       .then(() => {
         this.setData({ notifyOrder, notifyPromo });
       })
@@ -61,43 +65,20 @@ Page({
       .finally(() => this.setData({ submitting: false }));
   },
 
-  onClearTestData() {
-    const userId = app.getUserId();
-    if (!userId || this.data.submitting) return;
-    wx.showModal({
-      title: '确认清理',
-      content: '将清理当前用户测试数据（订单/购物车/地址），是否继续？',
-      success: (res) => {
-        if (!res.confirm) return;
-        this.setData({ submitting: true });
-        post(`/order/dev/clear-my-test-data?userId=${userId}`, {}, { retry: 0 })
-          .then(() => {
-            wx.showToast({ title: '清理成功', icon: 'success' });
-          })
-          .catch((error) => showRequestError(error, '清理失败'))
-          .finally(() => this.setData({ submitting: false }));
-      }
-    });
-  },
-
-  onGrantTestCoupons() {
+  onLogout() {
     if (this.data.submitting) return;
     wx.showModal({
-      title: '确认发放',
-      content: '给所有用户发放默认测试优惠券，是否继续？',
+      title: '退出登录',
+      content: '退出后将清空当前本地登录状态，是否继续？',
       success: (res) => {
         if (!res.confirm) return;
-        this.setData({ submitting: true });
-        post('/coupon/dev/grant-default', {}, { retry: 0 })
-          .then((resData) => {
-            const data = (resData && resData.data) || {};
-            wx.showToast({
-              title: `发放${data.grantedCount || 0}张`,
-              icon: 'success'
-            });
-          })
-          .catch((error) => showRequestError(error, '发放失败'))
-          .finally(() => this.setData({ submitting: false }));
+        app.markManualLogout(true);
+        app.clearLoginState();
+        this.refreshAccountSummary();
+        wx.showToast({ title: '已退出登录', icon: 'success', duration: 1200 });
+        setTimeout(() => {
+          wx.switchTab({ url: '/pages/index/index' });
+        }, 400);
       }
     });
   }

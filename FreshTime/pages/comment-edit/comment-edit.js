@@ -36,14 +36,14 @@ Page({
 
   onSubmit() {
     if (this.data.submitting) return;
-    const userId = app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+    if (!app.getUserId()) {
+      app.requireLogin({
+        redirect: `/pages/comment-edit/comment-edit?orderId=${this.data.orderId}&goodsId=${this.data.goodsId}&goodsName=${encodeURIComponent(this.data.goodsName || '')}`
+      }).catch(() => {});
       return;
     }
 
     const payload = {
-      userId,
       orderId: this.data.orderId,
       goodsId: this.data.goodsId,
       rating: this.data.rating,
@@ -53,6 +53,7 @@ Page({
     this.setData({ submitting: true });
     post('/comment/submit', payload, { retry: 0 })
       .then(() => {
+        wx.setStorageSync('commentRefreshGoodsId', this.data.goodsId);
         wx.showToast({ title: '评价成功', icon: 'success' });
         setTimeout(() => wx.navigateBack(), 700);
       })
@@ -60,4 +61,3 @@ Page({
       .finally(() => this.setData({ submitting: false }));
   }
 });
-

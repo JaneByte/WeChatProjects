@@ -1,0 +1,34 @@
+<view class="profile-edit-page">
+  <view class="hero-card">
+    <text class="hero-title">{{mode === 'onboarding' ? '完善个人资料' : '编辑个人资料'}}</text>
+    <text class="hero-subtitle">{{mode === 'onboarding' ? '头像和昵称可以稍后再改' : '修改头像和昵称'}}</text>
+  </view>
+
+  <view class="panel-card">
+    <view class="section-head">
+      <text class="section-title">头像</text>
+    </view>
+    <view class="avatar-row">
+      <view class="avatar-picker-shell">
+        <image class="avatar-preview" src="{{profile.avatar}}" mode="aspectFill"></image>
+        <button class="avatar-picker-trigger" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+      </view>
+      <view class="avatar-copy">
+        <text class="avatar-title">头像</text>
+        <text class="avatar-tip">点击获取微信头像</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel-card">
+    <view class="section-head">
+      <text class="section-title">昵称</text>
+    </view>
+    <input class="nickname-input" maxlength="20" placeholder="填写一个你想显示的昵称" value="{{profile.nickname}}" bindinput="onInputNickname" />
+  </view>
+
+  <view class="action-bar">
+    <button class="save-btn" loading="{{submitting}}" disabled="{{loading || submitting}}" bindtap="onSubmit">保存资料</button>
+    <button wx:if="{{mode === 'onboarding'}}" class="skip-btn" disabled="{{loading || submitting}}" bindtap="onSkip">先跳过</button>
+  </view>
+</view>

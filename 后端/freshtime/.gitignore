@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local WeChat login config ###
+.env.local
+start-local.ps1

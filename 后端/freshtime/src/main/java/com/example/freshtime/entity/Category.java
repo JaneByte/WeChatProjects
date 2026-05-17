@@ -2,8 +2,6 @@ package com.example.freshtime.entity;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 public class Category {
     private Long id;                    // 分类ID
@@ -12,7 +10,6 @@ public class Category {
     private String icon;                // 分类图标路径
     private Integer sort;               // 排序值，越小越靠前
     private Integer status;             // 状态，是否启用
-    private LocalDateTime createTime;   // 创建时间
 
     public Category() {}
 
@@ -62,13 +59,5 @@ public class Category {
 
     public void setStatus(Integer status) {
         this.status = status;
-    }
-
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
     }
 }

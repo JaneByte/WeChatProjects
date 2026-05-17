@@ -1,15 +1,38 @@
 <view class='page'>
-  <view class='item'>
-    <text>订单通知</text>
-    <switch color='#07c160' checked='{{notifyOrder}}' bindchange='onToggleOrder' />
+  <view class='hero-card'>
+    <text class='hero-title'>账号与设置</text>
+    <text class='hero-subtitle'>这里集中管理账号信息、通知偏好与退出登录。</text>
   </view>
-  <view class='item'>
-    <text>优惠活动通知</text>
-    <switch color='#07c160' checked='{{notifyPromo}}' bindchange='onTogglePromo' />
+
+  <view class='section-card account-card'>
+    <text class='section-title'>当前账号</text>
+    <view class='account-main'>{{accountSummary}}</view>
   </view>
-  <view class='tip'>当前设置仅用于演示页面展示。</view>
-  <block wx:if='{{showDevTools}}'>
-    <button class='danger-btn' bindtap='onGrantTestCoupons'>给所有用户发测试优惠券</button>
-    <button class='danger-btn' bindtap='onClearTestData'>清理当前用户测试数据</button>
-  </block>
+
+  <view class='section-card'>
+    <view class='section-head'>
+      <text class='section-title'>通知偏好</text>
+      <text class='section-desc'>当前设置仅用于演示页面展示</text>
+    </view>
+    <view class='setting-item'>
+      <view class='setting-copy'>
+        <text class='setting-title'>订单通知</text>
+        <text class='setting-sub'>订单状态变更时提醒你</text>
+      </view>
+      <switch color='#07c160' checked='{{notifyOrder}}' bindchange='onToggleOrder' />
+    </view>
+    <view class='setting-item'>
+      <view class='setting-copy'>
+        <text class='setting-title'>优惠活动通知</text>
+        <text class='setting-sub'>领券、活动与推荐消息提醒</text>
+      </view>
+      <switch color='#07c160' checked='{{notifyPromo}}' bindchange='onTogglePromo' />
+    </view>
+  </view>
+
+  <view class='section-card action-card'>
+    <text class='section-title'>登录管理</text>
+    <text class='section-desc'>退出后会清空当前本地登录状态。</text>
+    <button class='logout-btn' bindtap='onLogout'>退出登录</button>
+  </view>
 </view>

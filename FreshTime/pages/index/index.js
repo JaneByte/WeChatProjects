@@ -10,7 +10,7 @@ Page({
     brandSub: '鲜时达',
     greetingWords: '早安，新鲜蔬果已经到店',
     searchIcon: '/assets/icon/search.png',
-    searchPlaceholder: '搜索蔬果 / 产地 / 秒杀',
+    searchPlaceholder: '搜索蔬果 / 秒杀',
 
     moreText: '更多 >',
     noticePrefix: '公告',
@@ -37,13 +37,12 @@ Page({
     hotKeyword: '',
 
     navList: [
-      { type: 'couponZone', text: '领券福利', iconText: '券', linkType: 'coupon', linkValue: '' },
-      { type: 'seasonalFresh', text: '当季鲜选', iconText: '时', linkType: 'scene', linkValue: '时令' },
-      { type: 'smallPortion', text: '一人食小份', iconText: '小', linkType: 'scene', linkValue: '小份量' },
-      { type: 'comboMix', text: '蔬果搭配', iconText: '搭', linkType: 'scene', linkValue: '搭配' }
+      { type: 'couponZone', text: '领券福利', subText: '先领券再下单', iconText: '券', linkType: 'coupon', linkValue: '' },
+      { type: 'seasonalFresh', text: '当季鲜选', subText: '应季更新更划算', iconText: '时', linkType: 'scene', linkValue: '时令' },
+      { type: 'smallPortion', text: '一人食小份', subText: '单人份量少浪费', iconText: '小', linkType: 'scene', linkValue: '小份量' },
+      { type: 'comboMix', text: '蔬果搭配', subText: '按场景一次配齐', iconText: '搭', linkType: 'scene', linkValue: '搭配' }
     ],
 
-    traceList: [],
     goodsList: [],
     leftColumnList: [],
     rightColumnList: [],
@@ -97,7 +96,7 @@ Page({
       const res = await get('/home/index', {}, { retry: 1 });
       const data = this.unwrapData(res);
       const flashRaw = data.flash || {};
-      const flashList = await this.normalizeGoodsImageList(flashRaw.list || []);
+      const flashList = await this.normalizeGoodsImageList(flashRaw.list || [], true);
       const bannerList = await this.normalizeBannerImageList(data.banners || []);
       const flashEndTimestamp = this.parseTimeToTimestamp(flashRaw.endTime);
       const noticeList = Array.isArray(data.notices) ? data.notices : [];
@@ -110,7 +109,6 @@ Page({
         noticeList,
         navList,
         hotKeyword,
-        traceList: data.traceList || [],
         flashEndTimestamp,
         homeLoading: false,
         homeError: false
@@ -126,7 +124,6 @@ Page({
         flashSaleList: [],
         bannerList: [],
         noticeList: [],
-        traceList: [],
         homeLoading: false,
         homeError: true
       });
@@ -175,7 +172,7 @@ Page({
     return { leftColumnList, rightColumnList };
   },
 
-  async normalizeGoodsImageList(list) {
+  async normalizeGoodsImageList(list, asFlash = false) {
     if (!list || list.length === 0) return [];
     const fileIds = list.map((item) => item.mainImage || item.image).filter((id) => id && id.startsWith('cloud://'));
     const urlMap = fileIds.length > 0 ? await getTempFileUrls(fileIds) : {};
@@ -183,8 +180,30 @@ Page({
       const rawImage = item.mainImage || item.image || '';
       const image = urlMap[rawImage] || rawImage;
       const stock = typeof item.stock === 'number' ? item.stock : (typeof item.flashStock === 'number' ? item.flashStock : 0);
-      return { ...item, mainImage: image, image, stock };
+      if (!asFlash) return { ...item, mainImage: image, image, stock };
+      const originPrice = Number(item.originalPrice || item.originPrice || item.price || 0);
+      const flashPrice = Number(item.flashPrice || item.price || 0);
+      const flashStock = Number(item.flashStock || 0);
+      const soldPercent = this.calcSoldPercent(stock, flashStock);
+      return {
+        ...item,
+        mainImage: image,
+        image,
+        stock,
+        originPrice: originPrice.toFixed(2),
+        flashPrice: flashPrice.toFixed(2),
+        soldPercent
+      };
     });
+  },
+
+  calcSoldPercent(currentStock, initialFlashStock) {
+    const nowStock = Number(currentStock || 0);
+    const totalStock = Number(initialFlashStock || 0);
+    if (totalStock <= 0) return 0;
+    const sold = Math.max(0, totalStock - nowStock);
+    const ratio = Math.round((sold * 100) / totalStock);
+    return Math.max(0, Math.min(100, ratio));
   },
 
   async normalizeBannerImageList(list) {
@@ -334,7 +353,12 @@ Page({
   buildTargetUrl(linkType, linkValue, paths) {
     if (linkType === 'category') return paths.category;
     if (linkType === 'coupon') return '/pages/coupon/coupon';
-    if (linkType === 'scene') return `${paths.goods}?scene=${encodeURIComponent(linkValue || '')}`;
+    if (linkType === 'scene') {
+      if (linkValue === '时令') return '/pages/seasonal/seasonal';
+      if (linkValue === '小份量') return '/pages/meal-config/meal-config';
+      if (linkValue === '搭配') return '/pages/combo-config/combo-config';
+      return `${paths.goods}?scene=${encodeURIComponent(linkValue || '')}`;
+    }
     if (linkType === 'search') return `${paths.search}?keyword=${encodeURIComponent(linkValue || '')}`;
     return `${paths.goods}?type=${encodeURIComponent(linkValue || 'hot')}`;
   },
@@ -361,6 +385,18 @@ Page({
       return;
     }
     if (type === 'scene') {
+      if (value === '时令') {
+        wx.navigateTo({ url: '/pages/seasonal/seasonal' });
+        return;
+      }
+      if (value === '小份量') {
+        wx.navigateTo({ url: '/pages/meal-config/meal-config' });
+        return;
+      }
+      if (value === '搭配') {
+        wx.navigateTo({ url: '/pages/combo-config/combo-config' });
+        return;
+      }
       wx.navigateTo({ url: `${paths.goods}?scene=${encodeURIComponent(value)}` });
       return;
     }
@@ -377,10 +413,6 @@ Page({
       if (!value) return;
       wx.navigateTo({ url: `/pages/webview/webview?url=${encodeURIComponent(value)}` });
     }
-  },
-
-  onTraceMoreTap() {
-    wx.navigateTo({ url: '/pages/trace-detail/trace-detail' });
   },
 
   onMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=weeklyHot` }); },
@@ -401,17 +433,23 @@ Page({
   },
 
   addToCart(goodsId, quantity = 1, onSuccess) {
-    const userId = app.getUserId && app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
-      return;
-    }
-    post(`/cart/add?userId=${userId}&goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 })
+    app.requireLogin({ redirect: '/pages/index/index', message: '正在登录，请稍候' })
+      .then(() => post(`/cart/add?goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 }))
       .then(() => {
         if (typeof onSuccess === 'function') onSuccess();
         wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
         if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'));
+      .catch((error) => {
+        if (error && (error.message === 'LOGIN_REQUIRED' || error.message === 'LOGIN_TIMEOUT' || error.message === 'MANUAL_LOGOUT')) {
+          return;
+        }
+        showRequestError(error, '加入购物车失败');
+      });
   }
 });
+
+
+
+
+

@@ -1,4 +1,4 @@
-﻿<view class='page'>
+<view class='page'>
   <view wx:if='{{loading}}' class='state'>加载中...</view>
   <view wx:elif='{{!detail}}' class='state'>订单不存在</view>
   <view wx:else>
@@ -13,7 +13,8 @@
         <button wx:if='{{detail.status === 0}}' size='mini' class='mini-btn primary' bindtap='onPay'>去支付</button>
         <button wx:if='{{detail.status === 0 || detail.status === 1}}' size='mini' class='mini-btn' bindtap='onCancel'>取消订单</button>
         <button wx:if='{{detail.status === 2}}' size='mini' class='mini-btn' bindtap='onFinish'>确认收货</button>
-        <button wx:if='{{detail.status === 1 || detail.status === 2}}' size='mini' class='mini-btn' bindtap='onRefund'>申请退款</button>
+        <button wx:if='{{canAfterSale}}' size='mini' class='mini-btn' bindtap='onRefund'>{{detail.status === 3 ? "申请售后" : "申请退款"}}</button>
+        <button wx:if='{{detail.status === 6}}' size='mini' class='mini-btn' bindtap='onRefundFinish'>确认退款成功</button>
       </view>
     </view>
 
@@ -34,14 +35,25 @@
         <text>单价：¥{{item.price}}</text>
         <text>数量：x{{item.quantity}}</text>
       </view>
+      <view class='item-sub' wx:if='{{item.skuName || item.skuWeightG}}'>
+        <text>规格：{{item.skuName || "标准装"}}{{item.skuWeightG ? (" · " + item.skuWeightG + "g") : ""}}</text>
+      </view>
       <view class='item-sub' wx:if='{{detail.status === 3}}'>
         <button
+          wx:if='{{!(item.hasCommented > 0)}}'
           size='mini'
           class='mini-btn'
           data-goods-id='{{item.goodsId}}'
           data-goods-name='{{item.goodsName}}'
           bindtap='onGoComment'
         >去评价</button>
+        <button
+          wx:if='{{item.hasCommented > 0}}'
+          size='mini'
+          class='mini-btn'
+          data-comment-id='{{item.commentId}}'
+          bindtap='onViewComment'
+        >查看评价</button>
       </view>
     </view>
   </view>

@@ -1,7 +1,8 @@
-﻿const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
+const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
 
 const DEFAULT_TIMEOUT = 10000;
 const TOKEN_STORAGE_KEY = 'token';
+const UNAUTHORIZED_EVENT_NAME = 'auth:unauthorized';
 
 const HTTP_ERROR_MESSAGE_MAP = {
   400: '请求参数有误',
@@ -48,6 +49,17 @@ function normalizeNetworkError(error) {
   return new Error('网络请求失败，请稍后重试');
 }
 
+function parseUploadResponse(rawData) {
+  if (typeof rawData !== 'string') {
+    return rawData;
+  }
+  try {
+    return JSON.parse(rawData);
+  } catch (error) {
+    return rawData;
+  }
+}
+
 function logRequestStart(traceId, method, url, data) {
   if (!REQUEST_LOG_ENABLED) return;
   console.info(`[request:start] id=${traceId} env=${ENV_VERSION} ${method} ${url}`, data || {});
@@ -63,6 +75,17 @@ function logRequestEnd(traceId, method, url, duration, statusCode, businessCode)
 function logRequestFail(traceId, method, url, duration, error) {
   if (!REQUEST_LOG_ENABLED) return;
   console.warn(`[request:fail] id=${traceId} ${method} ${url} duration=${duration}ms`, error);
+}
+
+function emitUnauthorized() {
+  try {
+    const app = getApp();
+    if (app && typeof app.handleUnauthorized === 'function') {
+      app.handleUnauthorized();
+    }
+  } catch (error) {
+    // noop
+  }
 }
 
 /**
@@ -115,6 +138,12 @@ function request(options = {}) {
           logRequestEnd(traceId, method, finalUrl, duration, res.statusCode, businessCode);
 
           if (res.statusCode === 401) {
+            try {
+              wx.removeStorageSync(TOKEN_STORAGE_KEY);
+            } catch (error) {
+              // noop
+            }
+            emitUnauthorized();
             const unauthorizedError = new Error(getHttpErrorMessage(401));
             unauthorizedError.code = 401;
             reject(unauthorizedError);
@@ -210,10 +239,54 @@ function del(url, data = {}, options = {}) {
   });
 }
 
+/**
+ * 上传文件到服务器
+ * @param {String} url 上传接口路径
+ * @param {String} filePath 本地文件路径
+ * @param {Object} [formData={}] 额外表单数据
+ * @returns {Promise<any>}
+ */
+const uploadFile = (url, filePath, formData = {}) => {
+  return new Promise((resolve, reject) => {
+    wx.uploadFile({
+      url: BASE_URL + url, // 修复：使用正确的全局变量名
+      filePath: filePath,
+      name: 'file',
+      formData: formData,
+      header: {
+        ...getAuthHeader() // 修复：复用已有的获取认证头方法
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          const data = parseUploadResponse(res.data);
+          if (
+            data &&
+            typeof data === 'object' &&
+            Object.prototype.hasOwnProperty.call(data, 'code') &&
+            data.code !== 200
+          ) {
+            reject(new Error(data.message || '上传失败'));
+            return;
+          }
+          resolve(data);
+        } else {
+          reject(new Error(`上传失败 (${res.statusCode})`));
+        }
+      },
+      fail: (error) => {
+        reject(normalizeNetworkError(error));
+      }
+    });
+  });
+};
+
 module.exports = {
   request,
   get,
   post,
   put,
-  del
+  del,
+  uploadFile,
+  TOKEN_STORAGE_KEY,
+  UNAUTHORIZED_EVENT_NAME
 };

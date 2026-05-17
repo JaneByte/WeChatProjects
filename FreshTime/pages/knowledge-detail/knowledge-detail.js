@@ -90,12 +90,11 @@ Page({
   },
 
   addToCart(goodsId, quantity = 1, onSuccess) {
-    const userId = app.getUserId && app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: `/pages/knowledge-detail/knowledge-detail?id=${encodeURIComponent(this.data.id || '')}` }).catch(() => {});
       return;
     }
-    post(`/cart/add?userId=${userId}&goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 })
+    post(`/cart/add?goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 })
       .then(() => {
         if (typeof onSuccess === 'function') onSuccess();
         wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });

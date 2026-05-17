@@ -8,6 +8,16 @@ spring:
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      max-lifetime: 1800000
+      idle-timeout: 600000
+      keepalive-time: 300000
+      validation-timeout: 5000
+      connection-timeout: 10000
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 
 mybatis-plus:
 
@@ -20,3 +30,14 @@ mybatis-plus:
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
+
+wechat:
+  miniprogram:
+    app-id: ${WECHAT_MINIPROGRAM_APP_ID:}
+    app-secret: ${WECHAT_MINIPROGRAM_APP_SECRET:}
+
+app:
+  upload-dir: uploads
+  public-base-url: https://unashamed-cursor-drainable.ngrok-free.dev
+  auth:
+    admin-user-ids: 1

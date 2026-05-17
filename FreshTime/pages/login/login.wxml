@@ -1,0 +1,20 @@
+<view class="login-page">
+  <view class="login-orb login-orb--top"></view>
+  <view class="login-orb login-orb--bottom"></view>
+  <view class="login-panel">
+    <view class="brand-mark">鲜时刻</view>
+    <text class="login-title">微信登录</text>
+    <text class="login-subtitle">一键进入鲜时刻</text>
+
+    <view class="login-card">
+      <view class="login-hero">
+        <view class="hero-icon">鲜</view>
+        <view class="hero-copy">
+          <text class="login-mode">使用微信账号登录</text>
+          <text class="login-desc">快速开始浏览和下单</text>
+        </view>
+      </view>
+      <button class="login-action login-action--primary" loading="{{loading}}" disabled="{{loading}}" bindtap="onWechatLogin">继续使用微信登录</button>
+    </view>
+  </view>
+</view>

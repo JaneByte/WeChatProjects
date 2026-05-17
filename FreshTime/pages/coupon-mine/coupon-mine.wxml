@@ -1,0 +1,27 @@
+<view class='page'>
+  <view class='section-title'>我的优惠券</view>
+  <view class='state-text' wx:if='{{loading}}'>加载中...</view>
+  <view class='state-text' wx:elif='{{loadError}}'>加载失败，请稍后重试</view>
+
+  <block wx:elif='{{list.length > 0}}'>
+    <view class='coupon' wx:for='{{list}}' wx:key='id'>
+      <view class='coupon-top'>
+        <view>
+          <view class='amount'>{{item.title}}</view>
+          <view class='desc'>{{item.condition}}</view>
+        </view>
+        <view class='badge-wrap'>
+          <view class='badge near-expire' wx:if='{{item.isNearExpire}}'>即将过期 {{item.remainDaysText}}</view>
+          <view class='badge'>可用</view>
+        </view>
+      </view>
+      <view class='expire'>有效期至：{{item.expireAt}}</view>
+      <button class='use-btn' size='mini' bindtap='onUseTap'>去使用</button>
+    </view>
+  </block>
+
+  <view class='empty-wrap' wx:else>
+    <text class='empty-text'>当前没有可用优惠券</text>
+    <button class='go-btn' bindtap='onGoCouponCenter'>前往领券</button>
+  </view>
+</view>

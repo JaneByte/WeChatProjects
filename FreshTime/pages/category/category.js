@@ -16,7 +16,11 @@ Page({
     loading: false,
     loadError: false,
     filterKeyword: '',
-    onlyInStock: false
+    onlyInStock: false,
+    specPopupVisible: false,
+    specGoods: null,
+    selectedSkuId: 0,
+    addCartLoadingId: 0
   },
 
   onLoad() {
@@ -118,7 +122,8 @@ Page({
       desc: item.subtitle || '',
       sales: item.salesVolume || 0,
       image: item.mainImage,
-      stock: item.stock !== undefined ? item.stock : 999
+      stock: item.stock !== undefined ? item.stock : 999,
+      skuList: Array.isArray(item.skuList) ? item.skuList : []
     }));
 
     this.setData({ goodsList }, () => this.applyFilters());
@@ -181,18 +186,72 @@ Page({
       return;
     }
 
-    const userId = app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none', duration: 1500 });
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/category/category' }).catch(() => {});
       return;
     }
+    const selectedSku = this.getFirstAvailableSku(goods);
+    if (!selectedSku) {
+      wx.showToast({ title: '暂无可用规格', icon: 'none', duration: 1500 });
+      return;
+    }
+    this.setData({
+      specPopupVisible: true,
+      specGoods: goods,
+      selectedSkuId: Number(selectedSku.id || 0)
+    });
+  },
 
-    post(`/cart/add?userId=${userId}&goodsId=${goodsId}&quantity=1`, {}, { retry: 0 })
+  onCloseSpecPopup() {
+    if (this.data.addCartLoadingId) return;
+    this.setData({
+      specPopupVisible: false,
+      specGoods: null,
+      selectedSkuId: 0
+    });
+  },
+
+  onSelectSku(e) {
+    const skuId = Number(e.currentTarget.dataset.skuid || 0);
+    if (!skuId) return;
+    this.setData({ selectedSkuId: skuId });
+  },
+
+  onConfirmSpecAdd() {
+    const goods = this.data.specGoods;
+    if (!goods || !goods.id || this.data.addCartLoadingId) return;
+    const selectedSku = this.getSelectedSku(goods, this.data.selectedSkuId);
+    if (!selectedSku || Number(selectedSku.skuStock || 0) <= 0) {
+      wx.showToast({ title: '该规格库存不足', icon: 'none', duration: 1500 });
+      return;
+    }
+    this.setData({ addCartLoadingId: Number(goods.id) });
+    post(`/cart/add?goodsId=${goods.id}&skuId=${selectedSku.id}&quantity=1`, {}, { retry: 0 })
       .then(() => {
         wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
+        this.setData({
+          specPopupVisible: false,
+          specGoods: null,
+          selectedSkuId: 0
+        });
         if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'));
+      .catch((error) => showRequestError(error, '加入购物车失败'))
+      .finally(() => this.setData({ addCartLoadingId: 0 }));
+  },
+
+  getFirstAvailableSku(goods = {}) {
+    const list = Array.isArray(goods.skuList) ? goods.skuList : [];
+    const enabled = list.filter((sku) => Number(sku.status) === 1 && Number(sku.skuStock || 0) > 0);
+    if (!enabled.length) return null;
+    const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
+    return sorted[0];
+  },
+
+  getSelectedSku(goods = {}, selectedSkuId = 0) {
+    const list = Array.isArray(goods.skuList) ? goods.skuList : [];
+    const matched = list.find((sku) => Number(sku.id) === Number(selectedSkuId || 0));
+    return matched || this.getFirstAvailableSku(goods);
   },
 
   onPullDownRefresh() {

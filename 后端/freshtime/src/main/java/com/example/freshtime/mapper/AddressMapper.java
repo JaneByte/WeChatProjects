@@ -14,13 +14,15 @@ import java.util.List;
 @Mapper
 public interface AddressMapper {
 
-    @Select("SELECT * FROM address WHERE user_id = #{userId} ORDER BY is_default DESC, id DESC")
+    String ADDRESS_COLUMNS = "id, user_id, receiver_name, receiver_phone, province, city, district, detail, is_default";
+
+    @Select("SELECT " + ADDRESS_COLUMNS + " FROM address WHERE user_id = #{userId} ORDER BY is_default DESC, id DESC")
     List<AddressInfo> selectByUserId(Long userId);
 
-    @Select("SELECT * FROM address WHERE id = #{id} AND user_id = #{userId} LIMIT 1")
+    @Select("SELECT " + ADDRESS_COLUMNS + " FROM address WHERE id = #{id} AND user_id = #{userId} LIMIT 1")
     AddressInfo selectByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
-    @Select("SELECT * FROM address WHERE id = #{id} LIMIT 1")
+    @Select("SELECT " + ADDRESS_COLUMNS + " FROM address WHERE id = #{id} LIMIT 1")
     AddressInfo selectById(Long id);
 
     @Insert("INSERT INTO address(user_id, receiver_name, receiver_phone, province, city, district, detail, is_default) " +

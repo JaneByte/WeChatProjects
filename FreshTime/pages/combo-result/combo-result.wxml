@@ -1,0 +1,65 @@
+<view class='page'>
+  <view class='state' wx:if='{{loading}}'>正在生成搭配方案...</view>
+  <view class='state' wx:elif='{{!combo}}'>暂无方案，请返回重试</view>
+
+  <view wx:else>
+    <view class='hero'>
+      <view class='title'>{{combo.comboName}}</view>
+      <view class='sub'>匹配度 {{combo.fitScore}} · 预计总价 ¥{{combo.priceSummary.totalPrice}}</view>
+      <view class='summary-card'>
+        <view class='summary-title'>{{comboSummaryTitle}}</view>
+        <view class='summary-text'>{{comboSummaryText}}</view>
+      </view>
+      <view class='tip' wx:if='{{combo.priceSummary.originalTotalPrice > combo.priceSummary.totalPrice}}'>单买约 ¥{{combo.priceSummary.originalTotalPrice}} · 当前已省 ¥{{combo.priceSummary.savedAmount}}</view>
+      <view class='tip' wx:if='{{combo.priceSummary.originalTotalPrice <= combo.priceSummary.totalPrice}}'>当前按场景适配与搭配完整度推荐，适合一键加购</view>
+      <view class='tip' wx:if='{{combo.priceSummary.couponHint}}'>{{combo.priceSummary.couponHint}}</view>
+      <view class='tip' wx:if='{{replaceDeltaText}}'>{{replaceDeltaText}}</view>
+      <view class='tip' wx:for='{{combo.warnings || []}}' wx:key='index'>{{item}}</view>
+    </view>
+
+    <view class='card'>
+      <view class='card-title'>搭配明细</view>
+      <view class='item' wx:for='{{combo.items}}' wx:key='_itemKey'>
+        <view class='item-head'>
+          <view class='item-name'>{{item.name}}</view>
+          <view class='replace-btn' data-index='{{index}}' bindtap='onReplaceItem'>换一项</view>
+        </view>
+        <view class='item-meta'>{{item.role || item.group || '组合项'}} · {{item.skuName || '默认规格'}} · x{{item.quantity}}</view>
+        <view class='item-meta item-tagline' wx:if='{{item._reasonTagShort}}'>
+          {{item._reasonTagShort}}<text wx:if='{{item._reasonTagMore > 0}}'> +{{item._reasonTagMore}}</text>
+        </view>
+        <view class='reason-row' wx:if='{{item._reasonLong}}'>
+          <view class='item-reason'>{{reasonExpandedMap[item._itemKey] ? item._reasonLong : item._reasonShort}}</view>
+          <view class='reason-toggle' data-item-key='{{item._itemKey}}' bindtap='onToggleReason'>
+            {{reasonExpandedMap[item._itemKey] ? '收起说明' : '查看说明'}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class='card' wx:if='{{combo.prepHint}}'>
+      <view class='card-title'>处理建议</view>
+      <view class='meta-line'>单买参考：¥{{combo.priceSummary.originalTotalPrice || combo.priceSummary.totalPrice}} / 组合价：¥{{combo.priceSummary.packagePrice || combo.priceSummary.totalPrice}}</view>
+      <view class='meta-line'>{{combo.prepHint}}</view>
+    </view>
+
+    <view class='card' wx:if='{{combo.strategySummary}}'>
+      <view class='card-title'>本次策略说明</view>
+      <view class='meta-line'>策略版本：{{combo.strategySummary.weightProfile}}</view>
+      <view class='meta-line'>权重：小份{{combo.strategySummary.smallPortionWeight}} / 销量{{combo.strategySummary.salesWeight}} / 库存{{combo.strategySummary.stockWeight}} / 预算{{combo.strategySummary.budgetWeight}}</view>
+      <view class='meta-line'>兜底：{{combo.strategySummary.fallbackUsed ? '已触发' : '未触发'}}{{combo.strategySummary.fallbackReason ? (' · ' + combo.strategySummary.fallbackReason) : ''}}</view>
+    </view>
+
+    <view class='action-row'>
+      <button class='ghost-btn' bindtap='onRegenerate'>重新生成</button>
+      <button class='primary-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onAddPlanToCart'>一键加购</button>
+    </view>
+
+    <view class='card' wx:if='{{addCartFailedItems.length > 0}}'>
+      <view class='card-title'>未加购成功项</view>
+      <view class='meta-line' wx:for='{{addCartFailedItems}}' wx:key='index'>
+        商品{{item.goodsId}}：{{item.reason}}
+      </view>
+    </view>
+  </view>
+</view>

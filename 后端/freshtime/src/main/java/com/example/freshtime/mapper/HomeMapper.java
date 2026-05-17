@@ -12,12 +12,16 @@ import java.util.Map;
 @Mapper
 public interface HomeMapper {
 
-    @Select("SELECT * FROM goods " +
+    String GOODS_COLUMNS = "id, category_id, name, main_image, images, detail, price, original_price, stock, unit, " +
+            "sales_volume, is_recommend, is_flash, flash_price, flash_start_time, flash_end_time, flash_stock, " +
+            "home_sort, show_in_home, status, origin, keywords, create_time";
+
+    @Select("SELECT " + GOODS_COLUMNS + " FROM goods " +
             "WHERE status = 1 AND show_in_home = 1 AND is_recommend = 1 " +
             "ORDER BY home_sort ASC, sales_volume DESC, create_time DESC LIMIT 1")
     Goods selectTodayRecommend();
 
-    @Select("SELECT * FROM goods " +
+    @Select("SELECT " + GOODS_COLUMNS + " FROM goods " +
             "WHERE status = 1 AND is_flash = 1 AND flash_stock > 0 " +
             "AND flash_start_time IS NOT NULL AND flash_end_time IS NOT NULL " +
             "AND flash_start_time <= #{now} AND flash_end_time >= #{now} " +
@@ -44,7 +48,7 @@ public interface HomeMapper {
             "ORDER BY create_time DESC LIMIT #{limit}")
     List<Map<String, Object>> selectNewArrivalList(@Param("limit") Integer limit);
 
-    @Select("SELECT * FROM goods " +
+    @Select("SELECT " + GOODS_COLUMNS + " FROM goods " +
             "WHERE status = 1 AND show_in_home = 1 " +
             "ORDER BY sales_volume DESC, home_sort ASC, create_time DESC " +
             "LIMIT #{offset}, #{pageSize}")
@@ -53,7 +57,7 @@ public interface HomeMapper {
     @Select("SELECT COUNT(1) FROM goods WHERE status = 1 AND show_in_home = 1")
     Integer countHomeGoods();
 
-    @Select("SELECT * FROM goods " +
+    @Select("SELECT " + GOODS_COLUMNS + " FROM goods " +
             "WHERE status = 1 AND show_in_home = 1 AND stock > 0 AND " +
             "(name LIKE CONCAT('%', #{keyword}, '%') OR keywords LIKE CONCAT('%', #{keyword}, '%')) " +
             "ORDER BY sales_volume DESC, home_sort ASC, create_time DESC LIMIT #{limit}")

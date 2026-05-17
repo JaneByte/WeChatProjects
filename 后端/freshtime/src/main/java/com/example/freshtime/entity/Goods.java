@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 @Data
 public class Goods {
     private Long id;
-    private Long merchantId;
     private Long categoryId;
     private String name;
     private String mainImage;
@@ -30,5 +29,11 @@ public class Goods {
     private Integer status;
     private String origin;
     private String keywords;
+    private Integer seasonStartMonth;
+    private Integer seasonEndMonth;
+    private Integer seasonLateThresholdDays;
+    private String seasonEarlyHint;
+    private String seasonPeakHint;
+    private String seasonLateHint;
     private LocalDateTime createTime;
 }

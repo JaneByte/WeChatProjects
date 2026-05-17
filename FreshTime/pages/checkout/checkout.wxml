@@ -1,4 +1,4 @@
-﻿<view class='page'>
+<view class='page'>
   <view class='address' bindtap='onChooseAddress'>
     <view wx:if='{{address}}'>
       <view class='name'>{{address.receiverName}} {{address.receiverPhone}}</view>
@@ -12,8 +12,9 @@
 
   <view class='list' wx:if='{{items.length > 0}}'>
     <view class='item' wx:for='{{items}}' wx:key='id'>
-      <text>{{item.name}} x{{item.quantity}}</text>
+      <text>{{item.name}} {{item.skuName ? ("(" + item.skuName + ")") : ""}} x{{item.quantity}}</text>
       <text>¥{{item.price}}</text>
+      <text wx:if='{{item.sourceType && item.sourceType !== "NORMAL"}}'>{{item.sourceScene || item.sourceType}}</text>
     </view>
   </view>
   <view class='list empty-list' wx:else>
@@ -76,9 +77,9 @@
   <view class='bottom'>
     <text>合计：¥{{actualAmount}}</text>
     <button
-      class='submit {{(submitting || !items.length || !address || !address.id) ? "submit-disabled" : ""}}'
+      class='submit {{submitting ? "submit-disabled" : ""}}'
       loading='{{submitting}}'
-      disabled='{{submitting || !items.length || !address || !address.id}}'
+      disabled='{{submitting}}'
       bindtap='onSubmit'
     >提交订单</button>
   </view>

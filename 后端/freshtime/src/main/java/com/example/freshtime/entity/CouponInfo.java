@@ -4,7 +4,6 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 public class CouponInfo {
@@ -16,5 +15,4 @@ public class CouponInfo {
     private BigDecimal discountAmount;
     private LocalDate expireDate;
     private Integer status;
-    private LocalDateTime createTime;
 }

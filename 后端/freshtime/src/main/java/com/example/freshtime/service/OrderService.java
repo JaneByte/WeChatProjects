@@ -28,6 +28,4 @@ public interface OrderService {
     ApiResponse<?> applyRefund(Long userId, Long orderId);
 
     ApiResponse<?> finishRefund(Long userId, Long orderId);
-
-    ApiResponse<?> clearMyTestData(Long userId);
 }

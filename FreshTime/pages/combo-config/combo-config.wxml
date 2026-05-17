@@ -1,0 +1,64 @@
+﻿<view class='page'>
+  <view class='hero'>
+    <view class='hero-title'>蔬果搭配生成器</view>
+    <view class='hero-sub'>按场景生成可替换、可加购的搭配方案</view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>搭配场景</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{goalScene === item.key ? "pill--active" : ""}}'
+        wx:for='{{goalOptions}}'
+        wx:key='key'
+        data-field='goalScene'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>人数</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{peopleCount === item.key ? "pill--active" : ""}}'
+        wx:for='{{peopleOptions}}'
+        wx:key='key'
+        data-field='peopleCount'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>预算档位</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{budgetLevel === item.key ? "pill--active" : ""}}'
+        wx:for='{{budgetOptions}}'
+        wx:key='key'
+        data-field='budgetLevel'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>口味偏好</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{tastePref === item.key ? "pill--active" : ""}}'
+        wx:for='{{tasteOptions}}'
+        wx:key='key'
+        data-field='tastePref'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>生成搭配方案</button>
+</view>

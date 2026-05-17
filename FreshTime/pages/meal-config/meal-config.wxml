@@ -1,0 +1,80 @@
+<view class='page'>
+  <view class='hero'>
+    <view class='hero-title'>一人食生成器</view>
+    <view class='hero-sub'>选择餐次与偏好，生成单人可吃完方案</view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>餐次</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{mealType === item.key ? "pill--active" : ""}}'
+        wx:for='{{mealTypeOptions}}'
+        wx:key='key'
+        data-field='mealType'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>预算档位</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{budgetLevel === item.key ? "pill--active" : ""}}'
+        wx:for='{{budgetOptions}}'
+        wx:key='key'
+        data-field='budgetLevel'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>饮食目标</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{dietGoal === item.key ? "pill--active" : ""}}'
+        wx:for='{{goalOptions}}'
+        wx:key='key'
+        data-field='dietGoal'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>烹饪方式</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{cookMode === item.key ? "pill--active" : ""}}'
+        wx:for='{{cookModeOptions}}'
+        wx:key='key'
+        data-field='cookMode'
+        data-value='{{item.key}}'
+        bindtap='onChooseOption'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class='card'>
+    <view class='section-title'>忌口偏好</view>
+    <view class='pill-list'>
+      <view
+        class='pill {{item.selected ? "pill--active" : ""}}'
+        wx:for='{{dislikeOptions}}'
+        wx:key='key'
+        data-field='dislikeTags'
+        data-value='{{item.key}}'
+        data-multi='1'
+        catchtap='onChooseOption'
+        hover-class='pill--hover'
+      >{{item.label}}</view>
+    </view>
+  </view>
+
+  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>生成一人食方案</button>
+</view>

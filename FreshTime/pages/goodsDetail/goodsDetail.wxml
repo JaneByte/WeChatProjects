@@ -6,10 +6,35 @@
     <image class='cover' src='{{detail.mainImage}}' mode='aspectFill'></image>
     <view class='card'>
       <view class='title'>{{detail.name}}</view>
-      <view class='price'>¥{{detail.price}}</view>
-      <view class='meta'>库存：{{detail.stock}} {{detail.unit || '件'}}</view>
+      <view class='price'>¥{{selectedSku ? (selectedSku.skuPrice || detail.price) : detail.price}}</view>
+      <view class='seasonal-panel' wx:if='{{sourceType === "SEASONAL"}}'>
+        <view class='seasonal-badge-row'>
+          <text class='seasonal-badge'>{{seasonalBadgeText || '当季精选'}}</text>
+          <text class='seasonal-badge warn' wx:if='{{seasonalUrgencyText}}'>临近过季</text>
+        </view>
+        <view class='meta'>{{seasonalContextText}}</view>
+        <view class='meta' wx:if='{{seasonalWindowText}}'>{{seasonalWindowText}}</view>
+        <view class='meta' wx:if='{{seasonalTipText}}'>{{seasonalTipText}}</view>
+      </view>
+      <view class='meta'>库存：{{selectedSku ? (selectedSku.skuStock || 0) : detail.stock}} {{detail.unit || '件'}}</view>
       <view class='meta'>销量：{{detail.salesVolume || 0}}</view>
-      <view class='meta' wx:if='{{detail.stock <= 0}}'>当前状态：已售罄</view>
+      <view class='meta' wx:if='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>当前状态：已售罄</view>
+      <view class='spec-select-wrap' wx:if='{{detail.skuList && detail.skuList.length > 0}}'>
+        <picker mode='selector' range='{{detail.skuList}}' range-key='skuName' value='{{selectedSkuIndex || 0}}' bindchange='onPickerSkuChange'>
+          <view class='spec-picker'>
+            <text class='spec-picker-label'>规格</text>
+            <text class='spec-picker-value'>
+              {{selectedSku ? (selectedSku.skuName || '标准装') : '请选择规格'}}
+              {{selectedSku && selectedSku.skuWeightG ? (' · ' + selectedSku.skuWeightG + 'g') : ''}}
+            </text>
+            <text class='spec-picker-arrow'>▼</text>
+          </view>
+        </picker>
+        <view class='spec-hint' wx:if='{{selectedSku}}'>
+          <text>价格：¥{{selectedSku.skuPrice || detail.price}}</text>
+          <text>库存：{{selectedSku.skuStock || 0}}</text>
+        </view>
+      </view>
     </view>
 
     <view class='actions'>
@@ -18,11 +43,23 @@
         <input class='qty' type='number' value='{{quantity}}' bindinput='onInputQuantity' />
         <view class='qty-btn' bindtap='onPlus'>+</view>
       </view>
-      <button class='btn ghost' bindtap='onAddCart' disabled='{{detail.stock <= 0}}'>加入购物车</button>
-      <button class='btn primary' bindtap='onBuyNow' disabled='{{detail.stock <= 0}}'>立即购买</button>
+      <button class='btn ghost' bindtap='onAddCart' disabled='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>加入购物车</button>
+      <button class='btn primary' bindtap='onBuyNow' disabled='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>立即购买</button>
     </view>
-    <view class='actions'>
-      <button class='btn ghost' bindtap='onGoTrace'>查看溯源信息</button>
+    <view class='card'>
+      <view class='comment-head'>
+        <text class='comment-title'>商品评价</text>
+        <text class='comment-score' wx:if='{{commentSummary}}'>{{commentSummary.avgRating || 0}}分（{{commentSummary.totalCount || 0}}条）</text>
+      </view>
+      <view wx:if='{{commentList.length === 0}}' class='comment-empty'>暂无评价</view>
+      <view wx:for='{{commentList}}' wx:key='id' class='comment-item'>
+        <view class='comment-item-top'>
+          <text class='comment-rating'>评分：{{item.rating || 0}}</text>
+          <text class='comment-time'>{{item.createTime || ''}}</text>
+        </view>
+        <view class='comment-content'>{{item.content || '用户未填写评价内容'}}</view>
+      </view>
+      <view class='comment-more' wx:if='{{commentHasMore}}' bindtap='onLoadMoreComments'>加载更多</view>
     </view>
   </view>
 </view>

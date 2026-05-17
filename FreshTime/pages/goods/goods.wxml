@@ -9,11 +9,35 @@
   <view class="scene-panel" wx:if="{{sceneMeta}}">
     <text class="scene-panel-title">{{sceneMeta.panelTitle}}</text>
     <text class="scene-panel-text">{{sceneMeta.subtitle}}</text>
+    <text class="scene-pack-tip" wx:if="{{comboPackTips}}">{{comboPackTips}}</text>
   </view>
-
+  <view class="flash-hero" wx:if="{{currentType === 'flash'}}">
+    <view class="flash-hero-top">
+      <text class="flash-hero-title">限时秒杀进行中</text>
+      <text class="flash-hero-badge">限量</text>
+    </view>
+    <view class="flash-hero-countdown">
+      <text class="flash-hero-label">距结束</text>
+      <text class="flash-hero-time">{{flashCountdown}}</text>
+    </view>
+    <text class="flash-hero-tip">库存实时变动，建议尽快下单锁定优惠价</text>
+  </view>
+  <view class="scene-filter-wrap" wx:if="{{sceneFilterOptions.length > 0}}">
+    <view class="scene-filter-list">
+      <view
+        class="scene-filter-item {{activeSceneFilter === item.key ? 'scene-filter-item--active' : ''}}"
+        wx:for="{{sceneFilterOptions}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onSceneFilterTap"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </view>
   <view class="state" wx:if="{{loading}}">加载中...</view>
   <view class="state" wx:elif="{{loadError}}">加载失败，请稍后重试</view>
-  <view class="state" wx:elif="{{list.length === 0}}">{{sceneMeta ? sceneMeta.emptyText : '暂无商品'}}</view>
+  <view class="state" wx:elif="{{list.length === 0}}">{{sceneMeta ? sceneMeta.emptyText : '暂无商品'}}（当前筛选）</view>
   <view class="list" wx:else>
     <view class="item" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="onTapItem">
       <image class="img" src="{{item.mainImage}}" mode="aspectFill"></image>
@@ -21,12 +45,50 @@
         <view class="name-row">
           <text class="name">{{item.name}}</text>
           <text class="tag" wx:if="{{sceneMeta}}">{{scene === '时令' ? '当季' : (scene === '小份量' ? '小份' : '搭配')}}</text>
+          <text class="flash-tag" wx:if="{{currentType === 'flash'}}">秒杀</text>
         </view>
         <text class="hint" wx:if="{{item.sceneHint}}">{{item.sceneHint}}</text>
+        <text class="hint coupon-hint" wx:if="{{item.couponThresholdHint}}">{{item.couponThresholdHint}}</text>
         <view class="foot-row">
-          <text class="price">¥{{item.price}}</text>
-          <view class="add-btn" catchtap="onAddCart" data-id="{{item.id}}">加入购物车</view>
+          <view class="flash-price-box" wx:if="{{currentType === 'flash'}}">
+            <text class="price">¥{{item.flashPrice}}</text>
+            <text class="origin-price">¥{{item.displayPrice || item.price}}</text>
+          </view>
+          <text class="price" wx:else>¥{{item.displayPrice || item.price}}</text>
+          <view class="right-foot">
+            <text class="combo-badge" wx:if="{{item.comboBadge}}">{{item.comboBadge}}</text>
+            <view class="flash-progress-row" wx:if="{{currentType === 'flash'}}">
+              <view class="flash-progress-track">
+                <view class="flash-progress-inner" style="width: {{item.flashPercent}}%;"></view>
+              </view>
+              <text class="flash-progress-text">已抢{{item.flashPercent}}%</text>
+            </view>
+            <view class="add-btn" catchtap="onAddCart" data-id="{{item.id}}">加入购物车</view>
+          </view>
         </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="spec-mask" wx:if="{{specPopupVisible}}" catchtouchmove="noop" bindtap="onCloseSpecPopup">
+    <view class="spec-popup" catchtap="noop">
+      <text class="spec-popup-title">确认规格</text>
+      <text class="spec-popup-name">{{specGoods.name}}</text>
+      <view class="scene-spec-list" wx:if="{{specGoods.skuList && specGoods.skuList.length > 0}}">
+        <view
+          class="scene-spec-item {{selectedSkuId === item.id ? 'scene-spec-item--active' : ''}}"
+          wx:for="{{specGoods.skuList}}"
+          wx:key="id"
+          data-skuid="{{item.id}}"
+          bindtap="onSelectSku"
+        >
+          {{item.skuName || '标准装'}}{{item.skuWeightG ? (' · ' + item.skuWeightG + 'g') : ''}}
+        </view>
+      </view>
+      <text class="spec-popup-price">加入数量：x1</text>
+      <view class="spec-popup-row">
+        <button class="spec-cancel-btn" bindtap="onCloseSpecPopup">取消</button>
+        <button class="spec-confirm-btn" loading="{{addCartLoadingId === specGoods.id}}" disabled="{{addCartLoadingId === specGoods.id}}" bindtap="onConfirmSpecAdd">确认加入</button>
       </view>
     </view>
   </view>

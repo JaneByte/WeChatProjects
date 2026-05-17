@@ -1,4 +1,4 @@
-﻿const { get, del } = require('../../utils/request');
+const { get, del } = require('../../utils/request');
 const { showRequestError } = require('../../utils/ui');
 const app = getApp();
 
@@ -19,14 +19,14 @@ Page({
   },
 
   loadList() {
-    const userId = app.getUserId();
-    if (!userId) {
+    if (!app.getUserId()) {
       this.setData({ list: [] });
+      app.requireLogin({ redirect: '/pages/address-list/address-list', silent: true }).catch(() => {});
       return;
     }
 
     this.setData({ loading: true });
-    get('/address/list', { userId }, { retry: 0 })
+    get('/address/list', {}, { retry: 0 })
       .then((res) => {
         const list = (res && res.data) || [];
         this.setData({ list: Array.isArray(list) ? list : [], loadError: false });
@@ -49,10 +49,12 @@ Page({
 
   onDelete(e) {
     const { id } = e.currentTarget.dataset;
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/address-list/address-list' }).catch(() => {});
+      return;
+    }
 
-    del('/address/delete', { userId, id }, { retry: 0 })
+    del('/address/delete', { id }, { retry: 0 })
       .then(() => {
         wx.showToast({ title: '删除成功', icon: 'success' });
         this.loadList();
@@ -73,4 +75,3 @@ Page({
     this.loadList();
   }
 });
-

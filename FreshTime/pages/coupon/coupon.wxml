@@ -4,7 +4,10 @@
     <text class='hero-sub'>先领券再下单，结算更划算</text>
   </view>
 
-  <view class='section-title'>可领取</view>
+  <view class='section-head'>
+    <text class='section-title'>可领取优惠券</text>
+    <text class='section-link' bindtap='onOpenMyCoupon'>我的优惠券 ></text>
+  </view>
   <view class='coupon' wx:for='{{availableList}}' wx:key='id'>
     <view class='coupon-top'>
       <view>
@@ -23,19 +26,51 @@
     >
       {{item.claimed ? '已领取' : (claimLoadingId === item.id ? '领取中...' : '立即领取')}}
     </button>
-    <button class='use-btn' size='mini' bindtap='onUseTap'>去使用</button>
   </view>
 
-  <view class='section-title'>我的优惠券</view>
-  <view class='coupon' wx:for='{{list}}' wx:key='id'>
-    <view class='coupon-top'>
-      <view>
-        <view class='amount'>{{item.title}}</view>
-        <view class='desc'>{{item.condition}}</view>
-      </view>
-      <view class='badge owned'>已领取</view>
+  <view class='empty-wrap' wx:if='{{availableList.length === 0}}'>
+    <text class='empty-text'>当前暂无可领取优惠券</text>
+  </view>
+
+  <view class='section-title'>猜你喜欢</view>
+  <view class='goods-waterfall'>
+    <view class='waterfall-col'>
+      <block wx:for='{{leftColumnList}}' wx:key='id'>
+        <goods-card item='{{item}}' bind:goodstap='onGoodsCardTap' bind:add='onGoodsCardAdd' />
+      </block>
     </view>
-    <view class='expire'>有效期至：{{item.expireAt}}</view>
-    <button class='use-btn' size='mini' bindtap='onUseTap'>去使用</button>
+    <view class='waterfall-col'>
+      <block wx:for='{{rightColumnList}}' wx:key='id'>
+        <goods-card item='{{item}}' bind:goodstap='onGoodsCardTap' bind:add='onGoodsCardAdd' />
+      </block>
+    </view>
+  </view>
+
+  <view class='empty-wrap' wx:if='{{recommendGoodsList.length === 0 && !loading}}'>
+    <text class='empty-text'>暂无推荐商品</text>
+  </view>
+
+  <view class='spec-mask' wx:if='{{specPopupVisible}}' bindtap='onCloseSpecPopup' catchtouchmove='noop'>
+    <view class='spec-popup' catchtap='noop'>
+      <text class='spec-popup-title'>选择规格</text>
+      <text class='spec-popup-name'>{{specGoods.name}}</text>
+      <view class='spec-option-list' wx:if='{{specGoods.skuList && specGoods.skuList.length > 0}}'>
+        <view
+          class='spec-option-item {{selectedSkuId === item.id ? "spec-option-item--active" : ""}}'
+          wx:for='{{specGoods.skuList}}'
+          wx:key='id'
+          data-skuid='{{item.id}}'
+          bindtap='onSelectSku'
+        >
+          {{item.skuName || '标准装'}}{{item.skuWeightG ? (' · ' + item.skuWeightG + 'g') : ''}}
+        </view>
+      </view>
+      <text class='spec-popup-price'>当前价格：¥{{specDisplayPrice}}</text>
+      <text class='spec-popup-qty'>加入数量：x1</text>
+      <view class='spec-popup-row'>
+        <button class='spec-cancel-btn' bindtap='onCloseSpecPopup'>取消</button>
+        <button class='spec-confirm-btn' loading='{{addCartLoadingId === specGoods.id}}' disabled='{{addCartLoadingId === specGoods.id}}' bindtap='onConfirmSpecAdd'>确认加入</button>
+      </view>
+    </view>
   </view>
 </view>

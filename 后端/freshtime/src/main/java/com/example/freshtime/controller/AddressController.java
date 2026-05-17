@@ -1,6 +1,7 @@
 package com.example.freshtime.controller;
 
 import com.example.freshtime.common.ApiResponse;
+import com.example.freshtime.common.AuthContext;
 import com.example.freshtime.dto.SaveAddressRequest;
 import com.example.freshtime.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,17 +23,23 @@ public class AddressController {
     private AddressService addressService;
 
     @GetMapping("/list")
-    public ApiResponse<?> list(@RequestParam Long userId) {
-        return addressService.list(userId);
+    public ApiResponse<?> list(@RequestParam(required = false) Long userId) {
+        return addressService.list(resolveUserId(userId));
     }
 
     @PostMapping("/save")
     public ApiResponse<?> save(@RequestBody SaveAddressRequest request) {
+        request.setUserId(resolveUserId(request == null ? null : request.getUserId()));
         return addressService.save(request);
     }
 
     @DeleteMapping("/delete")
-    public ApiResponse<?> delete(@RequestParam Long userId, @RequestParam Long id) {
-        return addressService.remove(userId, id);
+    public ApiResponse<?> delete(@RequestParam(required = false) Long userId, @RequestParam Long id) {
+        return addressService.remove(resolveUserId(userId), id);
+    }
+
+    private Long resolveUserId(Long userId) {
+        Long authUserId = AuthContext.getUserId();
+        return authUserId != null ? authUserId : userId;
     }
 }

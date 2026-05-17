@@ -9,6 +9,9 @@ Page({
     loadError: false,
     message: '正在同步订单状态...',
     orderId: null,
+    orderNo: '',
+    actualAmount: 0,
+    payTime: '',
     payTradeNo: '',
     payChannel: ''
   },
@@ -19,9 +22,8 @@ Page({
   },
 
   loadOrderStatus() {
-    const userId = app.getUserId && app.getUserId();
     const orderId = this.data.orderId;
-    if (!userId || !orderId) {
+    if (!app.getUserId() || !orderId) {
       this.setData({
         loading: false,
         loadError: true,
@@ -32,7 +34,7 @@ Page({
     }
 
     this.setData({ loading: true, loadError: false });
-    get('/order/detail', { userId, orderId }, { retry: 0 })
+    get('/order/detail', { orderId }, { retry: 0 })
       .then((res) => {
         const detail = (res && res.data) || {};
         const status = Number(detail.status);
@@ -44,6 +46,9 @@ Page({
         this.setData({
           success,
           message,
+          orderNo: detail.orderNo || '',
+          actualAmount: Number(detail.actualAmount || 0),
+          payTime: detail.payTime || '',
           payTradeNo: detail.payTradeNo || '',
           payChannel: detail.payChannel || ''
         });

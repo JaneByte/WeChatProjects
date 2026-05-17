@@ -4,18 +4,37 @@ const app = getApp();
 
 Page({
   data: {
+    currentType: '',
     title: '商品列表',
     scene: '',
     sceneMeta: null,
     sceneClass: '',
     list: [],
+    fullList: [],
+    sceneFilterOptions: [],
+    activeSceneFilter: 'all',
+    selectedSkuId: 0,
+    comboPackTips: '',
+    flashEndTimestamp: 0,
+    flashCountdown: '00:00:00',
+    addCartLoadingId: 0,
+    specPopupVisible: false,
+    specGoods: null,
     loading: false,
     loadError: false
   },
 
   onLoad(options) {
     const type = options.type || '';
-    const scene = options.scene || '';
+    const scene = this.normalizeSceneParam(options.scene || '');
+    if (scene === '小份量') {
+      wx.redirectTo({ url: '/pages/meal-config/meal-config' });
+      return;
+    }
+    if (scene === '搭配') {
+      wx.redirectTo({ url: '/pages/combo-config/combo-config' });
+      return;
+    }
     const sceneMetaMap = {
       '时令': {
         sceneClass: 'scene-seasonal',
@@ -24,22 +43,6 @@ Page({
         badge: '当季推荐',
         emptyText: '当前暂无当季商品，稍后再来看看',
         panelTitle: '本季推荐理由'
-      },
-      '小份量': {
-        sceneClass: 'scene-small',
-        title: '一人食小份',
-        subtitle: '更适合一人餐桌，减少浪费，随买随吃',
-        badge: '轻负担',
-        emptyText: '当前暂无小份量商品，稍后再来看看',
-        panelTitle: '一人食建议'
-      },
-      '搭配': {
-        sceneClass: 'scene-combo',
-        title: '蔬果搭配',
-        subtitle: '按食用场景搭配组合，做饭和备餐更省心',
-        badge: '组合推荐',
-        emptyText: '当前暂无搭配商品，稍后再来看看',
-        panelTitle: '搭配思路'
       }
     };
     const titleMap = {
@@ -52,26 +55,87 @@ Page({
     };
     const sceneMeta = sceneMetaMap[scene] || null;
     this.setData({
+      currentType: type,
       scene,
       sceneMeta,
       sceneClass: sceneMeta ? sceneMeta.sceneClass : '',
+      sceneFilterOptions: sceneMeta && Array.isArray(sceneMeta.filterOptions) ? sceneMeta.filterOptions : [],
+      activeSceneFilter: 'all',
+      selectedSkuId: 0,
+      comboPackTips: sceneMeta && sceneMeta.comboPackTips ? sceneMeta.comboPackTips : '',
       title: sceneMeta ? sceneMeta.title : (titleMap[type] || '商品列表')
     });
     wx.setNavigationBarTitle({ title: this.data.title });
     this.loadList(type, scene);
   },
 
+  normalizeSceneParam(sceneValue = '') {
+    const raw = `${sceneValue || ''}`.trim();
+    if (!raw) return '';
+    try {
+      const decoded = decodeURIComponent(raw);
+      return `${decoded || ''}`.trim();
+    } catch (error) {
+      return raw;
+    }
+  },
+
   loadList(type, scene) {
     this.setData({ loading: true, loadError: false });
     const mapSceneList = (rawList) => {
       const baseList = Array.isArray(rawList) ? rawList : [];
-      return baseList.map((item) => ({ ...item, sceneHint: this.formatSceneHint(item) }));
+      return baseList.map((item) => {
+        const compact = {
+          id: item.id,
+          categoryId: item.categoryId,
+          name: item.name || '',
+          mainImage: item.mainImage || '',
+          price: item.price,
+          originalPrice: item.originalPrice,
+          stock: item.stock,
+          unit: item.unit || '件',
+          salesVolume: item.salesVolume || 0,
+          origin: item.origin || '',
+          keywords: item.keywords || '',
+          sceneType: item.sceneType || '',
+          comboMode: item.comboMode || '',
+          packType: item.packType || '',
+          couponThresholdHint: item.couponThresholdHint || '',
+          skuList: Array.isArray(item.skuList) ? item.skuList.slice(0, 6) : []
+        };
+        const sceneHint = this.formatSceneHint(item);
+        const sceneType = this.resolveSceneType(item);
+        const firstSku = this.getFirstAvailableSku(item);
+        const displayPrice = this.getSkuDisplayPrice(firstSku, item.price);
+        const flashPrice = this.getFlashPrice(item);
+        const flashPercent = this.getFlashSoldPercent(item);
+        const comboBadge = this.resolveComboBadge(sceneType);
+        const couponThresholdHint = item.couponThresholdHint || this.resolveCouponThresholdHintByPrice(item);
+        return {
+          ...compact,
+          sceneHint,
+          sceneType,
+          displayPrice,
+          flashPrice,
+          flashPercent,
+          comboBadge,
+          couponThresholdHint
+        };
+      });
+    };
+    const updateListState = (rawList) => {
+      const fullList = mapSceneList(rawList).slice(0, 30);
+      const filteredList = this.applySceneFilter(fullList, this.data.activeSceneFilter);
+      this.setData({
+        fullList,
+        list: filteredList
+      });
     };
     if (scene) {
       get('/goods/list', { scene }, { retry: 0 })
         .then((res) => {
           const list = (res && res.data) || [];
-          this.setData({ list: mapSceneList(list) });
+          updateListState(list);
         })
         .catch((error) => {
           this.setData({ list: [], loadError: true });
@@ -84,10 +148,17 @@ Page({
       get('/home/index', {}, { retry: 0 })
         .then((res) => {
           const data = (res && res.data) || {};
+          const flash = data.flash || {};
           const list = type === 'flash'
-            ? (((data.flash || {}).list) || [])
+            ? (flash.list || [])
             : (data.newArrivalList || []);
-          this.setData({ list: mapSceneList(list) });
+          updateListState(list);
+          if (type === 'flash') {
+            const endTs = this.parseTimeToTimestamp(flash.endTime);
+            this.setData({ flashEndTimestamp: endTs });
+            if (endTs > Date.now()) this.startFlashCountdown();
+            else this.setData({ flashCountdown: '00:00:00' });
+          }
         })
         .catch((error) => {
           this.setData({ list: [], loadError: true });
@@ -101,7 +172,7 @@ Page({
         .then((res) => {
           const data = (res && res.data) || {};
           const list = data.list || [];
-          this.setData({ list: mapSceneList(list) });
+          updateListState(list);
         })
         .catch((error) => {
           this.setData({ list: [], loadError: true });
@@ -114,7 +185,7 @@ Page({
     get(endpoint, {}, { retry: 0 })
       .then((res) => {
         const list = (res && res.data) || [];
-        this.setData({ list: mapSceneList(list) });
+        updateListState(list);
       })
       .catch((error) => {
         this.setData({ list: [], loadError: true });
@@ -131,31 +202,181 @@ Page({
   onAddCart(e) {
     const id = Number(e.currentTarget.dataset.id || 0);
     if (!id) return;
-    const userId = app.getUserId && app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+    if (this.data.addCartLoadingId) return;
+    const target = (this.data.list || []).find((item) => Number(item.id) === id) || null;
+    if (!target) return;
+    this.setData({
+      specPopupVisible: true,
+      specGoods: target,
+      selectedSkuId: Number((this.getFirstAvailableSku(target) || {}).id || 0)
+    });
+  },
+
+  onCloseSpecPopup() {
+    if (this.data.addCartLoadingId) return;
+    this.setData({
+      specPopupVisible: false,
+      specGoods: null,
+      selectedSkuId: 0
+    });
+  },
+
+  onSelectSku(e) {
+    const skuId = Number(e.currentTarget.dataset.skuid || 0);
+    if (!skuId) return;
+    this.setData({ selectedSkuId: skuId });
+  },
+
+  onConfirmSpecAdd() {
+    const target = this.data.specGoods;
+    if (!target || !target.id) return;
+    if (this.data.addCartLoadingId) return;
+    const selectedSku = this.getSelectedSku(target, this.data.selectedSkuId);
+    if (!selectedSku || Number(selectedSku.skuStock || 0) <= 0) {
+      wx.showToast({ title: '该规格库存不足', icon: 'none' });
       return;
     }
-    post(`/cart/add?userId=${userId}&goodsId=${id}&quantity=1`, {}, { retry: 0 })
+    const quantity = 1;
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: `/pages/goods/goods?type=${encodeURIComponent(this.options.type || '')}&scene=${encodeURIComponent(this.options.scene || '')}` }).catch(() => {});
+      return;
+    }
+    this.setData({ addCartLoadingId: Number(target.id) });
+    post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=${quantity}`, {}, { retry: 0 })
       .then(() => {
-        wx.showToast({ title: '已加入购物车', icon: 'success' });
+        wx.showToast({ title: `已加入购物车 x${quantity}`, icon: 'success' });
         if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+        this.setData({
+          specPopupVisible: false,
+          specGoods: null,
+          selectedSkuId: 0
+        });
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'));
+      .catch((error) => showRequestError(error, '加入购物车失败'))
+      .finally(() => this.setData({ addCartLoadingId: 0 }));
+  },
+
+  onSceneFilterTap(e) {
+    const key = `${e.currentTarget.dataset.key || 'all'}`;
+    const filteredList = this.applySceneFilter(this.data.fullList || [], key);
+    this.setData({
+      activeSceneFilter: key,
+      list: filteredList
+    });
+  },
+
+  applySceneFilter(list, filterKey) {
+    const source = Array.isArray(list) ? list : [];
+    if (!this.data.scene || filterKey === 'all') return source;
+    return source.filter((item) => `${item.sceneType || 'all'}` === `${filterKey}`);
+  },
+
+  resolveSceneType(item = {}) {
+    if (item.sceneType) return `${item.sceneType}`;
+    return 'all';
+  },
+
+  resolveComboBadge(sceneType) {
+    if (sceneType === 'single') return '小份装';
+    if (sceneType === 'platter') return '拼盘';
+    if (sceneType === 'fixed') return '固定搭配';
+    if (sceneType === 'random') return '随机搭配';
+    return '';
+  },
+
+  getFirstAvailableSku(item = {}) {
+    const list = Array.isArray(item.skuList) ? item.skuList : [];
+    const enabled = list.filter((sku) => Number(sku.status) === 1);
+    if (!enabled.length) return null;
+    const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
+    return sorted[0];
+  },
+
+  getSelectedSku(item = {}, selectedSkuId = 0) {
+    const list = Array.isArray(item.skuList) ? item.skuList : [];
+    const skuId = Number(selectedSkuId || 0);
+    if (skuId > 0) {
+      const matched = list.find((sku) => Number(sku.id) === skuId);
+      if (matched) return matched;
+    }
+    return this.getFirstAvailableSku(item);
+  },
+
+  getSkuDisplayPrice(sku, fallbackPrice) {
+    if (sku && sku.skuPrice !== undefined && sku.skuPrice !== null) {
+      return Number(sku.skuPrice || 0).toFixed(2);
+    }
+    return Number(fallbackPrice || 0).toFixed(2);
+  },
+
+  noop() {},
+
+  getFlashPrice(item = {}) {
+    const fp = Number(item.flashPrice || item.flash_price || 0);
+    if (fp > 0) return fp.toFixed(2);
+    return this.getSkuDisplayPrice(null, item.price);
+  },
+
+  getFlashSoldPercent(item = {}) {
+    const stock = Number(item.stock || 0);
+    const flashStock = Number(item.flashStock || item.flash_stock || 0);
+    if (stock <= 0 || flashStock <= 0) return 0;
+    const sold = Math.max(0, flashStock - stock);
+    const p = Math.round((sold * 100) / flashStock);
+    return Math.max(0, Math.min(100, p));
+  },
+
+  parseTimeToTimestamp(timeValue) {
+    if (!timeValue) return 0;
+    if (typeof timeValue === 'number') return timeValue;
+    const ts = new Date(String(timeValue).replace(/-/g, '/')).getTime();
+    return Number.isNaN(ts) ? 0 : ts;
+  },
+
+  startFlashCountdown() {
+    this.clearFlashCountdown();
+    this.updateFlashCountdown();
+    this.flashTimer = setInterval(() => this.updateFlashCountdown(), 1000);
+  },
+
+  clearFlashCountdown() {
+    if (this.flashTimer) {
+      clearInterval(this.flashTimer);
+      this.flashTimer = null;
+    }
+  },
+
+  updateFlashCountdown() {
+    const remain = this.data.flashEndTimestamp - Date.now();
+    if (remain <= 0) {
+      this.setData({ flashCountdown: '00:00:00' });
+      this.clearFlashCountdown();
+      return;
+    }
+    const hour = Math.floor(remain / (1000 * 60 * 60));
+    const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
+    const second = Math.floor((remain % (1000 * 60)) / 1000);
+    this.setData({ flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}` });
+  },
+
+  pad2(num) { return num < 10 ? `0${num}` : `${num}`; },
+
+  onUnload() {
+    this.clearFlashCountdown();
   },
 
   formatSceneHint(item) {
     const scene = this.data.scene;
     if (scene === '时令') return item.origin ? `产地：${item.origin}` : '当季新鲜直达';
-    if (scene === '小份量') return item.unit ? `小规格·${item.unit}` : '小规格更轻松';
-    if (scene === '搭配') return item.keywords ? `搭配关键词：${item.keywords}` : '适合组合购买';
     return item.unit ? `规格：${item.unit}` : '';
   },
 
-  formatSceneTag() {
-    if (this.data.scene === '时令') return '当季';
-    if (this.data.scene === '小份量') return '小份';
-    if (this.data.scene === '搭配') return '搭配';
-    return '';
+  resolveCouponThresholdHintByPrice(item = {}) {
+    const price = Number(item.price || 0);
+    if (!this.data.scene) return '';
+    if (price >= 99) return '满99可用大额券';
+    if (price >= 50) return '满50可用满减券';
+    if (price >= 39) return '满足新人券门槛';
+    return '建议凑单更划算';
   }
 });

@@ -25,7 +25,6 @@ public class HomeServiceImpl implements HomeService {
 
         Goods todayRecommend = homeMapper.selectTodayRecommend();
         List<Goods> flashList = homeMapper.selectFlashSaleList(now, 10);
-        List<Object> traceList = new ArrayList<>();
         Integer newArrivalCount = homeMapper.countNewArrivals(sevenDaysAgo);
         List<Map<String, Object>> bannerList = homeMapper.selectActiveBanners(5);
         List<Map<String, Object>> noticeList = homeMapper.selectActiveNotices(6);
@@ -54,8 +53,6 @@ public class HomeServiceImpl implements HomeService {
         flash.put("list", flashList);
         data.put("flash", flash);
 
-        data.put("traceList", traceList);
-        data.put("traceVisible", false);
         return ApiResponse.success(data);
     }
 

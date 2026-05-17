@@ -10,7 +10,6 @@ public class UserInfo {
     private String openid;
     private String nickname;
     private String avatar;
-    private String phone;
     private Integer status;
     private LocalDateTime createTime;
 }

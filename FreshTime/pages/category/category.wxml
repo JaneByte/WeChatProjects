@@ -40,7 +40,9 @@
       <view class="goods-list">
         <view class="goods-card" wx:for="{{filteredGoodsList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" hover-class="card-press">
           <view class="card-image-wrapper">
-            <image class="card-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+            <image class="card-image-bg" src="{{item.image}}" mode="aspectFill" lazy-load></image>
+            <view class="card-image-mask"></view>
+            <image class="card-image" src="{{item.image}}" mode="aspectFit" lazy-load></image>
           </view>
           <view class="card-info">
             <view class="info-header">
@@ -76,5 +78,27 @@
 
       <view class="safe-bottom"></view>
     </scroll-view>
+  </view>
+
+  <view class="spec-mask" wx:if="{{specPopupVisible}}" catchtouchmove="noop" bindtap="onCloseSpecPopup">
+    <view class="spec-popup" catchtap="noop">
+      <text class="spec-popup-title">确认规格</text>
+      <text class="spec-popup-name">{{specGoods.name}}</text>
+      <view class="scene-spec-list" wx:if="{{specGoods.skuList && specGoods.skuList.length > 0}}">
+        <view
+          class="scene-spec-item {{selectedSkuId === item.id ? 'scene-spec-item--active' : ''}}"
+          wx:for="{{specGoods.skuList}}"
+          wx:key="id"
+          data-skuid="{{item.id}}"
+          bindtap="onSelectSku"
+        >
+          {{item.skuName || '标准装'}}{{item.skuWeightG ? (' · ' + item.skuWeightG + 'g') : ''}}
+        </view>
+      </view>
+      <view class="spec-popup-row">
+        <button class="spec-cancel-btn" bindtap="onCloseSpecPopup">取消</button>
+        <button class="spec-confirm-btn" loading="{{addCartLoadingId === specGoods.id}}" disabled="{{addCartLoadingId === specGoods.id}}" bindtap="onConfirmSpecAdd">确认加入</button>
+      </view>
+    </view>
   </view>
 </view>

@@ -30,6 +30,72 @@
 }
 .scene-panel-title { display: block; font-size: 24rpx; color: #1e3311; font-weight: 600; }
 .scene-panel-text { display: block; margin-top: 6rpx; font-size: 22rpx; color: #647457; }
+.scene-pack-tip { display: block; margin-top: 8rpx; font-size: 21rpx; color: #5a8a28; }
+.flash-hero {
+  margin-bottom: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: radial-gradient(circle at top right, #ffcf9a 0%, #ff9e6e 38%, #ff6d63 100%);
+  box-shadow: 0 14rpx 28rpx rgba(255, 109, 99, 0.22);
+}
+.flash-hero-top { display: flex; align-items: center; justify-content: space-between; }
+.flash-hero-title { font-size: 34rpx; color: #ffffff; font-weight: 700; }
+.flash-hero-badge {
+  font-size: 22rpx;
+  color: #8f1f00;
+  background: #ffe6c8;
+  border-radius: 999rpx;
+  padding: 4rpx 12rpx;
+}
+.flash-hero-countdown { margin-top: 10rpx; display: flex; align-items: center; gap: 10rpx; }
+.flash-hero-label { font-size: 22rpx; color: rgba(255, 255, 255, 0.9); }
+.flash-hero-time {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+.flash-hero-tip {
+  margin-top: 8rpx;
+  display: block;
+  font-size: 21rpx;
+  color: rgba(255, 255, 255, 0.88);
+}
+.scene-filter-wrap,
+.scene-spec-wrap {
+  margin-bottom: 14rpx;
+  padding: 12rpx 14rpx;
+  border-radius: 14rpx;
+  background: #ffffff;
+  border: 1rpx solid #e4eadf;
+}
+.scene-filter-list,
+.scene-spec-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.scene-filter-item,
+.scene-spec-item {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #cfdcc6;
+  font-size: 22rpx;
+  color: #5f6f52;
+  background: #f8faf5;
+}
+.scene-filter-item--active,
+.scene-spec-item--active {
+  color: #ffffff;
+  background: #73a937;
+  border-color: #73a937;
+}
+.scene-spec-title {
+  display: block;
+  font-size: 23rpx;
+  color: #44563a;
+  margin-bottom: 10rpx;
+}
 .state { color: #b8c2ae; text-align: center; padding: 40rpx 0; }
 .list { background: #ffffff; border-radius: 16rpx; border: 1rpx solid #e4eadf; padding: 0 16rpx; }
 .item { display: flex; padding: 18rpx 0; border-bottom: 1rpx solid #e4eadf; }
@@ -45,9 +111,48 @@
   border-radius: 999rpx;
   padding: 2rpx 10rpx;
 }
+.flash-tag {
+  font-size: 20rpx;
+  color: #ffffff;
+  background: #ff6f61;
+  border-radius: 999rpx;
+  padding: 2rpx 10rpx;
+}
 .hint { font-size: 22rpx; color: #647457; margin-top: 6rpx; }
 .price { font-size: 30rpx; color: #5a8a28; font-weight: 600; }
+.flash-price-box { display: flex; align-items: baseline; gap: 8rpx; }
+.origin-price {
+  font-size: 22rpx;
+  color: #9fa896;
+  text-decoration: line-through;
+}
 .foot-row { margin-top: 10rpx; display: flex; align-items: center; justify-content: space-between; }
+.right-foot { display: flex; align-items: center; gap: 10rpx; }
+.flash-progress-row { display: flex; align-items: center; gap: 8rpx; }
+.flash-progress-track {
+  width: 110rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #ffe5de;
+  overflow: hidden;
+}
+.flash-progress-inner {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #ff9e6e, #ff6d63);
+}
+.flash-progress-text {
+  font-size: 20rpx;
+  color: #ff6d63;
+}
+.combo-badge {
+  font-size: 20rpx;
+  color: #5a8a28;
+  background: #edf6e0;
+  border: 1rpx solid #d5e8be;
+  border-radius: 999rpx;
+  padding: 2rpx 10rpx;
+}
 .add-btn {
   font-size: 22rpx;
   color: #ffffff;
@@ -55,6 +160,29 @@
   border-radius: 999rpx;
   padding: 8rpx 18rpx;
 }
+.spec-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-end;
+  z-index: 99;
+}
+.spec-popup {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 24rpx;
+}
+.spec-popup-title { display: block; font-size: 28rpx; font-weight: 700; color: #1e3311; }
+.spec-popup-name { display: block; margin-top: 10rpx; font-size: 26rpx; color: #2d4220; }
+.spec-popup-price,
+.spec-popup-qty { display: block; margin-top: 8rpx; font-size: 24rpx; color: #647457; }
+.spec-popup-row { margin-top: 18rpx; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14rpx; }
+.spec-cancel-btn,
+.spec-confirm-btn { height: 72rpx; line-height: 72rpx; border-radius: 14rpx; font-size: 26rpx; }
+.spec-cancel-btn { background: #f1f4ed; color: #5f6f52; }
+.spec-confirm-btn { background: #73a937; color: #ffffff; }
 
 .scene-small .scene-hero {
   background: linear-gradient(160deg, #6db97f 0%, #62ae78 40%, #5a9f70 100%);

@@ -6,6 +6,7 @@ import com.example.freshtime.dto.SubmitOrderRequest;
 import com.example.freshtime.entity.AddressInfo;
 import com.example.freshtime.entity.CouponInfo;
 import com.example.freshtime.entity.Goods;
+import com.example.freshtime.entity.GoodsSku;
 import com.example.freshtime.entity.OrderInfo;
 import com.example.freshtime.entity.OrderItemInfo;
 import com.example.freshtime.mapper.AddressMapper;
@@ -14,7 +15,6 @@ import com.example.freshtime.mapper.CouponMapper;
 import com.example.freshtime.mapper.OrderMapper;
 import com.example.freshtime.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,9 +44,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private CartMapper cartMapper;
-
-    @Value("${spring.datasource.url:}")
-    private String datasourceUrl;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -81,43 +78,64 @@ public class OrderServiceImpl implements OrderService {
     private ApiResponse<?> doSubmitOrder(SubmitOrderRequest request) {
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemInfo> orderItems = new ArrayList<>();
-        Map<Long, Integer> mergedItems = new HashMap<>();
+        Map<String, SubmitOrderRequest.Item> mergedItems = new HashMap<>();
 
         for (SubmitOrderRequest.Item item : request.getItems()) {
-            if (item.getGoodsId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+            if (item.getGoodsId() == null || item.getSkuId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
                 return ApiResponse.badRequest("商品参数不合法");
             }
-            mergedItems.put(item.getGoodsId(), mergedItems.getOrDefault(item.getGoodsId(), 0) + item.getQuantity());
+            String key = item.getGoodsId() + "_" + item.getSkuId();
+            SubmitOrderRequest.Item merged = mergedItems.get(key);
+            if (merged == null) {
+                merged = new SubmitOrderRequest.Item();
+                merged.setGoodsId(item.getGoodsId());
+                merged.setSkuId(item.getSkuId());
+                merged.setQuantity(item.getQuantity());
+                mergedItems.put(key, merged);
+            } else {
+                merged.setQuantity(merged.getQuantity() + item.getQuantity());
+            }
         }
 
-        for (Map.Entry<Long, Integer> entry : mergedItems.entrySet()) {
-            Long goodsId = entry.getKey();
-            Integer quantity = entry.getValue();
+        for (SubmitOrderRequest.Item entry : mergedItems.values()) {
+            Long goodsId = entry.getGoodsId();
+            Long skuId = entry.getSkuId();
+            Integer quantity = entry.getQuantity();
 
             Goods goods = orderMapper.selectGoodsForUpdate(goodsId);
             if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
                 return ApiResponse.badRequest("商品不存在或已下架");
             }
-            if (goods.getStock() == null || goods.getStock() < quantity) {
-                return ApiResponse.badRequest("商品库存不足: " + goods.getName());
+            GoodsSku sku = orderMapper.selectSkuForUpdate(skuId);
+            if (sku == null || sku.getGoodsId() == null || !goodsId.equals(sku.getGoodsId()) || sku.getStatus() == null || sku.getStatus() != 1) {
+                return ApiResponse.badRequest("商品规格不存在或已下架: " + goods.getName());
+            }
+            if (sku.getSkuStock() == null || sku.getSkuStock() < quantity) {
+                return ApiResponse.badRequest("规格库存不足: " + goods.getName());
             }
 
-            int updated = orderMapper.deductGoodsStock(goods.getId(), quantity);
+            int updated = orderMapper.deductSkuStock(sku.getId(), quantity);
             if (updated <= 0) {
                 return ApiResponse.badRequest("库存更新失败，请重试");
             }
 
-            BigDecimal itemPrice = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
+            BigDecimal itemPrice = sku.getSkuPrice() == null ? BigDecimal.ZERO : sku.getSkuPrice();
             BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(quantity));
             totalAmount = totalAmount.add(itemTotal);
 
             OrderItemInfo orderItem = new OrderItemInfo();
             orderItem.setGoodsId(goods.getId());
+            orderItem.setSkuId(sku.getId());
             orderItem.setGoodsName(goods.getName());
             orderItem.setGoodsImage(goods.getMainImage());
+            orderItem.setSkuName(sku.getSkuName());
+            orderItem.setSkuWeightG(sku.getSkuWeightG());
             orderItem.setPrice(itemPrice);
             orderItem.setQuantity(quantity);
             orderItem.setTotalPrice(itemTotal);
+            orderItem.setSourceType(normalizeSourceType(entry.getSourceType()));
+            orderItem.setSourcePlanId(entry.getSourcePlanId());
+            orderItem.setSourceScene(safeText(entry.getSourceScene()));
             orderItems.add(orderItem);
         }
 
@@ -165,7 +183,6 @@ public class OrderServiceImpl implements OrderService {
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setOrderNo(generateOrderNo());
         orderInfo.setUserId(request.getUserId());
-        orderInfo.setMerchantId(request.getMerchantId() == null ? 1L : request.getMerchantId());
         orderInfo.setTotalAmount(totalAmount);
         orderInfo.setDiscountAmount(discountAmount);
         orderInfo.setActualAmount(actualAmount);
@@ -174,6 +191,7 @@ public class OrderServiceImpl implements OrderService {
         orderInfo.setReceiverAddress(receiverAddress);
         orderInfo.setRemark(request.getRemark());
         orderInfo.setCouponId(couponId);
+        orderInfo.setOrderSource(resolveOrderSource(orderItems));
         orderInfo.setStatus(0);
         orderInfo.setPayStatus(0);
 
@@ -246,7 +264,7 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("仅待付款或待发货订单可取消");
         }
 
-        int restoreCount = orderMapper.restoreGoodsStockByOrderId(orderId);
+        int restoreCount = orderMapper.restoreSkuStockByOrderId(orderId);
         if (restoreCount <= 0) {
             return ApiResponse.badRequest("库存回补失败，请重试");
         }
@@ -387,7 +405,7 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("订单未超时，不可过期取消");
         }
 
-        int restoreCount = orderMapper.restoreGoodsStockByOrderId(orderId);
+        int restoreCount = orderMapper.restoreSkuStockByOrderId(orderId);
         if (restoreCount <= 0) {
             return ApiResponse.badRequest("库存回补失败，请重试");
         }
@@ -431,12 +449,29 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return ApiResponse.notFound("订单不存在");
         }
-        if (order.getStatus() == null || (order.getStatus() != 1 && order.getStatus() != 2)) {
+        if (order.getStatus() == null) {
+            return ApiResponse.badRequest("当前状态不可申请退款");
+        }
+        if (order.getStatus() == 2) {
+            return ApiResponse.badRequest("已发货订单不支持直接退款");
+        }
+        if (order.getStatus() == 3) {
+            if (order.getFinishTime() == null) {
+                return ApiResponse.badRequest("订单完成时间异常，暂无法申请售后");
+            }
+            LocalDateTime deadline = order.getFinishTime().plusDays(7);
+            if (LocalDateTime.now().isAfter(deadline)) {
+                return ApiResponse.badRequest("已超过7天售后期限");
+            }
+        } else if (order.getStatus() != 1) {
             return ApiResponse.badRequest("当前状态不可申请退款");
         }
         int updated = orderMapper.applyRefund(orderId, userId);
         if (updated <= 0) {
-            return ApiResponse.badRequest("退款申请失败，请重试");
+            return ApiResponse.badRequest("售后申请失败，请重试");
+        }
+        if (order.getStatus() == 3) {
+            return ApiResponse.success("售后申请已提交", null);
         }
         return ApiResponse.success("退款申请已提交", null);
     }
@@ -455,29 +490,13 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("当前状态不可完成退款");
         }
 
-        orderMapper.restoreGoodsStockByOrderId(orderId);
+        orderMapper.restoreSkuStockByOrderId(orderId);
         int updated = orderMapper.finishRefund(orderId, userId);
         if (updated <= 0) {
             return ApiResponse.badRequest("退款完成失败，请重试");
         }
         restoreCouponIfNeeded(order);
         return ApiResponse.success("退款已完成", null);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public ApiResponse<?> clearMyTestData(Long userId) {
-        if (userId == null) {
-            return ApiResponse.badRequest("userId不能为空");
-        }
-        if (datasourceUrl == null || !datasourceUrl.contains("localhost")) {
-            return ApiResponse.forbidden("仅开发环境可执行清理");
-        }
-        cartMapper.deleteAllByUserId(userId);
-        addressMapper.deleteByUserId(userId);
-        orderMapper.deleteOrderItemsByUserId(userId);
-        orderMapper.deleteOrdersByUserId(userId);
-        return ApiResponse.success("测试数据已清理", null);
     }
 
     private Map<String, Object> buildOrderView(OrderInfo order) {
@@ -491,12 +510,13 @@ public class OrderServiceImpl implements OrderService {
         row.put("receiverPhone", order.getReceiverPhone());
         row.put("receiverAddress", order.getReceiverAddress());
         row.put("remark", order.getRemark());
+        row.put("orderSource", safeText(order.getOrderSource()));
         row.put("payChannel", order.getPayChannel());
         row.put("payTradeNo", order.getPayTradeNo());
         row.put("payStatus", order.getPayStatus());
         row.put("payTime", order.getPayTime());
         row.put("statusText", mapStatusText(order.getStatus()));
-        row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId()));
+        row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId(), order.getUserId()));
         return row;
     }
 
@@ -550,7 +570,7 @@ public class OrderServiceImpl implements OrderService {
         if (!isOrderOverdue(order)) {
             return;
         }
-        orderMapper.restoreGoodsStockByOrderId(order.getId());
+        orderMapper.restoreSkuStockByOrderId(order.getId());
         int updated = orderMapper.updateOrderStatus(order.getId(), order.getUserId(), 0, 4);
         if (updated > 0) {
             restoreCouponIfNeeded(order);
@@ -569,5 +589,35 @@ public class OrderServiceImpl implements OrderService {
             return fallback;
         }
         return value.trim();
+    }
+
+    private String normalizeSourceType(String sourceType) {
+        String value = safeText(sourceType).toUpperCase();
+        if (OrderInfo.ORDER_SOURCE_MEAL.equals(value)
+                || OrderInfo.ORDER_SOURCE_COMBO.equals(value)
+                || OrderInfo.ORDER_SOURCE_SEASONAL.equals(value)
+                || OrderInfo.ORDER_SOURCE_MIXED.equals(value)) {
+            return value;
+        }
+        return OrderInfo.ORDER_SOURCE_NORMAL;
+    }
+
+    private String resolveOrderSource(List<OrderItemInfo> orderItems) {
+        String current = "";
+        for (OrderItemInfo item : orderItems) {
+            String sourceType = normalizeSourceType(item.getSourceType());
+            if (current.isEmpty()) {
+                current = sourceType;
+                continue;
+            }
+            if (!current.equals(sourceType)) {
+                return OrderInfo.ORDER_SOURCE_MIXED;
+            }
+        }
+        return current.isEmpty() ? OrderInfo.ORDER_SOURCE_NORMAL : current;
+    }
+
+    private String safeText(String value) {
+        return value == null ? "" : value.trim();
     }
 }

@@ -2,6 +2,7 @@ package com.example.freshtime.controller;
 
 import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.dto.LoginRequest;
+import com.example.freshtime.dto.UserProfileUpdateRequest;
 import com.example.freshtime.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,5 +22,10 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<?> login(@RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/profile")
+    public ApiResponse<?> updateProfile(@RequestBody UserProfileUpdateRequest request) {
+        return authService.updateProfile(request);
     }
 }

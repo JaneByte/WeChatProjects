@@ -17,6 +17,18 @@ Page({
     actionLoading: false
   },
 
+  resetCartState() {
+    this.setData({
+      cartItems: [],
+      allSelected: false,
+      totalPrice: 0,
+      selectedCount: 0,
+      currentSlideId: null,
+      actionLoading: false
+    });
+    this.syncBadgeFromServerData([]);
+  },
+
   onLoad() {
     const systemInfo = wx.getSystemInfoSync();
     this.data.rpxRatio = 750 / systemInfo.screenWidth;
@@ -24,22 +36,26 @@ Page({
   },
 
   onShow() {
-    this.loadCartData();
+    app.ensureLoginReady().finally(() => this.loadCartData());
+  },
+
+  requireLogin(redirect = '/pages/cart/cart') {
+    app.requireLogin({ redirect }).catch(() => {});
+    return false;
   },
 
   loadCartData() {
-    const userId = app.getUserId();
-    if (!userId) {
-      this.setData({ cartItems: [] }, () => this.calculateTotalAndSelectState());
+    if (!app.getUserId()) {
+      this.resetCartState();
       return;
     }
-    get('/cart/list', { userId }, { retry: 0 })
+    get('/cart/list', {}, { retry: 0 })
       .then((res) => {
         const raw = (res && res.data) || [];
         const cartItems = (Array.isArray(raw) ? raw : []).map((item) => ({
-          id: Number(item.goodsId || item.id),
+          id: Number(item.id || 0),
           goodsId: Number(item.goodsId || item.id),
-          merchantId: item.merchantId || 1,
+          skuId: Number(item.skuId || 0),
           name: item.name || '',
           price: Number(item.price || 0),
           unit: item.unit || '件',
@@ -47,6 +63,12 @@ Page({
           image: item.image || '',
           stock: Number(item.stock || 0),
           quantity: Number(item.quantity || 1),
+          skuName: item.skuName || '',
+          skuWeightG: Number(item.skuWeightG || 0),
+          skuText: item.skuText || '',
+          sourceType: item.sourceType || 'NORMAL',
+          sourcePlanId: item.sourcePlanId || null,
+          sourceScene: item.sourceScene || '',
           selected: Boolean(item.selected),
           slideOffset: 0
         }));
@@ -54,7 +76,7 @@ Page({
         this.syncBadgeFromServerData(cartItems);
       })
       .catch((error) => {
-        this.setData({ cartItems: [] }, () => this.calculateTotalAndSelectState());
+        this.resetCartState();
         showRequestError(error, '购物车加载失败');
       });
   },
@@ -97,11 +119,10 @@ Page({
       wx.showToast({ title: '暂无库存', icon: 'none' });
       return;
     }
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) return;
     const nextSelected = this.data.cartItems[index].selected ? 0 : 1;
     this.setData({ actionLoading: true });
-    post(`/cart/select?userId=${userId}&goodsId=${id}&selected=${nextSelected}`, {}, { retry: 0 })
+    post(`/cart/select?goodsId=${this.data.cartItems[index].goodsId}&skuId=${this.data.cartItems[index].skuId}&selected=${nextSelected}`, {}, { retry: 0 })
       .then(() => this.loadCartData())
       .catch((error) => showRequestError(error, '更新选中失败'))
       .finally(() => this.setData({ actionLoading: false }));
@@ -109,11 +130,10 @@ Page({
 
   toggleSelectAll() {
     if (this.data.actionLoading) return;
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) return;
     const selected = this.data.allSelected ? 0 : 1;
     this.setData({ actionLoading: true });
-    post(`/cart/select-all?userId=${userId}&selected=${selected}`, {}, { retry: 0 })
+    post(`/cart/select-all?selected=${selected}`, {}, { retry: 0 })
       .then(() => this.loadCartData())
       .catch((error) => showRequestError(error, '全选更新失败'))
       .finally(() => this.setData({ actionLoading: false }));
@@ -129,7 +149,7 @@ Page({
       wx.showToast({ title: '库存不足', icon: 'none' });
       return;
     }
-    this.updateQuantity(id, item.quantity + 1);
+    this.updateQuantity(item, item.quantity + 1);
   },
 
   decreaseQuantity(e) {
@@ -139,14 +159,13 @@ Page({
     if (index < 0) return;
     const item = this.data.cartItems[index];
     if (item.quantity <= 1) return;
-    this.updateQuantity(id, item.quantity - 1);
+    this.updateQuantity(item, item.quantity - 1);
   },
 
-  updateQuantity(goodsId, quantity) {
-    const userId = app.getUserId();
-    if (!userId) return;
+  updateQuantity(item, quantity) {
+    if (!app.getUserId()) return;
     this.setData({ actionLoading: true });
-    post(`/cart/quantity?userId=${userId}&goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 })
+    post(`/cart/quantity?goodsId=${item.goodsId}&skuId=${item.skuId}&quantity=${quantity}`, {}, { retry: 0 })
       .then(() => this.loadCartData())
       .catch((error) => showRequestError(error, '更新数量失败'))
       .finally(() => this.setData({ actionLoading: false }));
@@ -181,10 +200,14 @@ Page({
   deleteItem(e) {
     if (this.data.actionLoading) return;
     const id = Number(e.currentTarget.dataset.id);
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) return;
     this.setData({ actionLoading: true });
-    post(`/cart/delete?userId=${userId}&goodsId=${id}`, {}, { retry: 0 })
+    const target = this.data.cartItems.find((item) => Number(item.id) === Number(id));
+    if (!target) {
+      this.setData({ actionLoading: false });
+      return;
+    }
+    post(`/cart/delete?goodsId=${target.goodsId}&skuId=${target.skuId}`, {}, { retry: 0 })
       .then(() => {
         wx.showToast({ title: '已删除', icon: 'success' });
         this.loadCartData();
@@ -199,10 +222,9 @@ Page({
 
   onBatchDelete() {
     if (this.data.actionLoading || this.data.selectedCount === 0) return;
-    const userId = app.getUserId();
-    if (!userId) return;
+    if (!app.getUserId()) return;
     this.setData({ actionLoading: true });
-    post(`/cart/delete-selected?userId=${userId}`, {}, { retry: 0 })
+    post('/cart/delete-selected', {}, { retry: 0 })
       .then(() => {
         wx.showToast({ title: '删除成功', icon: 'success' });
         this.loadCartData();
@@ -213,9 +235,8 @@ Page({
 
   onCheckout() {
     if (this.data.selectedCount === 0) return;
-    const userId = app.getUserId();
-    if (!userId) {
-      wx.showToast({ title: '登录中，请稍后重试', icon: 'none' });
+    if (!app.getUserId()) {
+      app.requireLogin({ redirect: '/pages/cart/cart', message: '正在登录，请稍候' }).catch(() => {});
       return;
     }
 
@@ -227,11 +248,16 @@ Page({
 
     wx.setStorageSync('checkoutItems', selectedItems.map((item) => ({
       id: item.goodsId || item.id,
+      skuId: item.skuId,
       name: item.name,
       image: item.image,
       price: item.price,
+      skuName: item.skuName,
+      skuWeightG: item.skuWeightG,
       quantity: item.quantity,
-      merchantId: item.merchantId || 1
+      sourceType: item.sourceType || 'NORMAL',
+      sourcePlanId: item.sourcePlanId || null,
+      sourceScene: item.sourceScene || ''
     })));
 
     wx.navigateTo({ url: '/pages/checkout/checkout' });

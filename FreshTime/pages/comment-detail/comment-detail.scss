@@ -1,0 +1,57 @@
+.page {
+  padding: 24rpx;
+}
+
+.state {
+  text-align: center;
+  color: #9aa78f;
+  padding: 120rpx 0;
+  font-size: 26rpx;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 22rpx;
+  border: 1rpx solid #e6eddc;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 30rpx;
+  color: #2d4022;
+  font-weight: 600;
+}
+
+.time {
+  font-size: 22rpx;
+  color: #8d9b81;
+}
+
+.content {
+  margin-top: 14rpx;
+  color: #34482a;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+
+.meta {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #7d8d72;
+}
+
+.back-btn {
+  margin-top: 22rpx;
+  height: 74rpx;
+  line-height: 74rpx;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
+}

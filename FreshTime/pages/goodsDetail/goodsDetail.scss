@@ -35,6 +35,33 @@
   font-weight: 700;
 }
 
+.seasonal-panel {
+  margin-top: 14rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #f2faee 0%, #fbfef9 100%);
+  border: 1rpx solid #dfead4;
+}
+
+.seasonal-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.seasonal-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #2f7d3a;
+  background: #e8f5e6;
+}
+
+.seasonal-badge.warn {
+  color: #ad6229;
+  background: #fff1e2;
+}
+
 .meta {
   margin-top: 10rpx;
   color: #647457;
@@ -93,5 +120,103 @@
 .qty {
   width: 110rpx;
   text-align: center;
+}
+
+.comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e3311;
+}
+
+.comment-score {
+  font-size: 24rpx;
+  color: #647457;
+}
+
+.comment-empty {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #b8c2ae;
+}
+
+.comment-item {
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #edf2e7;
+}
+
+.comment-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comment-rating {
+  font-size: 24rpx;
+  color: #5a8a28;
+}
+
+.comment-time {
+  font-size: 22rpx;
+  color: #9aa78f;
+}
+
+.comment-content {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #2f3d25;
+}
+
+.comment-more {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #73a937;
+}
+
+.spec-select-wrap {
+  margin-top: 16rpx;
+}
+
+.spec-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 20rpx;
+  border: 1rpx solid #dfe9d5;
+  border-radius: 14rpx;
+  background: #f8fbf4;
+}
+
+.spec-picker-label {
+  font-size: 24rpx;
+  color: #647457;
+  width: 88rpx;
+}
+
+.spec-picker-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1e3311;
+  margin: 0 12rpx;
+}
+
+.spec-picker-arrow {
+  font-size: 20rpx;
+  color: #90a48a;
+}
+
+.spec-hint {
+  margin-top: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  font-size: 22rpx;
+  color: #6f8068;
 }
 

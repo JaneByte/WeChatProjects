@@ -1,5 +1,6 @@
 <view class='page'>
   <view class='form'>
+    <button class='locate-btn' loading='{{locating}}' disabled='{{locating}}' bindtap='onLocateTap'>{{locating ? '定位中...' : '一键获取当前位置'}}</button>
     <input placeholder='收货人' data-field='receiverName' value='{{form.receiverName}}' bindinput='onInput' />
     <input placeholder='手机号' data-field='receiverPhone' value='{{form.receiverPhone}}' bindinput='onInput' />
     <input placeholder='省份' data-field='province' value='{{form.province}}' bindinput='onInput' />

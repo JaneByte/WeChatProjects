@@ -1,0 +1,70 @@
+﻿.page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: linear-gradient(180deg, #f7f9ee 0%, #fbfcf5 100%);
+}
+
+.hero {
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(145deg, #82b34c 0%, #5f9d58 100%);
+  color: #ffffff;
+  margin-bottom: 20rpx;
+}
+
+.hero-title {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.hero-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  opacity: 0.92;
+}
+
+.card {
+  background: #ffffff;
+  border: 1rpx solid #e2e8d2;
+  border-radius: 18rpx;
+  padding: 18rpx;
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  font-size: 26rpx;
+  color: #2e3a1e;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.pill {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #d4e0c2;
+  font-size: 23rpx;
+  color: #5b6948;
+  background: #f8faef;
+}
+
+.pill--active {
+  color: #ffffff;
+  border-color: #5f9d58;
+  background: #5f9d58;
+}
+
+.submit-btn {
+  margin-top: 20rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #5f9d58, #4d8349);
+}

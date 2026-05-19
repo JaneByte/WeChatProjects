@@ -1,4 +1,4 @@
-﻿.page { padding: 24rpx; }
+.page { padding: 24rpx; }
 .state { text-align: center; color: #b8c2ae; padding: 80rpx 0; }
 .state button { margin-top: 16rpx; }
 .list { display: flex; flex-direction: column; gap: 16rpx; }
@@ -55,9 +55,9 @@
 .mini-btn {
   min-width: 132rpx;
   height: 56rpx;
-  line-height: 56rpx;
+  line-height: 62rpx;
   padding: 0 18rpx;
-  border-radius: 999rpx;
+  border-radius: 32rpx;
   border: 1rpx solid #e4eadf;
   background: #ffffff;
   color: #647457;
@@ -73,5 +73,66 @@
 .mini-btn.danger {
   border-color: #b8c2ae;
   color: #5a8a28;
+}
+
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f4f8ef 0%, #ffffff 30%);
+}
+
+.card {
+  border-radius: 20rpx;
+  padding: 22rpx;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.order-no {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #1e3311;
+  font-weight: 600;
+}
+
+.status-tag {
+  flex-shrink: 0;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #edf6e0;
+  color: #5a8a28;
+  font-size: 22rpx;
+}
+
+.amount-row {
+  margin-top: 14rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14rpx 16rpx;
+  border-radius: 16rpx;
+  background: #f7faf4;
+}
+
+.amount-label {
+  font-size: 22rpx;
+  color: #7b8d75;
+}
+
+.amount-value {
+  font-size: 34rpx;
+  color: #1e3311;
+  font-weight: 700;
+}
+
+.danger {
+  color: #d46b42;
+  font-weight: 600;
 }
 

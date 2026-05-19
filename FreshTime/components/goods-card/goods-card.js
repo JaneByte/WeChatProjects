@@ -10,8 +10,7 @@ Component({
     onTap() {
       this.triggerEvent('goodstap', { item: this.properties.item });
     },
-    onAdd(e) {
-      e.stopPropagation();
+    onAdd() {
       this.triggerEvent('add', { item: this.properties.item });
     }
   }

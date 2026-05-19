@@ -46,3 +46,49 @@
   color: #5a8a28;
 }
 
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f4f8ef 0%, #ffffff 30%);
+}
+
+.card {
+  border-radius: 20rpx;
+  padding: 22rpx;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.card-head .card-title {
+  margin-bottom: 0;
+}
+
+.status-tag {
+  flex-shrink: 0;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #edf6e0;
+  color: #5a8a28;
+  font-size: 22rpx;
+}
+
+.sum-line.total {
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #edf2e7;
+  font-size: 30rpx;
+  color: #1e3311;
+  font-weight: 700;
+}
+
+.line.danger {
+  color: #d46b42;
+  font-weight: 600;
+}
+

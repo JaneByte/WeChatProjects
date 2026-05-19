@@ -23,6 +23,10 @@ function normalizeList(rawList) {
     originalPrice: toNumber(item.originalPrice, 0),
     stock: toNumber(item.stock, 0),
     unit: item.unit || '件',
+    defaultSkuId: toNumber(item.defaultSkuId || 0, 0),
+    skuId: toNumber(item.skuId || 0, 0),
+    skuName: item.skuName || '',
+    skuWeightG: toNumber(item.skuWeightG, 0),
     salesVolume: toNumber(item.salesVolume, 0),
     origin: item.origin || '',
     keywords: item.keywords || '',
@@ -32,6 +36,11 @@ function normalizeList(rawList) {
     salesScore: toNumber(item.salesScore, 0),
     marginScore: toNumber(item.marginScore, 0),
     stockScore: toNumber(item.stockScore, 0),
+    seasonStage: item.seasonStage || '',
+    seasonStageText: item.seasonStageText || '',
+    seasonFreshnessHint: item.seasonFreshnessHint || '',
+    seasonMarketingText: item.seasonMarketingText || '',
+    seasonMonthRangeText: item.seasonMonthRangeText || '',
     recommendReason: item.recommendReason || '',
     tags: Array.isArray(item.tags) ? item.tags : []
   }));
@@ -63,12 +72,18 @@ function getSeasonalList(params = {}) {
     return {
       season: data.season || '',
       seasonText: data.seasonText || '',
+      seasonStage: data.seasonStage || '',
+      seasonStageText: data.seasonStageText || '',
       region: data.region || 'all',
       regionOptions: normalizeRegionOptions(data.regionOptions),
       budgetLevel: data.budgetLevel || 'all',
+      produceType: data.produceType || 'all',
       sortBy: data.sortBy || 'score',
+      strictTag: data.strictTag !== false,
       headline: data.headline || '当季精选',
       subHeadline: data.subHeadline || '',
+      fallbackUsed: data.fallbackUsed === true,
+      fallbackMessage: data.fallbackMessage || '',
       refreshTime: toNumber(data.refreshTime, 0),
       items: normalizeList(data.items)
     };
@@ -86,12 +101,18 @@ function refreshSeasonal(params = {}) {
     return {
       season: data.season || '',
       seasonText: data.seasonText || '',
+      seasonStage: data.seasonStage || '',
+      seasonStageText: data.seasonStageText || '',
       region: data.region || 'all',
       regionOptions: normalizeRegionOptions(data.regionOptions),
       budgetLevel: data.budgetLevel || 'all',
+      produceType: data.produceType || 'all',
       sortBy: data.sortBy || 'score',
+      strictTag: data.strictTag !== false,
       headline: data.headline || '当季精选',
       subHeadline: data.subHeadline || '',
+      fallbackUsed: data.fallbackUsed === true,
+      fallbackMessage: data.fallbackMessage || '',
       refreshTime: toNumber(data.refreshTime, 0),
       items: normalizeList(data.items)
     };

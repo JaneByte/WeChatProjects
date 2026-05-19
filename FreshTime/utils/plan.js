@@ -42,7 +42,9 @@ function normalizePlanItem(item = {}) {
     role: item.role || item.group || '',
     reason: item.reason || '',
     price: toNumber(item.price, 0),
-    gramsEstimate: toNumber(item.gramsEstimate, 0)
+    gramsEstimate: toNumber(item.gramsEstimate, 0),
+    skuName: item.skuName || '',
+    reasonTags: Array.isArray(item.reasonTags) ? item.reasonTags : []
   };
 }
 
@@ -70,7 +72,6 @@ function normalizeComboPlan(raw = {}) {
     comboName: raw.comboName || raw.name || '推荐搭配',
     items,
     prepHint: raw.prepHint || '',
-    fitScore: toNumber(raw.fitScore, 0),
     priceSummary: normalizePriceSummary(raw.priceSummary || {}, totalPriceFromItems),
     replaceOptions: raw.replaceOptions || {}
   };
@@ -112,13 +113,13 @@ function generateMealPlan(payload = {}) {
     .then((res) => {
       const { code, message, data } = unwrapApiResponse(res);
       if (code !== 200) {
-        const err = new Error(message || '一人食方案生成失败');
+      const err = new Error(message || '小份优选方案生成失败');
         err.code = code;
         throw err;
       }
       const normalized = normalizeMealPlan(data, 'meal');
       if (!normalized.planId || normalized.items.length === 0) {
-        throw createContractError('一人食方案字段缺失', { code, message });
+      throw createContractError('小份优选方案字段缺失', { code, message });
       }
       return {
         ...normalized,

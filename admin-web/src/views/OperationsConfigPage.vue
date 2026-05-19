@@ -4,7 +4,7 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">运营配置中心</h2>
-          <p class="section-desc">统一维护一人食/搭配规则与当季精选权重、文案模板，减少频繁改代码与手工跑脚本。</p>
+          <p class="section-desc">统一维护首页展示、当季精选与套餐优惠等运营配置。</p>
         </div>
         <button class="ghost-btn" @click="loadAll" :disabled="loading">
           {{ loading ? '加载中...' : '刷新' }}
@@ -13,31 +13,6 @@
 
       <div v-if="error" class="error-box">{{ error }}</div>
       <div v-else-if="successMessage" class="success-box">{{ successMessage }}</div>
-
-      <div class="section-card" style="margin-top: 0;">
-        <div class="section-head">
-          <div>
-            <h3 class="section-title">方案规则</h3>
-            <p class="section-desc">用于调整一人食、搭配、榨汁、沙拉等推荐逻辑。</p>
-          </div>
-        </div>
-        <div class="form-grid">
-          <label v-for="item in planRuleFields" :key="item.key" class="field-block input-wide">
-            <span class="field-label">{{ item.label }}</span>
-            <textarea
-              v-model.trim="planRuleForm[item.key]"
-              class="textarea input-wide"
-              :placeholder="item.placeholder"
-            ></textarea>
-            <span class="field-hint">{{ item.hint }}</span>
-          </label>
-        </div>
-        <div class="toolbar">
-          <button class="primary-btn" @click="savePlanRules" :disabled="savingPlanRules">
-            {{ savingPlanRules ? '保存中...' : '保存方案规则' }}
-          </button>
-        </div>
-      </div>
 
       <div class="section-card">
         <div class="section-head">
@@ -55,6 +30,7 @@
               :placeholder="item.placeholder"
             />
             <span class="field-hint">{{ item.hint }}</span>
+            <span class="field-hint">当前值：{{ formatCurrentValue(seasonalForm[item.key]) }}</span>
           </label>
         </div>
         <div class="toolbar">
@@ -68,7 +44,7 @@
         <div class="section-head">
           <div>
             <h3 class="section-title">套餐优惠配置</h3>
-            <p class="section-desc">统一维护一人食与蔬果搭配的折扣率、最低优惠额和最高优惠额。</p>
+            <p class="section-desc">统一维护小份优选与蔬果搭配的折扣率、最低优惠额和最高优惠额。</p>
           </div>
         </div>
         <div class="form-grid">
@@ -80,6 +56,7 @@
               :placeholder="item.placeholder"
             />
             <span class="field-hint">{{ item.hint }}</span>
+            <span class="field-hint">当前值：{{ formatCurrentValue(packPricingForm[item.key]) }}</span>
           </label>
         </div>
         <div class="toolbar">
@@ -97,51 +74,57 @@ import { onMounted, reactive, ref } from 'vue';
 import { http } from '../services/http';
 
 const loading = ref(false);
-const savingPlanRules = ref(false);
 const savingSeasonal = ref(false);
 const savingPackPricing = ref(false);
 const error = ref('');
 const successMessage = ref('');
 
-const planRuleForm = reactive({});
 const seasonalForm = reactive({});
 const packPricingForm = reactive({});
 
-const planRuleFields = [
-  { key: 'plan.strong_flavor_keywords', label: '强味型关键词', placeholder: '如：洋葱,大葱,蒜', hint: '逗号分隔，用于限制重口味食材' },
-  { key: 'plan.juice_blacklist_keywords', label: '榨汁黑名单', placeholder: '如：蒜,洋葱,辣椒', hint: '这些食材不会进入榨汁候选池' },
-  { key: 'plan.salad_blacklist_keywords', label: '沙拉黑名单', placeholder: '如：榴莲,菠萝蜜,洋葱', hint: '这些食材不会进入沙拉候选池' },
-  { key: 'plan.hotpot_blacklist_keywords', label: '火锅黑名单', placeholder: '如：鲜切即食,果切杯', hint: '这些商品不会进入火锅搭配候选池' },
-  { key: 'plan.starchy_keywords', label: '高淀粉关键词', placeholder: '如：土豆,南瓜,玉米', hint: '用于限制高淀粉堆叠' },
-  { key: 'plan.watery_fruit_keywords', label: '高含水水果关键词', placeholder: '如：西瓜,哈密瓜,香瓜', hint: '用于限制不适合热食搭配的水果' },
-  { key: 'plan.juice_conflict_pairs', label: '榨汁冲突对', placeholder: '如：黄瓜|香蕉,番茄|香蕉', hint: '格式：食材A|食材B，多组逗号分隔' },
-  { key: 'plan.salad_conflict_pairs', label: '沙拉冲突对', placeholder: '如：土豆|西瓜,洋葱|草莓', hint: '格式：食材A|食材B，多组逗号分隔' },
-  { key: 'plan.general_conflict_pairs', label: '通用冲突对', placeholder: '如：榴莲|柠檬', hint: '用于所有场景的基础冲突规避' }
-];
+const DEFAULT_CONFIG_VALUES = {
+  'weight.season': '0.30',
+  'weight.freshness': '0.08',
+  'weight.sales': '0.16',
+  'weight.margin': '0.10',
+  'weight.stock': '0.20',
+  'weight.budget': '0.16',
+  'title.template': '{seasonText}当季精选',
+  'subtitle.template': '优先新鲜度、当季适配和库存稳定性',
+  'home.hero.image': '',
+  'home.hero.linkType': 'none',
+  'home.hero.linkValue': '',
+  'pack.combo.discount_rate': '0.05',
+  'pack.combo.min_discount': '2.00',
+  'pack.combo.max_discount': '12.00',
+  'pack.meal.discount_rate': '0.03',
+  'pack.meal.min_discount': '1.00',
+  'pack.meal.max_discount': '8.00'
+};
 
 const seasonalFields = [
-  { key: 'weight.season', label: '当季权重', placeholder: '如：0.26', hint: '越高越偏向时令适配' },
-  { key: 'weight.freshness', label: '新鲜度权重', placeholder: '如：0.18', hint: '越高越偏向库存与新鲜度表现' },
-  { key: 'weight.sales', label: '销量权重', placeholder: '如：0.18', hint: '越高越偏向热销表现' },
-  { key: 'weight.margin', label: '价差权重', placeholder: '如：0.14', hint: '越高越偏向原价/售价差' },
-  { key: 'weight.stock', label: '库存权重', placeholder: '如：0.14', hint: '越高越偏向稳定库存' },
-  { key: 'weight.budget', label: '预算权重', placeholder: '如：0.10', hint: '越高越偏向价格匹配度' },
+  { key: 'weight.season', label: '当季权重', placeholder: '如：0.30', hint: '仅用于当季精选排序，值越高越偏向时令适配' },
+  { key: 'weight.freshness', label: '供应状态权重', placeholder: '如：0.08', hint: '仅用于当季精选排序，反映可售状态和综合供应表现，不是入库时间新鲜度' },
+  { key: 'weight.sales', label: '销量权重', placeholder: '如：0.16', hint: '仅用于当季精选排序，值越高越偏向热销表现' },
+  { key: 'weight.margin', label: '价差权重', placeholder: '如：0.10', hint: '仅用于当季精选排序，值越高越偏向原价/售价差' },
+  { key: 'weight.stock', label: '库存权重', placeholder: '如：0.20', hint: '仅用于当季精选排序，值越高越偏向库存稳定商品' },
+  { key: 'weight.budget', label: '预算权重', placeholder: '如：0.16', hint: '仅用于当季精选排序，值越高越偏向价格匹配度' },
   { key: 'title.template', label: '标题模板', placeholder: '如：{seasonText}当季精选', hint: '支持 {seasonText} 占位符' },
-  { key: 'subtitle.template', label: '副标题模板', placeholder: '如：优先新鲜度、当季适配和库存稳定性', hint: '支持 {seasonText} 占位符' }
+  { key: 'subtitle.template', label: '副标题模板', placeholder: '如：优先新鲜度、当季适配和库存稳定性', hint: '支持 {seasonText} 占位符' },
+  { key: 'home.hero.image', label: '首页主视觉图', placeholder: '填写图片地址或 cloud 文件地址', hint: '首页顶部固定展示的主视觉图片' },
+  { key: 'home.hero.linkType', label: '主视觉跳转类型', placeholder: '如：none / scene / goods / coupon', hint: '不跳转可填写 none' },
+  { key: 'home.hero.linkValue', label: '主视觉跳转值', placeholder: '如：时令 / 123 / 空', hint: '根据跳转类型填写对应值' }
 ];
 
 const packPricingFields = [
   { key: 'pack.combo.discount_rate', label: '搭配折扣率', placeholder: '如：0.05', hint: '蔬果搭配基础折扣率' },
   { key: 'pack.combo.min_discount', label: '搭配最低优惠额', placeholder: '如：2.00', hint: '蔬果搭配至少优惠多少' },
   { key: 'pack.combo.max_discount', label: '搭配最高优惠额', placeholder: '如：12.00', hint: '蔬果搭配最多优惠多少' },
-  { key: 'pack.meal.discount_rate', label: '一人食折扣率', placeholder: '如：0.03', hint: '一人食基础折扣率' },
-  { key: 'pack.meal.min_discount', label: '一人食最低优惠额', placeholder: '如：1.00', hint: '一人食至少优惠多少' },
-  { key: 'pack.meal.max_discount', label: '一人食最高优惠额', placeholder: '如：8.00', hint: '一人食最多优惠多少' }
+  { key: 'pack.meal.discount_rate', label: '小份优选折扣率', placeholder: '如：0.03', hint: '小份优选基础折扣率' },
+  { key: 'pack.meal.min_discount', label: '小份优选最低优惠额', placeholder: '如：1.00', hint: '小份优选至少优惠多少' },
+  { key: 'pack.meal.max_discount', label: '小份优选最高优惠额', placeholder: '如：8.00', hint: '小份优选最多优惠多少' }
 ];
 
-for (const item of planRuleFields) {
-  planRuleForm[item.key] = '';
-}
 for (const item of seasonalFields) {
   seasonalForm[item.key] = '';
 }
@@ -149,35 +132,46 @@ for (const item of packPricingFields) {
   packPricingForm[item.key] = '';
 }
 
-async function loadPlanRules() {
-  const res = await http.get('/plan-rules');
-  const rows = Array.isArray(res.data) ? res.data : [];
+function mapRowsToConfig(rows = []) {
   const next = {};
-  rows.forEach((row) => {
-    next[row.ruleKey] = row.ruleValue || '';
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const key = row?.ruleKey || row?.configKey || '';
+    const value = row?.ruleValue ?? row?.configValue ?? '';
+    if (key) {
+      next[key] = value;
+    }
   });
-  planRuleFields.forEach((item) => {
-    planRuleForm[item.key] = next[item.key] || '';
-  });
+  return next;
+}
+
+function resolveValue(key, value) {
+  if (value !== undefined && value !== null && String(value).trim() !== '') {
+    return String(value);
+  }
+  if (Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG_VALUES, key)) {
+    return DEFAULT_CONFIG_VALUES[key];
+  }
+  return '';
+}
+
+function formatCurrentValue(value) {
+  const text = String(value ?? '').trim();
+  return text || '当前未单独配置';
 }
 
 async function loadSeasonalConfig() {
   const res = await http.get('/seasonal-config');
-  const data = res.data || {};
+  const data = mapRowsToConfig(res.data);
   seasonalFields.forEach((item) => {
-    seasonalForm[item.key] = data[item.key] || '';
+    seasonalForm[item.key] = resolveValue(item.key, data[item.key]);
   });
 }
 
 async function loadPackPricingRules() {
   const res = await http.get('/pack-pricing-rules');
-  const rows = Array.isArray(res.data) ? res.data : [];
-  const next = {};
-  rows.forEach((row) => {
-    next[row.ruleKey] = row.ruleValue || '';
-  });
+  const next = mapRowsToConfig(res.data);
   packPricingFields.forEach((item) => {
-    packPricingForm[item.key] = next[item.key] || '';
+    packPricingForm[item.key] = resolveValue(item.key, next[item.key]);
   });
 }
 
@@ -186,30 +180,11 @@ async function loadAll() {
   error.value = '';
   successMessage.value = '';
   try {
-    await Promise.all([loadPlanRules(), loadSeasonalConfig(), loadPackPricingRules()]);
+    await Promise.all([loadSeasonalConfig(), loadPackPricingRules()]);
   } catch (err) {
     error.value = err.message;
   } finally {
     loading.value = false;
-  }
-}
-
-async function savePlanRules() {
-  savingPlanRules.value = true;
-  error.value = '';
-  successMessage.value = '';
-  try {
-    const payload = {};
-    planRuleFields.forEach((item) => {
-      payload[item.key] = planRuleForm[item.key] || '';
-    });
-    await http.post('/plan-rules/save', payload);
-    successMessage.value = '方案规则已保存';
-    await loadPlanRules();
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    savingPlanRules.value = false;
   }
 }
 

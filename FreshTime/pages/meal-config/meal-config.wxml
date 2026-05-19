@@ -1,7 +1,7 @@
 <view class='page'>
   <view class='hero'>
-    <view class='hero-title'>一人食生成器</view>
-    <view class='hero-sub'>选择餐次与偏好，生成单人可吃完方案</view>
+    <view class='hero-title'>小份优选推荐</view>
+    <view class='hero-sub'>按餐次和偏好，帮你配一份更适合单人购买的蔬果组合</view>
   </view>
 
   <view class='card'>
@@ -76,5 +76,5 @@
     </view>
   </view>
 
-  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>生成一人食方案</button>
+  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>帮我配一份小份优选</button>
 </view>

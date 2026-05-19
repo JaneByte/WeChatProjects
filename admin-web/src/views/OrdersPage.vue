@@ -1,11 +1,11 @@
 <template>
   <div class="page-grid">
     <div class="section-card">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">订单管理</h2>
-          <p class="section-desc">已接订单列表、详情和状态更新接口</p>
-        </div>
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">订单管理</h2>
+            <p class="section-desc">查看订单状态、收货信息与当前待处理的履约任务</p>
+          </div>
         <button class="ghost-btn" @click="loadOrders" :disabled="loading">
           {{ loading ? '加载中...' : '刷新' }}
         </button>
@@ -22,6 +22,7 @@
           <option value="3">已完成</option>
           <option value="4">已取消</option>
           <option value="5">已退款</option>
+          <option value="7">售后待审核</option>
           <option value="6">退款中</option>
         </select>
         <button class="primary-btn" @click="loadOrders">查询</button>
@@ -54,7 +55,7 @@
         <thead>
           <tr>
             <th>订单号</th>
-            <th>来源</th>
+            <th>订单来源</th>
             <th>用户ID</th>
             <th>收货人</th>
             <th>实付金额</th>
@@ -65,28 +66,33 @@
         </thead>
         <tbody>
           <tr v-for="item in displayOrders" :key="item.id">
-            <td>
+            <td class="table-title-cell">
               <div class="cell-title">{{ item.orderNo }}</div>
               <div class="cell-sub">{{ formatPayStatus(item.payStatus) }}</div>
             </td>
-            <td>{{ formatOrderSource(item.orderSource) }}</td>
-            <td>{{ item.userId }}</td>
-            <td>
+            <td class="table-source-cell">
+              <div class="cell-title">{{ formatOrderSource(item.orderSource) }}</div>
+              <div class="cell-sub" v-if="item.sourceSceneSummary">{{ item.sourceSceneSummary }}</div>
+            </td>
+            <td class="table-id-cell">{{ item.userId }}</td>
+            <td class="table-title-cell">
               <div class="cell-title">{{ item.receiverName || '-' }}</div>
               <div class="cell-sub">{{ item.receiverPhone || '未填写电话' }}</div>
             </td>
-            <td>¥{{ item.actualAmount }}</td>
-            <td>
+            <td class="table-amount-cell">¥{{ item.actualAmount }}</td>
+            <td class="table-status-cell">
               <span :class="['status-pill', statusClass(item.status)]">
                 {{ formatStatus(item.status) }}
               </span>
             </td>
-            <td>{{ item.createTime }}</td>
-            <td>
-              <button class="link-btn" @click="viewDetail(item.id)">详情</button>
-              <button v-if="nextStatusLabel(item.status)" class="link-btn" @click="updateStatus(item)">
-                {{ nextStatusLabel(item.status) }}
-              </button>
+            <td class="table-time-cell">{{ item.createTime }}</td>
+            <td class="table-actions-cell">
+              <div class="table-actions">
+                <button class="link-btn" @click="viewDetail(item.id)">详情</button>
+                <button v-for="action in getOrderActions(item)" :key="`${item.id}-${action.label}`" class="link-btn" @click="updateStatus(item, action)">
+                  {{ action.label }}
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="!displayOrders.length">
@@ -110,45 +116,45 @@
         <div class="detail-box detail-grid">
           <div class="detail-item">
             <span class="detail-label">用户ID</span>
-            <strong>{{ detailOrder.userId }}</strong>
+            <strong class="detail-value">{{ detailOrder.userId }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">订单状态</span>
-            <strong>{{ formatStatus(detailOrder.status) }}</strong>
+            <strong class="detail-value">{{ formatStatus(detailOrder.status) }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">支付状态</span>
-            <strong>{{ formatPayStatus(detailOrder.payStatus) }}</strong>
+            <strong class="detail-value">{{ formatPayStatus(detailOrder.payStatus) }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">订单来源</span>
-            <strong>{{ formatOrderSource(detailOrder.orderSource) }}</strong>
+            <strong class="detail-value">{{ formatOrderSource(detailOrder.orderSource) }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">实付金额</span>
-            <strong>¥{{ detailOrder.actualAmount }}</strong>
+            <strong class="detail-value">¥{{ detailOrder.actualAmount }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">收货人</span>
-            <strong>{{ detailOrder.receiverName || '-' }}</strong>
+            <strong class="detail-value">{{ detailOrder.receiverName || '-' }}</strong>
           </div>
           <div class="detail-item">
             <span class="detail-label">联系电话</span>
-            <strong>{{ detailOrder.receiverPhone || '-' }}</strong>
+            <strong class="detail-value">{{ detailOrder.receiverPhone || '-' }}</strong>
           </div>
           <div class="detail-item detail-wide">
             <span class="detail-label">收货地址</span>
-            <strong>{{ detailOrder.receiverAddress || '-' }}</strong>
+            <strong class="detail-value detail-text">{{ detailOrder.receiverAddress || '-' }}</strong>
           </div>
           <div class="detail-item detail-wide">
             <span class="detail-label">订单备注</span>
-            <strong>{{ detailOrder.remark || '无' }}</strong>
+            <strong class="detail-value detail-text">{{ detailOrder.remark || '无' }}</strong>
           </div>
         </div>
 
-        <div class="toolbar" v-if="nextStatusLabel(detailOrder.status)">
-          <button class="primary-btn" @click="updateStatus(detailOrder)">
-            {{ nextStatusLabel(detailOrder.status) }}
+        <div class="toolbar" v-if="getOrderActions(detailOrder).length">
+          <button v-for="action in getOrderActions(detailOrder)" :key="action.label" class="primary-btn" @click="updateStatus(detailOrder, action)">
+            {{ action.label }}
           </button>
         </div>
 
@@ -164,11 +170,11 @@
           </thead>
           <tbody>
             <tr v-for="item in detailItems" :key="item.id">
-              <td>{{ item.goodsName }}</td>
-              <td>{{ formatOrderSource(item.sourceType) }}{{ item.sourceScene ? ` · ${item.sourceScene}` : '' }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>¥{{ item.price }}</td>
-              <td>¥{{ item.totalPrice }}</td>
+              <td class="table-title-cell">{{ item.goodsName }}</td>
+              <td class="table-note-cell">{{ formatOrderSource(item.sourceType) }}{{ item.sourceScene ? ` · ${decodeSourceScene(item.sourceScene)}` : '' }}</td>
+              <td class="table-id-cell">{{ item.quantity }}</td>
+              <td class="table-amount-cell">¥{{ item.price }}</td>
+              <td class="table-amount-cell">¥{{ item.totalPrice }}</td>
             </tr>
           </tbody>
         </table>
@@ -198,7 +204,8 @@ const statusMap = {
   3: '已完成',
   4: '已取消',
   5: '已退款',
-  6: '退款中'
+  6: '退款中',
+  7: '售后待审核'
 };
 
 function formatStatus(value) {
@@ -212,29 +219,58 @@ function formatPayStatus(value) {
 }
 
 function formatOrderSource(value) {
-  if (value === 'MEAL') return '一人食';
+  if (value === 'MEAL') return '小份优选';
   if (value === 'COMBO') return '蔬果搭配';
   if (value === 'SEASONAL') return '当季精选';
   if (value === 'MIXED') return '混合来源';
   return '普通商品';
 }
 
+function buildSourceSceneSummary(order = {}) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const sceneSet = new Set();
+  items.forEach((item) => {
+    const scene = decodeSourceScene(item && item.sourceScene);
+    if (scene) {
+      sceneSet.add(scene);
+      return;
+    }
+    const type = formatOrderSource(item && item.sourceType);
+    if (type && type !== '普通商品') {
+      sceneSet.add(type);
+    }
+  });
+  return Array.from(sceneSet).slice(0, 2).join(' / ');
+}
+
+function decodeSourceScene(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  try {
+    return decodeURIComponent(text);
+  } catch (error) {
+    return text;
+  }
+}
+
 function statusClass(value) {
   if (value === 3) return 'status-active';
-  if (value === 1 || value === 2 || value === 6) return 'status-warn';
+  if (value === 1 || value === 2 || value === 6 || value === 7) return 'status-warn';
   return 'status-off';
 }
 
-function getNextStatus(value) {
-  if (value === 1) return 2;
-  if (value === 2) return 3;
-  return null;
-}
-
-function nextStatusLabel(value) {
-  if (value === 1) return '标记发货';
-  if (value === 2) return '标记完成';
-  return '';
+function getOrderActions(order = {}) {
+  const status = Number(order.status);
+  if (status === 1) {
+    return [{ label: '标记发货', nextStatus: 2, successText: '订单已标记为待收货' }];
+  }
+  if (status === 7) {
+    return [
+      { label: '同意售后', nextStatus: 6, successText: '已同意售后，订单进入退款中' },
+      { label: '拒绝售后', nextStatus: order.finishTime ? 3 : 1, successText: '已拒绝售后申请' }
+    ];
+  }
+  return [];
 }
 
 const displayOrders = computed(() => {
@@ -260,7 +296,10 @@ async function loadOrders() {
         userId: userId.value === '' ? undefined : Number(userId.value)
       }
     });
-    orderList.value = res.data || [];
+    orderList.value = (res.data || []).map((item) => ({
+      ...item,
+      sourceSceneSummary: buildSourceSceneSummary(item)
+    }));
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -295,17 +334,16 @@ watch(detailOrder, (value) => {
   document.body.style.overflow = value ? 'hidden' : '';
 });
 
-async function updateStatus(order) {
-  const nextStatus = getNextStatus(order.status);
-  if (nextStatus === null) return;
+async function updateStatus(order, action) {
+  if (!action || action.nextStatus == null) return;
   try {
     await http.post('/order/status', null, {
       params: {
         orderId: order.id,
-        status: nextStatus
+        status: action.nextStatus
       }
     });
-    const successText = nextStatus === 2 ? '订单已标记为待收货' : '订单已标记为已完成';
+    const successText = action.successText || '订单状态已更新';
     if (detailOrder.value && detailOrder.value.id === order.id) {
       await viewDetail(order.id);
     }

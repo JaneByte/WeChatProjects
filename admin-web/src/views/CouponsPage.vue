@@ -33,22 +33,24 @@
         </thead>
         <tbody>
           <tr v-for="item in couponList" :key="item.id">
-            <td>{{ item.id }}</td>
-            <td>{{ item.title }}</td>
-            <td>{{ item.conditionText || '通用优惠券' }}</td>
-            <td>¥{{ item.thresholdAmount }}</td>
-            <td>¥{{ item.discountAmount }}</td>
-            <td>{{ item.expireDate || '-' }}</td>
-            <td>
+            <td class="table-id-cell">{{ item.id }}</td>
+            <td class="table-title-cell">{{ item.title }}</td>
+            <td class="table-note-cell">{{ item.conditionText || '通用优惠券' }}</td>
+            <td class="table-amount-cell">¥{{ item.thresholdAmount }}</td>
+            <td class="table-amount-cell">¥{{ item.discountAmount }}</td>
+            <td class="table-time-cell">{{ item.expireDate || '-' }}</td>
+            <td class="table-status-cell">
               <span :class="['status-pill', item.status === 1 ? 'status-active' : 'status-off']">
                 {{ item.status === 1 ? '启用' : '停用' }}
               </span>
             </td>
-            <td>
-              <button class="link-btn" @click="openEditDialog(item)">编辑</button>
-              <button class="link-btn" @click="toggleStatus(item)">
-                {{ item.status === 1 ? '停用' : '启用' }}
-              </button>
+            <td class="table-actions-cell">
+              <div class="table-actions">
+                <button class="link-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="link-btn" @click="toggleStatus(item)">
+                  {{ item.status === 1 ? '停用' : '启用' }}
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="!couponList.length">

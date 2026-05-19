@@ -46,13 +46,11 @@
     </view>
 
     <block wx:else>
-      <swiper wx:if="{{bannerList.length > 0}}" class="banner-swiper" style="height: {{bannerHeightPx}}px;" indicator-dots circular autoplay interval="3000" duration="500">
-        <swiper-item wx:for="{{bannerList}}" wx:key="id">
-          <view class="banner-item press-effect" bindtap="onBannerTap" data-link-type="{{item.linkType}}" data-link-value="{{item.linkValue}}">
-            <image class="banner-image" src="{{item.image}}" mode="aspectFit" bindload="onBannerImageLoad" lazy-load></image>
-          </view>
-        </swiper-item>
-      </swiper>
+      <view wx:if="{{homeHero && homeHero.image}}" class="banner-swiper" style="height: {{bannerHeightPx}}px;">
+        <view class="banner-item press-effect" bindtap="onBannerTap" data-link-type="{{homeHero.linkType}}" data-link-value="{{homeHero.linkValue}}">
+          <image class="banner-image" src="{{homeHero.image}}" mode="aspectFit" bindload="onBannerImageLoad" lazy-load></image>
+        </view>
+      </view>
 
       <view wx:if="{{noticeList.length > 0}}" class="notice-bar">
         <text class="notice-prefix">{{noticePrefix}}</text>
@@ -145,7 +143,7 @@
           <text class="load-text" wx:if="{{loadingMore}}">{{loadingText}}</text>
           <text class="load-text" wx:if="{{loadMoreError}}">加载失败，下拉重试</text>
           <text class="load-text" wx:if="{{noMore && goodsList.length > 0}}">{{noMoreText}}</text>
-          <text class="load-text" wx:if="{{!loadingMore && !noMore && goodsList.length === 0}}">暂无热销商品</text>
+          <text class="load-text" wx:if="{{!loadingMore && !noMore && goodsList.length === 0}}">热销商品正在补货中，先去逛逛其他新鲜好物</text>
         </view>
       </view>
     </block>

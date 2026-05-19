@@ -7,7 +7,7 @@ Page({
     success: false,
     loading: true,
     loadError: false,
-    message: '正在同步订单状态...',
+    message: '正在确认支付结果，请稍等',
     orderId: null,
     orderNo: '',
     actualAmount: 0,
@@ -28,7 +28,7 @@ Page({
         loading: false,
         loadError: true,
         success: false,
-        message: '订单状态获取失败，请返回订单列表查看'
+        message: '支付结果暂时没同步出来，你可以先去订单列表查看'
       });
       return;
     }
@@ -41,8 +41,8 @@ Page({
         const payStatus = Number(detail.payStatus);
         const success = payStatus === 2 || status === 1 || status === 2 || status === 3 || status === 6 || status === 5;
         const message = success
-          ? '订单支付已完成，可前往订单详情查看状态'
-          : '支付未完成，请返回订单页重试';
+          ? '订单已提交成功，可前往订单详情查看处理进度'
+          : '你可以返回订单页继续支付，无需重复下单';
         this.setData({
           success,
           message,
@@ -57,7 +57,7 @@ Page({
         this.setData({
           success: false,
           loadError: true,
-          message: '订单状态获取失败，请返回订单列表查看'
+          message: '支付结果暂时没同步出来，你可以先去订单列表查看'
         });
         showRequestError(error, '订单状态获取失败');
       })

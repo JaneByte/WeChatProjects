@@ -4,7 +4,7 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">方案规则配置</h2>
-          <p class="section-desc">集中调整一人食、搭配、榨汁、沙拉等规则关键词，无需改代码即可微调推荐逻辑</p>
+          <p class="section-desc">集中维护小份优选、搭配、榨汁、沙拉等场景下的推荐规则关键词。</p>
         </div>
         <button class="ghost-btn" @click="loadRules" :disabled="loading">
           {{ loading ? '加载中...' : '刷新' }}

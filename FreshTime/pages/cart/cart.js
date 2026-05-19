@@ -11,7 +11,7 @@ Page({
     editMode: false,
     startX: 0,
     currentSlideId: null,
-    slideThreshold: 100,
+    slideThreshold: 56,
     slideTransition: true,
     rpxRatio: 1,
     actionLoading: false
@@ -58,6 +58,9 @@ Page({
           skuId: Number(item.skuId || 0),
           name: item.name || '',
           price: Number(item.price || 0),
+          originPrice: Number(item.originPrice || item.price || 0),
+          priceType: item.priceType || 'NORMAL',
+          flashActive: Boolean(item.flashActive),
           unit: item.unit || '件',
           desc: item.desc || '',
           image: item.image || '',
@@ -69,6 +72,8 @@ Page({
           sourceType: item.sourceType || 'NORMAL',
           sourcePlanId: item.sourcePlanId || null,
           sourceScene: item.sourceScene || '',
+          sourceLabel: this.formatSourceLabel(item.sourceType, item.sourceScene),
+          specLabel: this.formatSpecLabel(item.skuName, item.skuWeightG, item.skuText),
           selected: Boolean(item.selected),
           slideOffset: 0
         }));
@@ -79,6 +84,39 @@ Page({
         this.resetCartState();
         showRequestError(error, '购物车加载失败');
       });
+  },
+
+  formatSourceLabel(sourceType, sourceScene) {
+    const scene = this.decodeSourceScene(sourceScene);
+    const type = `${sourceType || ''}`.trim().toUpperCase();
+    if (scene && scene !== 'MIXED' && scene !== 'ORDER_SOURCE_MIXED') {
+      return scene;
+    }
+    if (type === 'MEAL') return '小份优选';
+    if (type === 'COMBO') return '蔬果搭配';
+    if (type === 'SEASONAL') return '当季精选';
+    if (type === 'FLASH') return '限时秒杀';
+    return '';
+  },
+
+  decodeSourceScene(sourceScene) {
+    const text = `${sourceScene || ''}`.trim();
+    if (!text) return '';
+    try {
+      return decodeURIComponent(text);
+    } catch (error) {
+      return text;
+    }
+  },
+
+  formatSpecLabel(skuName, skuWeightG, skuText) {
+    const name = `${skuName || ''}`.trim();
+    const weight = Number(skuWeightG || 0);
+    if (name && weight > 0) return `${name} ${weight}g`;
+    if (name) return name;
+    if (weight > 0) return `${weight}g`;
+    const fallback = `${skuText || ''}`.trim();
+    return fallback.replace(/\s*·\s*/g, ' ');
   },
 
   calculateTotalAndSelectState() {
@@ -183,7 +221,7 @@ Page({
     const moveX = (e.touches[0].clientX - this.data.startX) * this.data.rpxRatio;
     const index = this.data.cartItems.findIndex((item) => Number(item.id) === id);
     if (index < 0) return;
-    const offset = Math.min(Math.max(-moveX, 0), 160);
+    const offset = Math.min(Math.max(-moveX, 0), 176);
     this.setData({ [`cartItems[${index}].slideOffset`]: offset, slideTransition: false });
   },
 
@@ -192,7 +230,7 @@ Page({
     const index = this.data.cartItems.findIndex((item) => Number(item.id) === id);
     if (index < 0) return;
     const currentOffset = this.data.cartItems[index].slideOffset || 0;
-    const target = currentOffset >= this.data.slideThreshold ? 160 : 0;
+    const target = currentOffset >= this.data.slideThreshold ? 176 : 0;
     this.setData({ [`cartItems[${index}].slideOffset`]: target, slideTransition: true });
     this.data.currentSlideId = null;
   },
@@ -252,6 +290,9 @@ Page({
       name: item.name,
       image: item.image,
       price: item.price,
+      originPrice: item.originPrice,
+      priceType: item.priceType || 'NORMAL',
+      flashActive: Boolean(item.flashActive),
       skuName: item.skuName,
       skuWeightG: item.skuWeightG,
       quantity: item.quantity,
@@ -259,6 +300,13 @@ Page({
       sourcePlanId: item.sourcePlanId || null,
       sourceScene: item.sourceScene || ''
     })));
+    wx.setStorageSync('checkoutMeta', {
+      source: 'cart',
+      cartItems: selectedItems.map((item) => ({
+        goodsId: Number(item.goodsId || item.id || 0),
+        skuId: Number(item.skuId || 0)
+      }))
+    });
 
     wx.navigateTo({ url: '/pages/checkout/checkout' });
   },

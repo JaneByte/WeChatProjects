@@ -4,7 +4,7 @@
       <div class="section-head">
         <div>
           <h2 class="section-title">商品管理</h2>
-          <p class="section-desc">已接商品查询与上下架接口</p>
+          <p class="section-desc">统一维护商品信息、价格库存与前台展示状态</p>
         </div>
         <button class="ghost-btn" @click="loadGoods" :disabled="loading">
           {{ loading ? '加载中...' : '刷新' }}
@@ -28,47 +28,48 @@
       <table v-else class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>商品名</th>
-            <th>分类</th>
-            <th>价格</th>
-            <th>单位</th>
-            <th>库存</th>
-            <th>产地</th>
-            <th>当季供应</th>
-            <th>状态</th>
-            <th>操作</th>
+            <th class="table-id-cell">ID</th>
+            <th class="table-title-cell">商品名</th>
+            <th class="table-category-cell">分类</th>
+            <th class="table-amount-cell">价格</th>
+            <th class="table-unit-cell">单位</th>
+            <th class="table-number-cell">总库存</th>
+            <th class="table-number-cell">总销量</th>
+            <th class="table-status-cell">状态</th>
+            <th class="table-actions-cell">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in goodsList" :key="item.id">
-            <td>{{ item.id }}</td>
-            <td>
+            <td class="table-id-cell">{{ item.id }}</td>
+            <td class="table-title-cell">
               <div class="cell-title">{{ item.name }}</div>
-              <div class="cell-sub">{{ item.keywords || '未填写关键词' }}</div>
             </td>
-            <td>{{ getCategoryName(item.categoryId) }}</td>
-            <td>
-              <div class="cell-title">¥{{ item.price }}</div>
+            <td class="table-category-cell">{{ getCategoryName(item.categoryId) }}</td>
+            <td class="table-amount-cell">
+              <div class="cell-title">{{ formatGoodsPrice(item) }}</div>
               <div class="cell-sub" v-if="item.originalPrice">原价 ¥{{ item.originalPrice }}</div>
             </td>
-            <td>{{ item.unit || '-' }}</td>
-            <td>{{ item.stock }}</td>
-            <td>{{ item.origin || '-' }}</td>
-            <td>
-              <div class="cell-title">{{ buildSeasonSummary(item) }}</div>
-              <div class="cell-sub">{{ buildSeasonHintSummary(item) }}</div>
+            <td class="table-unit-cell">{{ item.unit || '-' }}</td>
+            <td class="table-number-cell">
+              <div class="cell-title">{{ summarizeSkuStock(item) }}</div>
             </td>
-            <td>
+            <td class="table-number-cell">
+              <div class="cell-title">{{ summarizeSkuSales(item) }}</div>
+            </td>
+            <td class="table-status-cell">
               <span :class="['status-pill', item.status === 1 ? 'status-active' : 'status-off']">
                 {{ item.status === 1 ? '上架中' : '已下架' }}
               </span>
             </td>
-            <td>
-              <button class="link-btn" @click="openEditDialog(item)">编辑</button>
-              <button class="link-btn" @click="toggleStatus(item)">
-                {{ item.status === 1 ? '下架' : '上架' }}
-              </button>
+            <td class="table-actions-cell">
+              <div class="table-actions">
+                <button class="link-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="link-btn" @click="toggleStatus(item)">
+                  {{ item.status === 1 ? '下架' : '上架' }}
+                </button>
+                <button class="link-btn" @click="openSkuDialog(item)">规格管理</button>
+              </div>
             </td>
           </tr>
           <tr v-if="!goodsList.length">
@@ -86,6 +87,11 @@
             <p class="section-desc">填写商品基础信息并保存到店铺后台</p>
           </div>
           <button class="ghost-btn" @click="closeDialog" :disabled="saving">关闭</button>
+        </div>
+
+        <div class="form-section-head">
+          <h3 class="form-section-title">基础信息</h3>
+          <p class="form-section-desc">先完善商品名称、分类、主图与基础售价信息。</p>
         </div>
 
         <div class="form-grid">
@@ -112,7 +118,7 @@
               清空主图
             </button>
           </div>
-          <div class="input-wide upload-tip">建议优先使用后台上传，数据库会保存统一的图片地址，方便小程序和店铺后台共用。</div>
+          <div class="input-wide upload-tip">建议使用后台上传，便于统一管理商品图片。</div>
           <label class="field-block">
             <span class="field-label">售价（成交价）</span>
             <input v-model.number="form.price" class="input" placeholder="用户下单使用的价格" type="number" min="0" step="0.01" />
@@ -122,8 +128,9 @@
             <input v-model.number="form.originalPrice" class="input" placeholder="展示对比价，可为空" type="number" min="0" step="0.01" />
           </label>
           <label class="field-block">
-            <span class="field-label">库存</span>
+            <span class="field-label">商品库存</span>
             <input v-model.number="form.stock" class="input" placeholder="可售库存数量" type="number" min="0" />
+            <span class="field-hint">无独立规格时以这里为准；已有规格时以规格管理中的库存汇总为准。</span>
           </label>
           <label class="field-block">
             <span class="field-label">单位</span>
@@ -133,6 +140,14 @@
             <span class="field-label">产地</span>
             <input v-model.trim="form.origin" class="input" placeholder="如：山东、新疆、进口" />
           </label>
+        </div>
+
+        <div class="form-section-head">
+          <h3 class="form-section-title">季节与推荐配置</h3>
+          <p class="form-section-desc">用于控制当季推荐窗口、提示文案与特色标签。</p>
+        </div>
+
+        <div class="form-grid">
           <label class="field-block">
             <span class="field-label">供应起始月</span>
             <input v-model.number="form.seasonStartMonth" class="input" placeholder="1-12" type="number" min="1" max="12" />
@@ -173,6 +188,14 @@
               </label>
             </div>
           </div>
+        </div>
+
+        <div class="form-section-head">
+          <h3 class="form-section-title">详情预览</h3>
+          <p class="form-section-desc">补充详情文案后，可在下方同步查看展示效果。</p>
+        </div>
+
+        <div class="form-grid">
           <label class="field-block input-wide">
             <span class="field-label">商品详情</span>
             <textarea v-model.trim="form.detail" class="textarea input-wide" placeholder="用于详情页文案展示"></textarea>
@@ -199,6 +222,67 @@
         </div>
       </div>
     </div>
+
+    <div class="modal-mask" v-if="showSkuEditor" @click="closeSkuDialog">
+      <div class="modal-card" @click.stop>
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">规格管理</h2>
+            <p class="section-desc">{{ skuEditorGoodsName || '当前商品' }} 的规格价格、库存与销量维护</p>
+          </div>
+          <button class="ghost-btn" @click="closeSkuDialog" :disabled="saving">关闭</button>
+        </div>
+
+        <div class="sku-editor-preview">
+          <div v-if="formSkuList.length" class="sku-editor-list">
+            <div v-for="(sku, index) in formSkuList" :key="sku.id || `${index}-${sku.skuName}`" class="sku-editor-card">
+              <div class="sku-editor-card__head">
+                <div class="sku-editor-card__title">规格 {{ index + 1 }}</div>
+                <button class="link-btn sku-remove-btn" type="button" @click="removeSku(index)">{{ sku.id ? '停用' : '删除' }}</button>
+              </div>
+              <div class="form-grid sku-form-grid">
+                <label class="field-block">
+                  <span class="field-label">规格名称</span>
+                  <input v-model.trim="sku.skuName" class="input" placeholder="如：小份装、标准装" />
+                </label>
+                <label class="field-block">
+                  <span class="field-label">重量（g）</span>
+                  <input v-model.number="sku.skuWeightG" class="input" type="number" min="1" placeholder="如：300" />
+                </label>
+                <label class="field-block">
+                  <span class="field-label">售价</span>
+                  <input v-model.number="sku.skuPrice" class="input" type="number" min="0" step="0.01" placeholder="如：9.9" />
+                </label>
+                <label class="field-block">
+                  <span class="field-label">库存</span>
+                  <input v-model.number="sku.skuStock" class="input" type="number" min="0" placeholder="如：20" />
+                </label>
+                <label class="field-block">
+                  <span class="field-label">状态</span>
+                  <select v-model.number="sku.status" class="input select">
+                    <option :value="1">启用</option>
+                    <option :value="0">停用</option>
+                  </select>
+                  <span class="field-hint">已有销量的规格建议保留并停用。</span>
+                </label>
+                <label class="field-block">
+                  <span class="field-label">累计销量</span>
+                  <div class="readonly-field">{{ Number(sku.salesVolume || 0) }}</div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div v-else class="cell-sub">当前没有独立规格记录，新增后即可按不同规格分别管理价格和库存。</div>
+          <div class="toolbar">
+            <button class="ghost-btn" type="button" @click="addSku">新增规格</button>
+            <button class="primary-btn" type="button" @click="submitSkuOnly" :disabled="saving">
+              {{ saving ? '保存中...' : '保存规格' }}
+            </button>
+            <button class="ghost-btn" type="button" @click="closeSkuDialog" :disabled="saving">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -219,6 +303,10 @@ const tagOptions = ref([]);
 const selectedTagIds = ref([]);
 const originalTagIds = ref([]);
 const showEditor = ref(false);
+const showSkuEditor = ref(false);
+const skuEditorGoodsId = ref(null);
+const skuEditorGoodsName = ref('');
+const formSkuList = ref([]);
 const form = reactive(createEmptyForm());
 const originalSnapshot = reactive(createEmptyForm());
 
@@ -264,13 +352,37 @@ function getCategoryName(categoryId) {
   return categoryNameMap.value[categoryId] || `分类 ${categoryId}`;
 }
 
-function buildSeasonSummary(item = {}) {
-  const start = Number(item.seasonStartMonth || 0);
-  const end = Number(item.seasonEndMonth || 0);
-  if (start > 0 && end > 0) {
-    return start <= end ? `${start}-${end} 月应季` : `${start} 月至次年 ${end} 月应季`;
+function summarizeSkuStock(item = {}) {
+  const skuList = Array.isArray(item.skuList) ? item.skuList : [];
+  if (!skuList.length) {
+    return `${item.stock ?? 0}`;
   }
-  return '未配置当季窗口';
+  const total = skuList.reduce((sum, sku) => sum + Number(sku.skuStock || 0), 0);
+  return `${total}`;
+}
+
+function summarizeSkuSales(item = {}) {
+  const skuList = Array.isArray(item.skuList) ? item.skuList : [];
+  if (!skuList.length) {
+    return '0';
+  }
+  const total = skuList.reduce((sum, sku) => sum + Number(sku.salesVolume || 0), 0);
+  return `${total}`;
+}
+
+function formatGoodsPrice(item = {}) {
+  const skuList = Array.isArray(item.skuList) ? item.skuList : [];
+  if (!skuList.length) {
+    return `¥${item.price}`;
+  }
+  const priceList = skuList
+    .map((sku) => Number(sku.skuPrice))
+    .filter((price) => Number.isFinite(price) && price >= 0);
+  if (!priceList.length) {
+    return `¥${item.price}`;
+  }
+  const minPrice = Math.min(...priceList);
+  return `¥${minPrice} 起`;
 }
 
 function buildSeasonHintSummary(item = {}) {
@@ -376,18 +488,40 @@ async function openEditDialog(item) {
   showEditor.value = true;
 }
 
+async function openSkuDialog(item) {
+  error.value = '';
+  successMessage.value = '';
+  skuEditorGoodsId.value = item.id;
+  skuEditorGoodsName.value = item.name || '';
+  formSkuList.value = normalizeSkuList(item.skuList);
+  showSkuEditor.value = true;
+}
+
 function closeDialog() {
   showEditor.value = false;
 }
 
+function closeSkuDialog() {
+  showSkuEditor.value = false;
+  skuEditorGoodsId.value = null;
+  skuEditorGoodsName.value = '';
+  formSkuList.value = [];
+}
+
 function onEscClose(event) {
-  if (event && event.key === 'Escape' && showEditor.value) {
-    closeDialog();
+  if (event && event.key === 'Escape') {
+    if (showSkuEditor.value) {
+      closeSkuDialog();
+      return;
+    }
+    if (showEditor.value) {
+      closeDialog();
+    }
   }
 }
 
-watch(showEditor, (value) => {
-  document.body.style.overflow = value ? 'hidden' : '';
+watch([showEditor, showSkuEditor], ([editorVisible, skuVisible]) => {
+  document.body.style.overflow = editorVisible || skuVisible ? 'hidden' : '';
 });
 
 function clearImage() {
@@ -532,6 +666,152 @@ function resolveChangeList(next) {
     list.push(`推荐标签: ${formatTagNames(prevTags)} -> ${formatTagNames(nextTags)}`);
   }
   return list;
+}
+
+function normalizeSkuList(list = []) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+  return list.map((sku, index) => ({
+    id: sku?.id ?? null,
+    skuName: String(sku?.skuName || '').trim(),
+    skuWeightG: sku?.skuWeightG ?? '',
+    skuPrice: sku?.skuPrice ?? '',
+    skuStock: sku?.skuStock ?? 0,
+    salesVolume: Number(sku?.salesVolume || 0),
+    status: Number(sku?.status ?? 1),
+    sort: Number(sku?.sort ?? index + 1)
+  }));
+}
+
+function createEmptySku(sort = 1) {
+  return {
+    id: null,
+    skuName: '',
+    skuWeightG: '',
+    skuPrice: '',
+    skuStock: 0,
+    salesVolume: 0,
+    status: 1,
+    sort
+  };
+}
+
+function addSku() {
+  formSkuList.value.push(createEmptySku(formSkuList.value.length + 1));
+}
+
+function removeSku(index) {
+  const current = formSkuList.value[index];
+  if (!current) {
+    return;
+  }
+  if (current.id) {
+    formSkuList.value[index] = {
+      ...current,
+      status: 0
+    };
+  } else {
+    formSkuList.value.splice(index, 1);
+  }
+  formSkuList.value = formSkuList.value.map((sku, idx) => ({
+    ...sku,
+    sort: idx + 1
+  }));
+}
+
+function validateSkuList(list = []) {
+  if (!Array.isArray(list) || !list.length) {
+    return '';
+  }
+  const duplicateSet = new Set();
+  for (const sku of list) {
+    const skuName = String(sku?.skuName || '').trim();
+    const weight = Number(sku?.skuWeightG);
+    const price = Number(sku?.skuPrice);
+    const stock = Number(sku?.skuStock);
+    if (!skuName) {
+      return '规格名称不能为空';
+    }
+    if (!Number.isFinite(weight) || weight <= 0) {
+      return '规格重量必须大于0';
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      return '规格售价必须大于或等于0';
+    }
+    if (!Number.isFinite(stock) || stock < 0) {
+      return '规格库存不能小于0';
+    }
+    const duplicateKey = `${skuName}#${weight}`;
+    if (duplicateSet.has(duplicateKey)) {
+      return '同一商品下存在重复规格，请检查规格名称和重量';
+    }
+    duplicateSet.add(duplicateKey);
+  }
+  return '';
+}
+
+function buildSubmitSkuList() {
+  return formSkuList.value.map((sku, index) => ({
+    id: sku.id || null,
+    skuName: String(sku.skuName || '').trim(),
+    skuWeightG: Number(sku.skuWeightG),
+    skuPrice: Number(sku.skuPrice),
+    skuStock: Number(sku.skuStock || 0),
+    status: Number(sku.status ?? 1),
+    sort: index + 1
+  }));
+}
+
+async function submitSkuOnly() {
+  const skuError = validateSkuList(formSkuList.value);
+  if (skuError) {
+    error.value = skuError;
+    return;
+  }
+  if (!skuEditorGoodsId.value) {
+    error.value = '未找到当前商品';
+    return;
+  }
+  const target = goodsList.value.find((item) => Number(item.id) === Number(skuEditorGoodsId.value));
+  if (!target) {
+    error.value = '当前商品不存在，请刷新后重试';
+    return;
+  }
+
+  saving.value = true;
+  error.value = '';
+  successMessage.value = '';
+  try {
+    await http.post('/goods/save', {
+      id: target.id,
+      categoryId: target.categoryId,
+      name: target.name,
+      mainImage: target.mainImage || '',
+      detail: target.detail || '',
+      price: Number(target.price),
+      originalPrice: target.originalPrice === '' || target.originalPrice == null ? null : Number(target.originalPrice),
+      stock: Number(target.stock || 0),
+      unit: target.unit || '斤',
+      origin: target.origin || '',
+      keywords: target.keywords || '',
+      seasonStartMonth: target.seasonStartMonth === '' || target.seasonStartMonth == null ? null : Number(target.seasonStartMonth),
+      seasonEndMonth: target.seasonEndMonth === '' || target.seasonEndMonth == null ? null : Number(target.seasonEndMonth),
+      seasonLateThresholdDays: Number(target.seasonLateThresholdDays || 20),
+      seasonEarlyHint: target.seasonEarlyHint || '',
+      seasonPeakHint: target.seasonPeakHint || '',
+      seasonLateHint: target.seasonLateHint || '',
+      status: Number(target.status ?? 1),
+      skuList: buildSubmitSkuList()
+    });
+    await loadGoods();
+    closeSkuDialog();
+    successMessage.value = '规格信息已更新';
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    saving.value = false;
+  }
 }
 
 async function toggleStatus(item) {

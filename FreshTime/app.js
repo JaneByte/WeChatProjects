@@ -179,6 +179,7 @@ App({
     wx.removeStorageSync(OPENID_KEY);
     wx.removeStorageSync('cartList');
     wx.removeStorageSync('checkoutItems');
+    wx.removeStorageSync('checkoutMeta');
     wx.removeStorageSync('selectedAddress');
     this.updateCartBadge();
     if (typeof wx.removeTabBarBadge === 'function') {

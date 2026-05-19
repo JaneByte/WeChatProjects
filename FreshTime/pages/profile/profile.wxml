@@ -23,12 +23,12 @@
     </view>
   </view>
   <view class="order-card empty-order-card" wx:if="{{loginPromptVisible}}">
-    <text class="empty-order-text">登录后可查看订单、地址与优惠券</text>
+    <text class="empty-order-text">登录后可同步订单、地址和优惠券，下单会更方便</text>
   </view>
   <view class="order-card">
     <view class="card-head">
       <text class="card-title">我的订单</text>
-      <text class="card-link">最近交易与状态</text>
+      <text class="card-link">常用订单入口都在这里</text>
     </view>
     <view class="order-grid">
       <view class="order-item {{activeOrderTab === item.key ? 'order-item--active' : ''}}" wx:for="{{orderTabs}}" wx:key="key" data-key="{{item.key}}" bindtap="onOrderTap">
@@ -42,7 +42,7 @@
   <view class="order-card" wx:if="{{orderList.length > 0}}">
     <view class="card-head">
       <text class="card-title">最近订单</text>
-      <text class="card-link">共{{orderTotal}}单</text>
+      <text class="card-link">最近下单记录</text>
     </view>
     <view class="recent-order" wx:for="{{orderList}}" wx:key="id">
       <view class="recent-top">
@@ -61,12 +61,12 @@
     </view>
   </view>
   <view class="order-card empty-order-card" wx:elif="{{!loginPromptVisible}}">
-    <text class="empty-order-text">暂无订单</text>
+    <text class="empty-order-text">还没有订单记录，先去逛逛今天的新鲜好物</text>
   </view>
   <view class="menu-card">
     <view class="card-head card-head--menu">
       <text class="card-title">账号服务</text>
-      <text class="card-link">资料、收货与设置</text>
+      <text class="card-link">资料、收货地址和常用服务</text>
     </view>
     <view class="menu-item" wx:for="{{menuList}}" wx:key="key" data-key="{{item.key}}" bindtap="onMenuTap">
       <view class="menu-main">

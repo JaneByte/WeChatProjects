@@ -61,3 +61,36 @@
 .spec-confirm-btn { height: 72rpx; line-height: 72rpx; border-radius: 14rpx; font-size: 26rpx; }
 .spec-cancel-btn { background: #f1f4ed; color: #5f6f52; }
 .spec-confirm-btn { background: #73a937; color: #ffffff; }
+
+.hero {
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 16rpx 30rpx rgba(31, 43, 36, 0.08);
+}
+
+.coupon {
+  border-radius: 20rpx;
+  padding: 22rpx;
+  border-left-width: 10rpx;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.claim-btn {
+  border-radius: 14rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  box-shadow: 0 10rpx 20rpx rgba(115, 169, 55, 0.18);
+}
+
+.empty-wrap {
+  padding: 28rpx 0 16rpx;
+}
+
+.spec-popup {
+  border-radius: 28rpx 28rpx 0 0;
+  box-shadow: 0 -8rpx 24rpx rgba(31, 43, 36, 0.08);
+}
+
+.spec-confirm-btn {
+  box-shadow: 0 10rpx 20rpx rgba(115, 169, 55, 0.18);
+}

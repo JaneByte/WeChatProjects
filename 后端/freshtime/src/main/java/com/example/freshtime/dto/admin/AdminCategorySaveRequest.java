@@ -7,7 +7,6 @@ public class AdminCategorySaveRequest {
     private Long id;
     private Long parentId;
     private String name;
-    private String icon;
     private Integer sort;
     private Integer status;
 }

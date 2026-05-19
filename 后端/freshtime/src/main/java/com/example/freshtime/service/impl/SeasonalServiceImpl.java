@@ -3,7 +3,9 @@ package com.example.freshtime.service.impl;
 import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.dto.UpdateSeasonalConfigRequest;
 import com.example.freshtime.entity.Goods;
+import com.example.freshtime.entity.GoodsSku;
 import com.example.freshtime.mapper.GoodsMapper;
+import com.example.freshtime.mapper.GoodsSkuMapper;
 import com.example.freshtime.mapper.GoodsTagMapper;
 import com.example.freshtime.mapper.SeasonalConfigMapper;
 import com.example.freshtime.service.SeasonalService;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.YearMonth;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,6 +34,9 @@ public class SeasonalServiceImpl implements SeasonalService {
 
     @Autowired
     private GoodsMapper goodsMapper;
+
+    @Autowired
+    private GoodsSkuMapper goodsSkuMapper;
 
     @Autowired
     private SeasonalConfigMapper seasonalConfigMapper;
@@ -186,7 +192,8 @@ public class SeasonalServiceImpl implements SeasonalService {
                 .filter(it -> matchProduceType(it, produceType, goodsTagCodeMap.getOrDefault(it.getId(), new HashSet<>()), strictTag))
                 .filter(it -> matchSeasonWindow(it, season))
                 .collect(Collectors.toList());
-        List<Goods> source = filtered.isEmpty() ? goodsList : filtered;
+        boolean fallbackUsed = filtered.isEmpty() && !goodsList.isEmpty();
+        List<Goods> source = fallbackUsed ? goodsList : filtered;
 
         List<ScoredGoods> scored = new ArrayList<>();
         int maxSales = source.stream().map(Goods::getSalesVolume).filter(v -> v != null && v > 0).max(Integer::compareTo).orElse(1);
@@ -199,7 +206,13 @@ public class SeasonalServiceImpl implements SeasonalService {
             scored.add(new ScoredGoods(goods, breakdown));
         }
         sortScoredGoods(scored, sortBy);
-        return scored.stream().limit(limit).map(it -> toItem(it, config)).collect(Collectors.toList());
+        List<Map<String, Object>> result = scored.stream().limit(limit).map(it -> toItem(it, config)).collect(Collectors.toList());
+        if (fallbackUsed) {
+            for (Map<String, Object> item : result) {
+                item.put("fallbackUsed", true);
+            }
+        }
+        return result;
     }
 
     private boolean matchProduceType(Goods goods, String produceType, Set<String> tagCodes, boolean strictTag) {
@@ -297,26 +310,26 @@ public class SeasonalServiceImpl implements SeasonalService {
     private boolean matchBudget(Goods goods, String budgetLevel) {
         if ("all".equals(budgetLevel)) return true;
         BigDecimal price = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
-        if ("economy".equals(budgetLevel)) return price.compareTo(BigDecimal.valueOf(15)) <= 0;
-        if ("standard".equals(budgetLevel)) return price.compareTo(BigDecimal.valueOf(15)) > 0 && price.compareTo(BigDecimal.valueOf(35)) <= 0;
-        return price.compareTo(BigDecimal.valueOf(35)) > 0;
+        if ("economy".equals(budgetLevel)) return price.compareTo(BigDecimal.valueOf(10)) <= 0;
+        if ("standard".equals(budgetLevel)) return price.compareTo(BigDecimal.valueOf(10)) > 0 && price.compareTo(BigDecimal.valueOf(20)) <= 0;
+        return price.compareTo(BigDecimal.valueOf(20)) > 0;
     }
 
     private double calcBudgetScore(Goods goods, String budgetLevel) {
         if ("all".equals(budgetLevel)) return 70;
         BigDecimal price = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
         if ("economy".equals(budgetLevel)) {
-            if (price.compareTo(BigDecimal.valueOf(12)) <= 0) return 100;
-            if (price.compareTo(BigDecimal.valueOf(15)) <= 0) return 85;
+            if (price.compareTo(BigDecimal.valueOf(8)) <= 0) return 100;
+            if (price.compareTo(BigDecimal.valueOf(10)) <= 0) return 85;
             return 40;
         }
         if ("standard".equals(budgetLevel)) {
-            if (price.compareTo(BigDecimal.valueOf(16)) >= 0 && price.compareTo(BigDecimal.valueOf(30)) <= 0) return 100;
-            if (price.compareTo(BigDecimal.valueOf(35)) <= 0) return 80;
+            if (price.compareTo(BigDecimal.valueOf(12)) >= 0 && price.compareTo(BigDecimal.valueOf(18)) <= 0) return 100;
+            if (price.compareTo(BigDecimal.valueOf(20)) <= 0) return 80;
             return 50;
         }
-        if (price.compareTo(BigDecimal.valueOf(35)) >= 0) return 100;
-        if (price.compareTo(BigDecimal.valueOf(25)) >= 0) return 80;
+        if (price.compareTo(BigDecimal.valueOf(20)) >= 0) return 100;
+        if (price.compareTo(BigDecimal.valueOf(16)) >= 0) return 80;
         return 45;
     }
 
@@ -434,6 +447,7 @@ public class SeasonalServiceImpl implements SeasonalService {
 
     private Map<String, Object> toItem(ScoredGoods it, Map<String, String> config) {
         Goods g = it.goods;
+        GoodsSku defaultSku = resolveDefaultSku(g == null ? null : g.getId());
         Map<String, Object> item = new HashMap<>();
         String seasonCode = detectSeasonByMonth(LocalDate.now().getMonthValue());
         String seasonStage = hasSeasonWindowConfig(g) ? detectGoodsSeasonStage(g) : detectSeasonStage(seasonCode);
@@ -447,6 +461,10 @@ public class SeasonalServiceImpl implements SeasonalService {
         item.put("salesVolume", g.getSalesVolume());
         item.put("origin", g.getOrigin());
         item.put("keywords", g.getKeywords());
+        item.put("defaultSkuId", defaultSku == null ? null : defaultSku.getId());
+        item.put("skuId", defaultSku == null ? null : defaultSku.getId());
+        item.put("skuName", defaultSku == null ? "" : defaultSku.getSkuName());
+        item.put("skuWeightG", defaultSku == null ? null : defaultSku.getSkuWeightG());
         item.put("seasonScore", it.breakdown.seasonScore);
         item.put("freshnessScore", it.breakdown.freshnessScore);
         item.put("salesScore", it.breakdown.salesScore);
@@ -461,6 +479,20 @@ public class SeasonalServiceImpl implements SeasonalService {
         item.put("seasonMarketingText", buildSeasonMarketingText(g, seasonStage));
         item.put("seasonMonthRangeText", buildSeasonMonthRangeText(g));
         return item;
+    }
+
+    private GoodsSku resolveDefaultSku(Long goodsId) {
+        if (goodsId == null) return null;
+        List<GoodsSku> skuList = goodsSkuMapper.selectListByGoodsId(goodsId);
+        if (skuList == null || skuList.isEmpty()) return null;
+        for (GoodsSku sku : skuList) {
+            if (sku == null || sku.getId() == null) continue;
+            Integer stock = sku.getSkuStock();
+            if (stock != null && stock > 0) {
+                return sku;
+            }
+        }
+        return skuList.get(0);
     }
 
     private String buildReason(Goods g, ScoreBreakdown score) {
@@ -518,6 +550,10 @@ public class SeasonalServiceImpl implements SeasonalService {
         data.put("seasonStage", detectSeasonStage(season));
         data.put("seasonStageText", toSeasonStageText(detectSeasonStage(season)));
         data.put("items", items);
+        data.put("fallbackUsed", items != null && items.stream().anyMatch(it -> Boolean.TRUE.equals(it.get("fallbackUsed"))));
+        data.put("fallbackMessage", items != null && items.stream().anyMatch(it -> Boolean.TRUE.equals(it.get("fallbackUsed")))
+                ? "当前筛选条件下暂无直接命中的商品，以下为你展示当季推荐结果"
+                : "");
         appendCoverageWarning(data, produceType, strictTag, items, allOnSaleGoods);
         data.put("configVersion", System.currentTimeMillis());
         return data;
@@ -546,12 +582,15 @@ public class SeasonalServiceImpl implements SeasonalService {
         if (!hasSeasonWindowConfig(goods)) {
             return detectSeasonStage(detectCurrentSeason());
         }
-        int currentMonth = LocalDate.now().getMonthValue();
-        List<Integer> months = expandSeasonMonths(goods.getSeasonStartMonth(), goods.getSeasonEndMonth());
-        if (months.isEmpty()) return "peak";
-        int idx = months.indexOf(currentMonth);
-        if (idx <= 0) return "early";
-        if (idx >= months.size() - 1) return "late";
+        LocalDate currentDate = LocalDate.now();
+        SeasonWindow window = resolveSeasonWindow(goods, currentDate);
+        if (window == null) return "peak";
+        if (!currentDate.isAfter(window.startDate)) return "early";
+        if (!currentDate.isBefore(window.endDate)) return "late";
+        int safeLateThresholdDays = resolveLateThresholdDays(goods);
+        if (!currentDate.isBefore(window.endDate.minusDays(safeLateThresholdDays))) return "late";
+        int earlyThresholdDays = Math.min(15, Math.max(3, safeLateThresholdDays / 2));
+        if (!currentDate.isAfter(window.startDate.plusDays(earlyThresholdDays))) return "early";
         return "peak";
     }
 
@@ -573,6 +612,43 @@ public class SeasonalServiceImpl implements SeasonalService {
         if ("early".equals(seasonStage)) return "季初上新";
         if ("late".equals(seasonStage)) return "即将过季";
         return "应季正鲜";
+    }
+
+    private int resolveLateThresholdDays(Goods goods) {
+        if (goods == null || goods.getSeasonLateThresholdDays() == null || goods.getSeasonLateThresholdDays() <= 0) {
+            return 20;
+        }
+        return goods.getSeasonLateThresholdDays();
+    }
+
+    private SeasonWindow resolveSeasonWindow(Goods goods, LocalDate currentDate) {
+        if (goods == null || currentDate == null || !hasSeasonWindowConfig(goods)) return null;
+        int startMonth = Math.max(1, Math.min(12, goods.getSeasonStartMonth()));
+        int endMonth = Math.max(1, Math.min(12, goods.getSeasonEndMonth()));
+        int currentYear = currentDate.getYear();
+        if (startMonth <= endMonth) {
+            LocalDate startDate = LocalDate.of(currentYear, startMonth, 1);
+            LocalDate endDate = YearMonth.of(currentYear, endMonth).atEndOfMonth();
+            return new SeasonWindow(startDate, endDate);
+        }
+        if (currentDate.getMonthValue() >= startMonth) {
+            LocalDate startDate = LocalDate.of(currentYear, startMonth, 1);
+            LocalDate endDate = YearMonth.of(currentYear + 1, endMonth).atEndOfMonth();
+            return new SeasonWindow(startDate, endDate);
+        }
+        LocalDate startDate = LocalDate.of(currentYear - 1, startMonth, 1);
+        LocalDate endDate = YearMonth.of(currentYear, endMonth).atEndOfMonth();
+        return new SeasonWindow(startDate, endDate);
+    }
+
+    private static class SeasonWindow {
+        private final LocalDate startDate;
+        private final LocalDate endDate;
+
+        private SeasonWindow(LocalDate startDate, LocalDate endDate) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+        }
     }
 
     private String buildSeasonFreshnessHint(Goods goods, String seasonStage) {

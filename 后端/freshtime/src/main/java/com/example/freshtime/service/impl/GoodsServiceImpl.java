@@ -34,7 +34,7 @@ public class GoodsServiceImpl implements GoodsService {
     @Override
     public ApiResponse<?> getGoodsList(Long categoryId) {
         List<Goods> list = goodsMapper.selectByCategoryId(categoryId);
-        return ApiResponse.success(list);
+        return ApiResponse.success(buildGoodsCardList(list));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class GoodsServiceImpl implements GoodsService {
     @Override
     public ApiResponse<?> getRecommendList() {
         List<Goods> list = goodsMapper.selectRecommendList();
-        return ApiResponse.success(list);
+        return ApiResponse.success(buildGoodsCardList(list));
     }
 
     @Override
@@ -110,12 +110,40 @@ public class GoodsServiceImpl implements GoodsService {
         int totalCount = total == null ? 0 : total;
 
         Map<String, Object> data = new HashMap<>();
-        data.put("list", list);
+        data.put("list", buildGoodsCardList(list));
         data.put("page", safePage);
         data.put("pageSize", safePageSize);
         data.put("total", totalCount);
         data.put("hasMore", offset + safePageSize < totalCount);
         return ApiResponse.success(data);
+    }
+
+    public List<Map<String, Object>> buildGoodsCardList(List<Goods> list) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (list == null || list.isEmpty()) {
+            return result;
+        }
+        for (Goods goods : list) {
+            if (goods == null) continue;
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", goods.getId());
+            row.put("categoryId", goods.getCategoryId());
+            row.put("name", goods.getName());
+            row.put("mainImage", goods.getMainImage());
+            row.put("images", goods.getImages());
+            row.put("detail", goods.getDetail());
+            row.put("price", goods.getPrice());
+            row.put("originalPrice", goods.getOriginalPrice());
+            row.put("stock", goods.getStock());
+            row.put("unit", goods.getUnit());
+            row.put("salesVolume", goods.getSalesVolume());
+            row.put("status", goods.getStatus());
+            row.put("origin", goods.getOrigin());
+            row.put("keywords", goods.getKeywords());
+            row.put("skuList", buildSkuViewList(goods));
+            result.add(row);
+        }
+        return result;
     }
 
     private List<Map<String, Object>> buildSceneGoodsList(String scene, List<Goods> list) {

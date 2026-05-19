@@ -4,6 +4,7 @@ import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.dto.admin.AdminCategorySaveRequest;
 import com.example.freshtime.dto.admin.AdminCouponSaveRequest;
 import com.example.freshtime.dto.admin.AdminGoodsSaveRequest;
+import com.example.freshtime.dto.admin.AdminShopProfileSaveRequest;
 
 public interface AdminService {
     ApiResponse<?> getDashboardOverview();
@@ -40,6 +41,8 @@ public interface AdminService {
 
     ApiResponse<?> updateCouponStatus(Long id, Integer status);
 
+    ApiResponse<?> saveShopProfile(Long adminId, AdminShopProfileSaveRequest request);
+
     ApiResponse<?> getPlanRuleConfig();
 
     ApiResponse<?> savePlanRuleConfig(java.util.Map<String, String> config);
@@ -55,4 +58,8 @@ public interface AdminService {
     ApiResponse<?> refreshFlashPool(Integer targetCount);
 
     ApiResponse<?> getFlashOverview(Integer previewLimit);
+
+    ApiResponse<?> cleanupSourceSceneData();
+
+    ApiResponse<?> backfillHistoricalOrderSources();
 }

@@ -19,16 +19,29 @@ function formatCountdown(seconds) {
 
 function calcRemainSeconds(createTime) {
   if (!createTime) return 0;
-  const ts = new Date(String(createTime).replace(/-/g, '/')).getTime();
+  const normalized = String(createTime)
+    .replace('T', ' ')
+    .replace(/\.\d+/, '')
+    .replace(/-/g, '/');
+  const ts = new Date(normalized).getTime();
   if (Number.isNaN(ts)) return 0;
   const remainMs = ts + ORDER_EXPIRE_MS - Date.now();
   return Math.max(0, Math.floor(remainMs / 1000));
 }
 
+function parseDateTime(value) {
+  if (!value) return NaN;
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+/, '')
+    .replace(/-/g, '/');
+  return new Date(normalized).getTime();
+}
+
 function canAfterSale(item = {}) {
   if (Number(item.status) === 1) return true;
-  if (Number(item.status) !== 3 || !item.payTime) return false;
-  const ts = new Date(String(item.payTime).replace(/-/g, '/')).getTime();
+  if (Number(item.status) !== 3 || !item.finishTime) return false;
+  const ts = parseDateTime(item.finishTime);
   if (Number.isNaN(ts)) return false;
   return (Date.now() - ts) <= AFTER_SALE_MS;
 }
@@ -45,6 +58,7 @@ Page({
       { label: '待付款', value: '0' },
       { label: '待发货', value: '1' },
       { label: '待收货', value: '2' },
+      { label: '售后审核', value: '7' },
       { label: '退款中', value: '6' },
       { label: '已退款', value: '5' },
       { label: '已完成', value: '3' },
@@ -53,26 +67,31 @@ Page({
   },
 
   onLoad(options) {
+    this.pageActive = true;
     const status = options.status || '';
     this.setData({ status: `${status}` });
   },
 
   onShow() {
+    this.pageActive = true;
     this.loadList();
     this.startCountdownTicker();
   },
 
   onHide() {
+    this.pageActive = false;
     this.stopCountdownTicker();
   },
 
   onUnload() {
+    this.pageActive = false;
     this.stopCountdownTicker();
   },
 
   startCountdownTicker() {
     this.stopCountdownTicker();
     this.countdownTimer = setInterval(() => {
+      if (!this.pageActive) return;
       const next = (this.data.list || []).map((item) => {
         if (Number(item.status) !== 0) return item;
         const remainSeconds = Math.max(0, Number(item.remainSeconds || 0) - 1);
@@ -207,10 +226,12 @@ Page({
   onRefund(e) {
     const id = Number(e.currentTarget.dataset.id || 0);
     if (!id || !app.getUserId()) return;
+    const current = (this.data.list || []).find((item) => Number(item.id) === id) || {};
+    const isAfterSale = Number(current.status) === 3;
     this.executeAction(
       () => post(`/order/refund/apply?orderId=${id}`, {}, { retry: 0 }),
-      '退款申请已提交',
-      '退款申请失败'
+      isAfterSale ? '售后申请已提交' : '退款申请已提交',
+      isAfterSale ? '售后申请失败' : '退款申请失败'
     );
   },
 

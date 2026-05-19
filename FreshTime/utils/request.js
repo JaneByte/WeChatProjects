@@ -1,6 +1,6 @@
 const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 15000;
 const TOKEN_STORAGE_KEY = 'token';
 const UNAUTHORIZED_EVENT_NAME = 'auth:unauthorized';
 

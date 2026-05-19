@@ -156,13 +156,20 @@ Page({
           skuId: freshSku.id,
           name: freshDetail.name,
           image: freshDetail.mainImage || '',
-          price: freshSku.skuPrice || freshDetail.price,
+          price: this.getCheckoutPrice(freshDetail, freshSku),
+          originPrice: Number((freshSku && freshSku.skuPrice) || freshDetail.price || 0),
+          priceType: this.data.sourceType === 'FLASH' && this.isFlashActive(freshDetail) ? 'FLASH' : 'NORMAL',
+          flashActive: this.data.sourceType === 'FLASH' && this.isFlashActive(freshDetail),
           skuName: freshSku.skuName || '',
           skuWeightG: Number(freshSku.skuWeightG || 0),
           quantity: buyQty,
           sourceType: this.data.sourceType || 'NORMAL',
           sourceScene: this.data.sourceScene || ''
         }]);
+        wx.setStorageSync('checkoutMeta', {
+          source: 'direct',
+          cartItems: []
+        });
         wx.navigateTo({ url: '/pages/checkout/checkout' });
       })
       .catch((error) => {
@@ -257,7 +264,11 @@ Page({
     const enabled = list.filter((sku) => Number(sku.status) === 1);
     if (!enabled.length) return null;
     const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
-    return sorted[0];
+    const standardSku = sorted.find((sku) => {
+      const name = `${sku.skuName || ''}`.trim();
+      return name.includes('标准') || name.includes('默认');
+    });
+    return standardSku || sorted[0];
   },
 
   getSelectedSku(detail = {}, selectedSkuId = 0) {
@@ -338,5 +349,31 @@ Page({
     if (sourceType) query.push(`sourceType=${encodeURIComponent(sourceType)}`);
     if (sourceScene) query.push(`sourceScene=${encodeURIComponent(sourceScene)}`);
     return query.length ? `&${query.join('&')}` : '';
+  },
+
+  isFlashActive(detail = {}) {
+    if (Number(detail.isFlash || detail.is_flash || 0) !== 1) return false;
+    const flashPrice = Number(detail.flashPrice || detail.flash_price || 0);
+    const flashStock = Number(detail.flashStock || detail.flash_stock || 0);
+    const start = detail.flashStartTime || detail.flash_start_time;
+    const end = detail.flashEndTime || detail.flash_end_time;
+    if (!(flashPrice > 0) || !(flashStock > 0) || !start || !end) return false;
+    const now = Date.now();
+    const startTs = new Date(String(start).replace(/-/g, '/')).getTime();
+    const endTs = new Date(String(end).replace(/-/g, '/')).getTime();
+    if (Number.isNaN(startTs) || Number.isNaN(endTs)) return false;
+    return now >= startTs && now <= endTs;
+  },
+
+  getCheckoutPrice(detail = {}, sku = {}) {
+    const skuPrice = Number((sku && sku.skuPrice) || detail.price || 0);
+    if (this.data.sourceType !== 'FLASH' || !this.isFlashActive(detail)) {
+      return skuPrice;
+    }
+    const goodsPrice = Number(detail.price || 0);
+    const flashPrice = Number(detail.flashPrice || detail.flash_price || 0);
+    if (!(goodsPrice > 0) || !(flashPrice > 0)) return skuPrice;
+    const ratio = flashPrice / goodsPrice;
+    return Number((skuPrice * ratio).toFixed(2));
   }
 });

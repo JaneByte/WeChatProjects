@@ -5,6 +5,7 @@ import com.example.freshtime.common.AdminContext;
 import com.example.freshtime.dto.admin.AdminCategorySaveRequest;
 import com.example.freshtime.dto.admin.AdminCouponSaveRequest;
 import com.example.freshtime.dto.admin.AdminGoodsSaveRequest;
+import com.example.freshtime.dto.admin.AdminShopProfileSaveRequest;
 import com.example.freshtime.entity.AdminInfo;
 import com.example.freshtime.entity.UserInfo;
 import com.example.freshtime.mapper.AdminMapper;
@@ -46,6 +47,15 @@ public class AdminController {
             return ApiResponse.notFound("店铺账号不存在");
         }
         return ApiResponse.success("查询成功", adminInfo);
+    }
+
+    @PostMapping("/session/profile")
+    public ApiResponse<?> saveShopProfile(@RequestBody AdminShopProfileSaveRequest request) {
+        Long adminId = AdminContext.getAdminId();
+        if (adminId == null) {
+            return ApiResponse.unauthorized("请先登录");
+        }
+        return adminService.saveShopProfile(adminId, request);
     }
 
     @GetMapping("/dashboard/overview")
@@ -175,5 +185,15 @@ public class AdminController {
     @GetMapping("/flash/overview")
     public ApiResponse<?> getFlashOverview(@RequestParam(required = false) Integer previewLimit) {
         return adminService.getFlashOverview(previewLimit);
+    }
+
+    @PostMapping("/data-cleanup/source-scene")
+    public ApiResponse<?> cleanupSourceSceneData() {
+        return adminService.cleanupSourceSceneData();
+    }
+
+    @PostMapping("/data-cleanup/order-sources")
+    public ApiResponse<?> backfillHistoricalOrderSources() {
+        return adminService.backfillHistoricalOrderSources();
     }
 }

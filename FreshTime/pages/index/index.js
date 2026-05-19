@@ -10,11 +10,11 @@ Page({
     brandSub: '鲜时达',
     greetingWords: '早安，新鲜蔬果已经到店',
     searchIcon: '/assets/icon/search.png',
-    searchPlaceholder: '搜索蔬果 / 秒杀',
+    searchPlaceholder: '搜苹果、小份蔬菜、当季水果',
 
     moreText: '更多 >',
     noticePrefix: '公告',
-    waterfallTitle: '本周热销',
+    waterfallTitle: '这周大家都在买',
     priceSymbol: '¥',
     loadingText: '正在加载...',
     noMoreText: '已经到底啦',
@@ -32,14 +32,14 @@ Page({
     flashCountdown: '00:00:00',
     flashEndTimestamp: 0,
     flashSaleList: [],
-    bannerList: [],
+    homeHero: null,
     noticeList: [],
     hotKeyword: '',
 
     navList: [
       { type: 'couponZone', text: '领券福利', subText: '先领券再下单', iconText: '券', linkType: 'coupon', linkValue: '' },
       { type: 'seasonalFresh', text: '当季鲜选', subText: '应季更新更划算', iconText: '时', linkType: 'scene', linkValue: '时令' },
-      { type: 'smallPortion', text: '一人食小份', subText: '单人份量少浪费', iconText: '小', linkType: 'scene', linkValue: '小份量' },
+      { type: 'smallPortion', text: '小份优选', subText: '单人份量少浪费', iconText: '小', linkType: 'scene', linkValue: '小份量' },
       { type: 'comboMix', text: '蔬果搭配', subText: '按场景一次配齐', iconText: '搭', linkType: 'scene', linkValue: '搭配' }
     ],
 
@@ -55,6 +55,7 @@ Page({
   },
 
   onLoad() {
+    this.pageActive = true;
     const systemInfo = wx.getSystemInfoSync();
     const statusBar = systemInfo.statusBarHeight || 20;
     let compactSafeHeight = statusBar + 28;
@@ -73,20 +74,28 @@ Page({
   },
 
   onShow() {
+    this.pageActive = true;
     if (this.data.flashEndTimestamp > Date.now() && !this.countdownTimer) this.startFlashCountdown();
   },
 
-  onHide() { this.clearFlashCountdown(); },
-  onUnload() { this.clearFlashCountdown(); },
+  onHide() {
+    this.pageActive = false;
+    this.clearFlashCountdown();
+  },
+
+  onUnload() {
+    this.pageActive = false;
+    this.clearFlashCountdown();
+  },
 
   generateGreeting() {
     const hour = new Date().getHours();
     let greeting = '';
-    if (hour >= 6 && hour < 11) greeting = '早安，新鲜蔬果已经到店';
-    else if (hour >= 11 && hour < 14) greeting = '中午好，来点清爽蔬果';
-    else if (hour >= 14 && hour < 18) greeting = '下午好，补充轻食能量';
-    else if (hour >= 18 && hour < 22) greeting = '晚上好，精选好货在等你';
-    else greeting = '夜深了，明早再来挑新鲜';
+    if (hour >= 6 && hour < 11) greeting = '早安，今天的当季鲜果已上新';
+    else if (hour >= 11 && hour < 14) greeting = '中午好，来挑点清爽又好搭配的蔬果';
+    else if (hour >= 14 && hour < 18) greeting = '下午好，补点轻食水果刚刚好';
+    else if (hour >= 18 && hour < 22) greeting = '晚上好，今晚下厨的食材已经帮你备好';
+    else greeting = '夜深了，明早再来挑更新鲜的好物';
     this.setData({ greetingWords: greeting });
   },
 
@@ -97,7 +106,7 @@ Page({
       const data = this.unwrapData(res);
       const flashRaw = data.flash || {};
       const flashList = await this.normalizeGoodsImageList(flashRaw.list || [], true);
-      const bannerList = await this.normalizeBannerImageList(data.banners || []);
+      const homeHero = await this.normalizeHomeHero(data.homeHero || {});
       const flashEndTimestamp = this.parseTimeToTimestamp(flashRaw.endTime);
       const noticeList = Array.isArray(data.notices) ? data.notices : [];
       const navList = this.normalizeNavList(data.navList);
@@ -105,7 +114,7 @@ Page({
 
       this.setData({
         flashSaleList: flashList,
-        bannerList,
+        homeHero,
         noticeList,
         navList,
         hotKeyword,
@@ -122,7 +131,7 @@ Page({
     } catch (error) {
       this.setData({
         flashSaleList: [],
-        bannerList: [],
+        homeHero: null,
         noticeList: [],
         homeLoading: false,
         homeError: true
@@ -180,7 +189,15 @@ Page({
       const rawImage = item.mainImage || item.image || '';
       const image = urlMap[rawImage] || rawImage;
       const stock = typeof item.stock === 'number' ? item.stock : (typeof item.flashStock === 'number' ? item.flashStock : 0);
-      if (!asFlash) return { ...item, mainImage: image, image, stock };
+      if (!asFlash) {
+        return {
+          ...item,
+          mainImage: image,
+          image,
+          stock,
+          skuList: Array.isArray(item.skuList) ? item.skuList : []
+        };
+      }
       const originPrice = Number(item.originalPrice || item.originPrice || item.price || 0);
       const flashPrice = Number(item.flashPrice || item.price || 0);
       const flashStock = Number(item.flashStock || 0);
@@ -190,6 +207,7 @@ Page({
         mainImage: image,
         image,
         stock,
+        skuList: Array.isArray(item.skuList) ? item.skuList : [],
         originPrice: originPrice.toFixed(2),
         flashPrice: flashPrice.toFixed(2),
         soldPercent
@@ -206,14 +224,15 @@ Page({
     return Math.max(0, Math.min(100, ratio));
   },
 
-  async normalizeBannerImageList(list) {
-    if (!Array.isArray(list) || list.length === 0) return [];
-    const fileIds = list.map((item) => item.image).filter((id) => id && id.startsWith('cloud://'));
-    const urlMap = fileIds.length > 0 ? await getTempFileUrls(fileIds) : {};
-    return list.map((item) => {
-      const image = urlMap[item.image] || item.image || '';
-      return { ...item, image };
-    });
+  async normalizeHomeHero(hero = {}) {
+    if (!hero || !hero.image) return null;
+    const rawImage = hero.image || '';
+    const urlMap = rawImage && rawImage.startsWith('cloud://') ? await getTempFileUrls([rawImage]) : {};
+    return {
+      image: urlMap[rawImage] || rawImage,
+      linkType: hero.linkType || 'none',
+      linkValue: hero.linkValue || ''
+    };
   },
 
   onBannerImageLoad(e) {
@@ -252,8 +271,18 @@ Page({
   parseTimeToTimestamp(timeValue) {
     if (!timeValue) return 0;
     if (typeof timeValue === 'number') return timeValue;
-    const ts = new Date(String(timeValue).replace(/-/g, '/')).getTime();
-    return Number.isNaN(ts) ? 0 : ts;
+    const raw = String(timeValue).trim();
+    if (!raw) return 0;
+    const normalized = raw.includes('T')
+      ? raw
+      : raw.replace(' ', 'T');
+    const ts = new Date(normalized).getTime();
+    if (!Number.isNaN(ts)) return ts;
+    const fallbackTs = new Date(raw.replace(/-/g, '/')).getTime();
+    if (!Number.isNaN(fallbackTs)) return fallbackTs;
+    const localTs = new Date(raw.replace(/-/g, '/').replace('T', ' ')).getTime();
+    if (!Number.isNaN(localTs)) return localTs;
+    return 0;
   },
 
   startFlashCountdown() {
@@ -270,6 +299,7 @@ Page({
   },
 
   updateFlashCountdown() {
+    if (!this.pageActive) return;
     const remain = this.data.flashEndTimestamp - Date.now();
     if (remain <= 0) {
       this.setData({ flashCountdown: '00:00:00' });
@@ -308,7 +338,7 @@ Page({
 
   onFlashTap(e) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `${this.data.paths.goodsDetail}?id=${id}` });
+    wx.navigateTo({ url: `${this.data.paths.goodsDetail}?id=${id}&sourceType=FLASH&sourceScene=${encodeURIComponent('限时秒杀')}` });
   },
 
   onFlashAdd(e) {
@@ -319,7 +349,10 @@ Page({
       wx.showToast({ title: '秒杀已售罄', icon: 'none' });
       return;
     }
-    this.addToCart(id, 1, () => trackEvent('flash_add', { goodsId: `${id}` }));
+    this.addToCart(target, 1, () => trackEvent('flash_add', { goodsId: `${id}` }), {
+      sourceType: 'FLASH',
+      sourceScene: '限时秒杀'
+    });
   },
 
   onNavTap(e) {
@@ -429,12 +462,37 @@ Page({
       wx.showToast({ title: '商品已售罄', icon: 'none' });
       return;
     }
-    this.addToCart(item.id, 1, () => trackEvent('hot_add', { goodsId: `${item.id}` }));
+    this.addToCart(item, 1, () => trackEvent('hot_add', { goodsId: `${item.id}` }));
   },
 
-  addToCart(goodsId, quantity = 1, onSuccess) {
+  getFirstAvailableSku(goods = {}) {
+    const list = Array.isArray(goods.skuList) ? goods.skuList : [];
+    const enabled = list.filter((sku) => Number(sku.status) === 1 && Number(sku.skuStock || 0) > 0);
+    if (!enabled.length) return null;
+    const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
+    const standardSku = sorted.find((sku) => {
+      const name = `${sku.skuName || ''}`.trim();
+      return name.includes('标准') || name.includes('默认');
+    });
+    return standardSku || sorted[0];
+  },
+
+  addToCart(goods, quantity = 1, onSuccess, extra = {}) {
+    const target = goods && typeof goods === 'object'
+      ? goods
+      : ((this.data.goodsList || []).find((item) => Number(item.id) === Number(goods)) || (this.data.flashSaleList || []).find((item) => Number(item.id) === Number(goods)));
+    if (!target || !target.id) return;
+    const selectedSku = this.getFirstAvailableSku(target);
+    if (!selectedSku || !selectedSku.id) {
+      wx.showToast({ title: '暂无可用规格', icon: 'none', duration: 1500 });
+      return;
+    }
+    const query = [];
+    if (extra.sourceType) query.push(`sourceType=${encodeURIComponent(extra.sourceType)}`);
+    if (extra.sourceScene) query.push(`sourceScene=${encodeURIComponent(extra.sourceScene)}`);
+    const suffix = query.length ? `&${query.join('&')}` : '';
     app.requireLogin({ redirect: '/pages/index/index', message: '正在登录，请稍候' })
-      .then(() => post(`/cart/add?goodsId=${goodsId}&quantity=${quantity}`, {}, { retry: 0 }))
+      .then(() => post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=${quantity}${suffix}`, {}, { retry: 0 }))
       .then(() => {
         if (typeof onSuccess === 'function') onSuccess();
         wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });

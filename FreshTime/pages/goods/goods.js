@@ -25,6 +25,7 @@ Page({
   },
 
   onLoad(options) {
+    this.pageActive = true;
     const type = options.type || '';
     const scene = this.normalizeSceneParam(options.scene || '');
     if (scene === '小份量') {
@@ -39,9 +40,9 @@ Page({
       '时令': {
         sceneClass: 'scene-seasonal',
         title: '当季鲜选',
-        subtitle: '根据当季时令推荐，优先新鲜、口感稳定的蔬果',
+        subtitle: '优先挑出口感更稳、更新鲜、也更适合买的当季蔬果',
         badge: '当季推荐',
-        emptyText: '当前暂无当季商品，稍后再来看看',
+        emptyText: '当前筛选下暂无当季商品，换个条件试试',
         panelTitle: '本季推荐理由'
       }
     };
@@ -196,7 +197,10 @@ Page({
 
   onTapItem(e) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/goodsDetail/goodsDetail?id=${id}` });
+    const extra = this.data.currentType === 'flash'
+      ? `&sourceType=FLASH&sourceScene=${encodeURIComponent('限时秒杀')}`
+      : '';
+    wx.navigateTo({ url: `/pages/goodsDetail/goodsDetail?id=${id}${extra}` });
   },
 
   onAddCart(e) {
@@ -242,7 +246,10 @@ Page({
       return;
     }
     this.setData({ addCartLoadingId: Number(target.id) });
-    post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=${quantity}`, {}, { retry: 0 })
+    const sourceQuery = this.data.currentType === 'flash'
+      ? `&sourceType=FLASH&sourceScene=${encodeURIComponent('限时秒杀')}`
+      : '';
+    post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=${quantity}${sourceQuery}`, {}, { retry: 0 })
       .then(() => {
         wx.showToast({ title: `已加入购物车 x${quantity}`, icon: 'success' });
         if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
@@ -289,7 +296,11 @@ Page({
     const enabled = list.filter((sku) => Number(sku.status) === 1);
     if (!enabled.length) return null;
     const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
-    return sorted[0];
+    const standardSku = sorted.find((sku) => {
+      const name = `${sku.skuName || ''}`.trim();
+      return name.includes('标准') || name.includes('默认');
+    });
+    return standardSku || sorted[0];
   },
 
   getSelectedSku(item = {}, selectedSkuId = 0) {
@@ -329,8 +340,18 @@ Page({
   parseTimeToTimestamp(timeValue) {
     if (!timeValue) return 0;
     if (typeof timeValue === 'number') return timeValue;
-    const ts = new Date(String(timeValue).replace(/-/g, '/')).getTime();
-    return Number.isNaN(ts) ? 0 : ts;
+    const raw = String(timeValue).trim();
+    if (!raw) return 0;
+    const normalized = raw.includes('T')
+      ? raw
+      : raw.replace(' ', 'T');
+    const ts = new Date(normalized).getTime();
+    if (!Number.isNaN(ts)) return ts;
+    const fallbackTs = new Date(raw.replace(/-/g, '/')).getTime();
+    if (!Number.isNaN(fallbackTs)) return fallbackTs;
+    const localTs = new Date(raw.replace(/-/g, '/').replace('T', ' ')).getTime();
+    if (!Number.isNaN(localTs)) return localTs;
+    return 0;
   },
 
   startFlashCountdown() {
@@ -347,6 +368,7 @@ Page({
   },
 
   updateFlashCountdown() {
+    if (!this.pageActive) return;
     const remain = this.data.flashEndTimestamp - Date.now();
     if (remain <= 0) {
       this.setData({ flashCountdown: '00:00:00' });
@@ -362,13 +384,76 @@ Page({
   pad2(num) { return num < 10 ? `0${num}` : `${num}`; },
 
   onUnload() {
+    this.pageActive = false;
+    this.clearFlashCountdown();
+  },
+
+  onShow() {
+    this.pageActive = true;
+  },
+
+  onHide() {
+    this.pageActive = false;
     this.clearFlashCountdown();
   },
 
   formatSceneHint(item) {
     const scene = this.data.scene;
-    if (scene === '时令') return item.origin ? `产地：${item.origin}` : '当季新鲜直达';
+    if (scene === '时令') return item.origin ? `产地：${this.extractProvinceText(item.origin) || item.origin}` : '现在买更适合尝鲜';
     return item.unit ? `规格：${item.unit}` : '';
+  },
+
+  extractProvinceText(origin = '') {
+    const text = `${origin}`.trim();
+    if (!text) return '';
+    const provinceMap = [
+      ['北京市', ['北京']],
+      ['天津市', ['天津']],
+      ['上海市', ['上海']],
+      ['重庆市', ['重庆']],
+      ['河北省', ['河北']],
+      ['山西省', ['山西']],
+      ['辽宁省', ['辽宁']],
+      ['吉林省', ['吉林']],
+      ['黑龙江省', ['黑龙江']],
+      ['江苏省', ['江苏']],
+      ['浙江省', ['浙江']],
+      ['安徽省', ['安徽']],
+      ['福建省', ['福建']],
+      ['江西省', ['江西']],
+      ['山东省', ['山东']],
+      ['河南省', ['河南']],
+      ['湖北省', ['湖北']],
+      ['湖南省', ['湖南']],
+      ['广东省', ['广东']],
+      ['海南省', ['海南']],
+      ['四川省', ['四川']],
+      ['贵州省', ['贵州']],
+      ['云南省', ['云南']],
+      ['陕西省', ['陕西']],
+      ['甘肃省', ['甘肃']],
+      ['青海省', ['青海']],
+      ['台湾省', ['台湾']],
+      ['内蒙古自治区', ['内蒙古']],
+      ['广西壮族自治区', ['广西']],
+      ['西藏自治区', ['西藏']],
+      ['宁夏回族自治区', ['宁夏']],
+      ['新疆维吾尔自治区', ['新疆']],
+      ['香港特别行政区', ['香港']],
+      ['澳门特别行政区', ['澳门']]
+    ];
+    for (let i = 0; i < provinceMap.length; i += 1) {
+      const [fullName, aliases] = provinceMap[i];
+      if ([fullName, ...aliases].some((alias) => text.startsWith(alias))) {
+        return fullName;
+      }
+    }
+    const firstPart = text.split(/[，,、\s]+/).find((item) => item && item.trim()) || text;
+    const provinceMatch = firstPart.match(/(内蒙古|黑龙江|宁夏|广西|西藏|新疆|北京市|天津市|上海市|重庆市|香港|澳门|台湾|[^省市自治区特别行政区]+省|[^省市自治区特别行政区]+市|[^省市自治区特别行政区]+自治区)/);
+    if (provinceMatch && provinceMatch[0]) {
+      return provinceMatch[0];
+    }
+    return firstPart;
   },
 
   resolveCouponThresholdHintByPrice(item = {}) {

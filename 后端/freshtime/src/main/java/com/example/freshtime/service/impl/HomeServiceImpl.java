@@ -3,6 +3,7 @@ package com.example.freshtime.service.impl;
 import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.entity.Goods;
 import com.example.freshtime.mapper.HomeMapper;
+import com.example.freshtime.mapper.SeasonalConfigMapper;
 import com.example.freshtime.service.HomeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,12 @@ public class HomeServiceImpl implements HomeService {
     @Autowired
     private HomeMapper homeMapper;
 
+    @Autowired
+    private SeasonalConfigMapper seasonalConfigMapper;
+
+    @Autowired
+    private GoodsServiceImpl goodsServiceImpl;
+
     @Override
     public ApiResponse<?> getHomeIndex() {
         LocalDateTime now = LocalDateTime.now();
@@ -26,15 +33,15 @@ public class HomeServiceImpl implements HomeService {
         Goods todayRecommend = homeMapper.selectTodayRecommend();
         List<Goods> flashList = homeMapper.selectFlashSaleList(now, 10);
         Integer newArrivalCount = homeMapper.countNewArrivals(sevenDaysAgo);
-        List<Map<String, Object>> bannerList = homeMapper.selectActiveBanners(5);
         List<Map<String, Object>> noticeList = homeMapper.selectActiveNotices(6);
         List<Map<String, Object>> navList = homeMapper.selectActiveNavList(8);
         List<Map<String, Object>> newArrivalList = homeMapper.selectNewArrivalList(8);
+        Map<String, Object> homeHero = buildHomeHeroConfig();
 
         Map<String, Object> data = new HashMap<>();
         data.put("newArrivalCount", newArrivalCount == null ? 0 : newArrivalCount);
-        data.put("todayRecommend", todayRecommend);
-        data.put("banners", bannerList == null ? new ArrayList<>() : bannerList);
+        data.put("todayRecommend", todayRecommend == null ? null : goodsServiceImpl.buildGoodsCardList(java.util.Collections.singletonList(todayRecommend)).get(0));
+        data.put("homeHero", homeHero);
         data.put("newArrivalList", newArrivalList == null ? new ArrayList<>() : newArrivalList);
         data.put("notices", noticeList == null ? new ArrayList<>() : noticeList);
         data.put("navList", navList == null ? new ArrayList<>() : navList);
@@ -50,10 +57,33 @@ public class HomeServiceImpl implements HomeService {
         } else {
             flash.put("endTime", null);
         }
-        flash.put("list", flashList);
+        flash.put("list", goodsServiceImpl.buildGoodsCardList(flashList));
         data.put("flash", flash);
 
         return ApiResponse.success(data);
+    }
+
+    private Map<String, Object> buildHomeHeroConfig() {
+        Map<String, String> configMap = new HashMap<>();
+        try {
+            List<Map<String, Object>> rows = seasonalConfigMapper.selectAll();
+            if (rows != null) {
+                for (Map<String, Object> row : rows) {
+                    if (row == null) continue;
+                    String key = row.get("configKey") == null ? "" : String.valueOf(row.get("configKey")).trim();
+                    if (key.isEmpty()) continue;
+                    String value = row.get("configValue") == null ? "" : String.valueOf(row.get("configValue")).trim();
+                    configMap.put(key, value);
+                }
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+        Map<String, Object> hero = new HashMap<>();
+        hero.put("image", configMap.getOrDefault("home.hero.image", ""));
+        hero.put("linkType", configMap.getOrDefault("home.hero.linkType", "none"));
+        hero.put("linkValue", configMap.getOrDefault("home.hero.linkValue", ""));
+        return hero;
     }
 
     @Override
@@ -68,7 +98,7 @@ public class HomeServiceImpl implements HomeService {
         boolean hasMore = offset + safePageSize < totalCount;
 
         Map<String, Object> data = new HashMap<>();
-        data.put("list", list);
+        data.put("list", goodsServiceImpl.buildGoodsCardList(list));
         data.put("page", safePage);
         data.put("pageSize", safePageSize);
         data.put("total", totalCount);
@@ -87,7 +117,7 @@ public class HomeServiceImpl implements HomeService {
         int safeLimit = (limit == null || limit < 1) ? 4 : Math.min(limit, 10);
         List<Goods> list = homeMapper.selectRecommendGoodsByKeyword(clean, safeLimit);
         Map<String, Object> data = new HashMap<>();
-        data.put("list", list == null ? new ArrayList<>() : list);
+        data.put("list", goodsServiceImpl.buildGoodsCardList(list));
         return ApiResponse.success(data);
     }
 }

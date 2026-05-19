@@ -17,32 +17,86 @@ Page({
     unavailableCouponList: [],
     selectedCouponId: null,
     selectedCouponIndex: -1,
-    pendingOrderId: null
+    pendingOrderId: null,
+    checkoutMeta: null,
+    orderTipText: '',
+    amountLabel: '商品总额'
   },
   submitLock: false,
 
   onShow() {
     const items = wx.getStorageSync('checkoutItems') || [];
+    const checkoutMeta = wx.getStorageSync('checkoutMeta') || null;
     if (!app.getUserId()) {
       app.requireLogin({ redirect: '/pages/checkout/checkout', silent: true }).catch((error) => {
         showRequestError(error, '登录状态失效，请重新登录');
       });
       return;
     }
-    const amount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+    const planPackPrice = checkoutMeta && checkoutMeta.source === 'plan'
+      ? Number(checkoutMeta.packPrice || 0)
+      : 0;
+    const rawAmount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+    const amount = planPackPrice > 0 ? planPackPrice : rawAmount;
+    const normalizedItems = (Array.isArray(items) ? items : []).map((item) => ({
+      ...item,
+      price: Number(item.price || 0),
+      originPrice: Number(item.originPrice || item.price || 0),
+      flashActive: Boolean(item.flashActive),
+      priceType: item.priceType || 'NORMAL',
+      sourceLabel: this.formatSourceLabel(item.sourceType, item.sourceScene),
+      specLabel: this.formatSpecLabel(item.skuName, item.skuWeightG)
+    }));
     const selectedAddress = wx.getStorageSync('selectedAddress');
     this.setData({
-      items,
+      items: normalizedItems,
       amount: Math.round(amount * 100) / 100,
       discountAmount: 0,
       actualAmount: Math.round(amount * 100) / 100,
-      address: selectedAddress || null
+      address: selectedAddress || null,
+      checkoutMeta,
+      amountLabel: checkoutMeta && checkoutMeta.source === 'plan' ? '当前方案价' : '商品总额',
+      orderTipText: checkoutMeta && checkoutMeta.source === 'plan'
+        ? (checkoutMeta.tipText || '组合优惠仅限当前方案即时下单，加入普通购物车后不保留该优惠')
+        : ''
     });
 
     if (!selectedAddress) {
       this.loadDefaultAddress();
     }
     this.loadCoupons();
+  },
+
+  formatSourceLabel(sourceType, sourceScene) {
+    const scene = this.decodeSourceScene(sourceScene);
+    const type = `${sourceType || ''}`.trim().toUpperCase();
+    if (scene && scene !== 'MIXED' && scene !== 'ORDER_SOURCE_MIXED') {
+      return scene;
+    }
+    if (type === 'MEAL') return '小份优选';
+    if (type === 'COMBO') return '蔬果搭配';
+    if (type === 'SEASONAL') return '当季精选';
+    if (type === 'FLASH') return '限时秒杀';
+    return '';
+  },
+
+  decodeSourceScene(sourceScene) {
+    const text = `${sourceScene || ''}`.trim();
+    if (!text) return '';
+    try {
+      return decodeURIComponent(text);
+    } catch (error) {
+      return text;
+    }
+  },
+
+  formatSpecLabel(skuName, skuWeightG) {
+    const name = `${skuName || ''}`.trim();
+    const weight = Number(skuWeightG || 0);
+    if (name && weight > 0) return `${name} ${weight}g`;
+    if (name) return name;
+    if (weight > 0) return `${weight}g`;
+    return '';
   },
 
   loadCoupons() {
@@ -166,6 +220,9 @@ Page({
       addressId: this.data.address.id,
       couponId: this.data.selectedCouponId,
       remark: (this.data.remark || '').trim(),
+      packPrice: this.data.checkoutMeta && this.data.checkoutMeta.source === 'plan'
+        ? Number(this.data.checkoutMeta.packPrice || 0)
+        : undefined,
       items: this.data.items.map((item) => ({
         goodsId: item.id,
         skuId: Number(item.skuId || 0),
@@ -192,10 +249,11 @@ Page({
         }
         this.setData({ pendingOrderId: orderId });
         wx.removeStorageSync('checkoutItems');
+        wx.removeStorageSync('checkoutMeta');
         wx.removeStorageSync('selectedAddress');
-        return post('/cart/delete-selected', {}, { retry: 0 })
+        return this.cleanupCheckoutCartItems()
           .catch((error) => {
-            showRequestError(error, '清理购物车选中项失败');
+            showRequestError(error, '清理购物车结算项失败');
           })
           .then(() => app.refreshCartBadgeFromServer().catch((error) => {
             showRequestError(error, '购物车角标刷新失败');
@@ -236,6 +294,26 @@ Page({
         this.submitLock = false;
         this.setData({ submitting: false });
       });
+  },
+
+  cleanupCheckoutCartItems() {
+    const meta = this.data.checkoutMeta || {};
+    const source = `${meta.source || ''}`.trim();
+    const cartItems = Array.isArray(meta.cartItems) ? meta.cartItems : [];
+    if (source !== 'cart' || cartItems.length === 0) {
+      return Promise.resolve();
+    }
+    const tasks = cartItems
+      .map((item) => ({
+        goodsId: Number(item.goodsId || 0),
+        skuId: Number(item.skuId || 0)
+      }))
+      .filter((item) => item.goodsId > 0 && item.skuId > 0)
+      .map((item) => post(`/cart/delete?goodsId=${item.goodsId}&skuId=${item.skuId}`, {}, { retry: 0 }));
+    if (!tasks.length) {
+      return Promise.resolve();
+    }
+    return Promise.all(tasks);
   },
 
   onGoCart() {

@@ -316,6 +316,32 @@ page {
   color: $text-placeholder;
 }
 
+.order-card,
+.menu-card {
+  border-radius: 22rpx;
+  padding: 22rpx;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.order-item {
+  padding: 14rpx 0 10rpx;
+}
+
+.recent-order {
+  border-radius: 18rpx;
+  padding: 18rpx;
+}
+
+.action-btn {
+  min-width: 132rpx;
+  height: 58rpx;
+  line-height: 58rpx;
+}
+
+.menu-item {
+  padding: 24rpx 8rpx;
+}
+
 @media (max-width: 350px) {
   .profile-page {
     padding: 16rpx;

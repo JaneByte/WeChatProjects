@@ -76,6 +76,9 @@ public interface GoodsMapper {
     @Update("UPDATE goods SET status = #{status} WHERE id = #{id}")
     int updateGoodsStatus(@Param("id") Long id, @Param("status") Integer status);
 
+    @Update("UPDATE goods SET stock = #{stock} WHERE id = #{id}")
+    int updateGoodsStock(@Param("id") Long id, @Param("stock") Integer stock);
+
     @Select("SELECT COUNT(1) FROM goods")
     Integer countAllGoods();
 

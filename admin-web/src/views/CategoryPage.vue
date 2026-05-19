@@ -36,29 +36,33 @@
             <th>层级</th>
             <th>父分类</th>
             <th>排序</th>
-            <th>图标</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in displayList" :key="item.id">
-            <td>{{ item.id }}</td>
-            <td>{{ item.name }}</td>
-            <td>{{ Number(item.parentId || 0) === 0 ? '一级分类' : '二级分类' }}</td>
-            <td>{{ getParentName(item.parentId) }}</td>
-            <td>{{ item.sort ?? 0 }}</td>
-            <td>{{ item.icon || '-' }}</td>
-            <td>{{ item.status === 1 ? '启用' : '停用' }}</td>
-            <td>
-              <button class="link-btn" @click="openEditDialog(item)">编辑</button>
-              <button class="link-btn" @click="toggleStatus(item)">
-                {{ item.status === 1 ? '停用' : '启用' }}
-              </button>
+            <td class="table-id-cell">{{ item.id }}</td>
+            <td class="table-title-cell">{{ item.name }}</td>
+            <td class="table-source-cell">{{ Number(item.parentId || 0) === 0 ? '一级分类' : '二级分类' }}</td>
+            <td class="table-note-cell">{{ getParentName(item.parentId) }}</td>
+            <td class="table-id-cell">{{ item.sort ?? 0 }}</td>
+            <td class="table-status-cell">
+              <span :class="['status-pill', item.status === 1 ? 'status-active' : 'status-off']">
+                {{ item.status === 1 ? '启用' : '停用' }}
+              </span>
+            </td>
+            <td class="table-actions-cell">
+              <div class="table-actions">
+                <button class="link-btn" @click="openEditDialog(item)">编辑</button>
+                <button class="link-btn" @click="toggleStatus(item)">
+                  {{ item.status === 1 ? '停用' : '启用' }}
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="!displayList.length">
-            <td colspan="8" class="empty-cell">暂无分类数据</td>
+            <td colspan="7" class="empty-cell">暂无分类数据</td>
           </tr>
         </tbody>
       </table>
@@ -87,10 +91,6 @@
                 二级分类 / {{ item.name }}
               </option>
             </select>
-          </div>
-          <div class="field-block">
-            <label class="field-label">图标地址（可选）</label>
-            <input v-model.trim="form.icon" class="input" placeholder="如：https://.../icon.png" />
           </div>
           <div class="field-block">
             <label class="field-label">排序值（越小越靠前）</label>
@@ -135,7 +135,6 @@ function createEmptyForm() {
     id: null,
     parentId: '0',
     name: '',
-    icon: '',
     sort: 0,
     status: 1
   };
@@ -193,7 +192,6 @@ function buildDiffLines() {
   const fields = [
     { key: 'name', label: '名称' },
     { key: 'parentId', label: '层级/父分类' },
-    { key: 'icon', label: '图标地址' },
     { key: 'sort', label: '排序值' },
     { key: 'status', label: '状态' }
   ];
@@ -240,7 +238,6 @@ function openEditDialog(item) {
     id: item.id,
     parentId: String(item.parentId ?? 0),
     name: item.name || '',
-    icon: item.icon || '',
     sort: toNumber(item.sort || 0),
     status: Number(item.status ?? 1)
   };

@@ -11,6 +11,7 @@ Page({
     id: null,
     submitting: false,
     locating: false,
+    locationPreview: '',
     form: {
       receiverName: '',
       receiverPhone: '',
@@ -37,7 +38,9 @@ Page({
         const list = (res && res.data) || [];
         const current = list.find((item) => item.id === id);
         if (!current) return;
+        const preview = `${current.province || ''}${current.city || ''}${current.district || ''} ${(current.detail || '').slice(0, 20)}`;
         this.setData({
+          locationPreview: preview,
           form: {
             receiverName: current.receiverName || '',
             receiverPhone: current.receiverPhone || '',
@@ -120,31 +123,50 @@ Page({
       type: 'gcj02',
       success: (locRes) => {
         const { latitude, longitude } = locRes || {};
-        wx.chooseLocation({
-          latitude,
-          longitude,
-          success: (chooseRes) => {
-            const addressText = `${chooseRes.address || ''}`.trim();
-            const nameText = `${chooseRes.name || ''}`.trim();
-            const region = this.parseRegion(addressText);
-            this.setData({
-              'form.province': region.province,
-              'form.city': region.city,
-              'form.district': region.district,
-              'form.detail': `${nameText}${addressText}`.slice(0, 100)
-            });
-          },
-          fail: () => {
-            wx.showToast({ title: '未选择地址，请手动填写', icon: 'none' });
-          },
-          complete: () => {
-            this.setData({ locating: false });
-          }
-        });
+        this.openLocationPicker(latitude, longitude);
       },
       fail: () => {
         this.setData({ locating: false });
         wx.showToast({ title: '定位失败，请检查定位权限', icon: 'none' });
+      },
+      complete: () => {
+        this.setData({ locating: false });
+      }
+    });
+  },
+
+  openLocationPicker(latitude, longitude) {
+    wx.chooseLocation({
+      latitude,
+      longitude,
+      success: (chooseRes) => {
+        const addressText = `${chooseRes.address || ''}`.trim();
+        const nameText = `${chooseRes.name || ''}`.trim();
+        const detailText = `${nameText}${addressText}`.trim().slice(0, 100);
+        if (!addressText && !nameText) {
+          wx.showToast({ title: '未获取到地址，请重新选择', icon: 'none' });
+          return;
+        }
+        const region = this.parseRegion(addressText);
+        const preview = `${region.province}${region.city}${region.district} ${detailText.slice(0, 20)}`;
+        this.setData({
+          'form.province': region.province,
+          'form.city': region.city,
+          'form.district': region.district,
+          'form.detail': detailText,
+          locationPreview: preview
+        });
+        wx.showToast({ title: '地址已回填', icon: 'success' });
+      },
+      fail: (error) => {
+        const errMsg = `${error && error.errMsg ? error.errMsg : ''}`.toLowerCase();
+        console.warn('[address-edit] chooseLocation failed:', error);
+        if (errMsg.includes('cancel')) {
+          wx.showToast({ title: '你已取消地图选址', icon: 'none' });
+          return;
+        }
+        const shortMsg = `${error && error.errMsg ? error.errMsg : '地图选址失败'}`.slice(0, 28);
+        wx.showToast({ title: shortMsg, icon: 'none' });
       }
     });
   },
@@ -152,10 +174,11 @@ Page({
   parseRegion(addressText) {
     const text = `${addressText || ''}`;
     const provinceMatch = text.match(/^(.*?(省|自治区|行政区|特别行政区))/);
-    const province = provinceMatch ? provinceMatch[1] : '';
+    const directCityMatch = text.match(/^(北京市|上海市|天津市|重庆市)/);
+    const province = provinceMatch ? provinceMatch[1] : (directCityMatch ? directCityMatch[1] : '');
     const restAfterProvince = province ? text.slice(province.length) : text;
     const cityMatch = restAfterProvince.match(/^(.*?市)/);
-    const city = cityMatch ? cityMatch[1] : '';
+    const city = cityMatch ? cityMatch[1] : (directCityMatch ? directCityMatch[1] : '');
     const restAfterCity = city ? restAfterProvince.slice(city.length) : restAfterProvince;
     const districtMatch = restAfterCity.match(/^(.*?(区|县|旗))/);
     const district = districtMatch ? districtMatch[1] : '';

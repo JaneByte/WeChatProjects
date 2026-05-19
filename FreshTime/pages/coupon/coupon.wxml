@@ -1,7 +1,7 @@
 <view class='page'>
   <view class='hero'>
-    <text class='hero-title'>领券福利</text>
-    <text class='hero-sub'>先领券再下单，结算更划算</text>
+    <text class='hero-title'>先领券，再下单更划算</text>
+    <text class='hero-sub'>领好优惠券再去挑商品，结算时更省一点</text>
   </view>
 
   <view class='section-head'>
@@ -29,7 +29,7 @@
   </view>
 
   <view class='empty-wrap' wx:if='{{availableList.length === 0}}'>
-    <text class='empty-text'>当前暂无可领取优惠券</text>
+    <text class='empty-text'>当前暂无可领取优惠券，可以先看看推荐商品，后续活动会持续更新</text>
   </view>
 
   <view class='section-title'>猜你喜欢</view>
@@ -47,7 +47,7 @@
   </view>
 
   <view class='empty-wrap' wx:if='{{recommendGoodsList.length === 0 && !loading}}'>
-    <text class='empty-text'>暂无推荐商品</text>
+    <text class='empty-text'>推荐商品正在更新中，先去首页逛逛</text>
   </view>
 
   <view class='spec-mask' wx:if='{{specPopupVisible}}' bindtap='onCloseSpecPopup' catchtouchmove='noop'>

@@ -1,7 +1,148 @@
-.page { padding: 24rpx; }
-.form { display: flex; flex-direction: column; gap: 16rpx; }
-.form input { height: 76rpx; background: #edf6e0; border-radius: 16rpx; padding: 0 20rpx; color: #1e3311; }
-.locate-btn { height: 72rpx; line-height: 72rpx; border-radius: 14rpx; background: #ffffff; color: #5a8a28; border: 1rpx solid #73a937; font-size: 25rpx; }
-.default-row { display: flex; justify-content: space-between; align-items: center; padding: 6rpx 4rpx; }
-.default-label { font-size: 26rpx; color: #1e3311; }
-.save-btn { margin-top: 12rpx; height: 76rpx; line-height: 76rpx; border-radius: 16rpx; background: linear-gradient(135deg, #73a937, #5a8a28); color: #fff; }
+.page {
+  padding: 24rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.card-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1e3311;
+  margin-bottom: 20rpx;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.divider {
+  width: 1rpx;
+  height: 40rpx;
+  background-color: #e8e8e8;
+}
+
+.card input {
+  height: 80rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #1e3311;
+  margin-bottom: 16rpx;
+  border: 1rpx solid transparent;
+  box-sizing: border-box;
+}
+
+.card input:last-child {
+  margin-bottom: 0;
+}
+
+.card input:focus {
+  border-color: #73a937;
+  background-color: #ffffff;
+}
+
+.region-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.region-input {
+  flex: 1;
+  margin-bottom: 0 !important;
+}
+
+/* 地图定位卡片 */
+.location-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e8e8e8;
+}
+
+.location-icon {
+  width: 40rpx;
+  height: 40rpx;
+  background-color: #73a937;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'%3E%3C/path%3E%3Ccircle cx='12' cy='10' r='3'%3E%3C/circle%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'%3E%3C/path%3E%3Ccircle cx='12' cy='10' r='3'%3E%3C/circle%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+.location-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.location-label {
+  font-size: 28rpx;
+  color: #1e3311;
+  font-weight: 500;
+}
+
+.location-addr {
+  font-size: 24rpx;
+  color: #999999;
+  word-break: break-all;
+}
+
+.arrow {
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #cccccc;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+/* 默认地址行 */
+.default-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.default-label {
+  font-size: 28rpx;
+  color: #1e3311;
+}
+
+/* 保存按钮 */
+.save-btn {
+  margin-top: 8rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 20rpx rgba(90, 138, 40, 0.25);
+}

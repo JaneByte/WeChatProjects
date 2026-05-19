@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,9 +94,21 @@ public class OrderServiceImpl implements OrderService {
                 merged.setGoodsId(item.getGoodsId());
                 merged.setSkuId(item.getSkuId());
                 merged.setQuantity(item.getQuantity());
+                merged.setSourceType(item.getSourceType());
+                merged.setSourcePlanId(item.getSourcePlanId());
+                merged.setSourceScene(item.getSourceScene());
                 mergedItems.put(key, merged);
             } else {
                 merged.setQuantity(merged.getQuantity() + item.getQuantity());
+                if (merged.getSourceType() == null || merged.getSourceType().trim().isEmpty()) {
+                    merged.setSourceType(item.getSourceType());
+                }
+                if (merged.getSourcePlanId() == null || merged.getSourcePlanId() <= 0) {
+                    merged.setSourcePlanId(item.getSourcePlanId());
+                }
+                if (merged.getSourceScene() == null || merged.getSourceScene().trim().isEmpty()) {
+                    merged.setSourceScene(item.getSourceScene());
+                }
             }
         }
 
@@ -113,13 +128,23 @@ public class OrderServiceImpl implements OrderService {
             if (sku.getSkuStock() == null || sku.getSkuStock() < quantity) {
                 return ApiResponse.badRequest("规格库存不足: " + goods.getName());
             }
+            boolean flashActive = isFlashActive(goods);
+            if (flashActive) {
+                if (goods.getFlashStock() == null || goods.getFlashStock() < quantity) {
+                    return ApiResponse.badRequest("秒杀库存不足: " + goods.getName());
+                }
+                int flashUpdated = orderMapper.deductFlashStock(goodsId, quantity);
+                if (flashUpdated <= 0) {
+                    return ApiResponse.badRequest("秒杀库存更新失败，请重试");
+                }
+            }
 
             int updated = orderMapper.deductSkuStock(sku.getId(), quantity);
             if (updated <= 0) {
                 return ApiResponse.badRequest("库存更新失败，请重试");
             }
 
-            BigDecimal itemPrice = sku.getSkuPrice() == null ? BigDecimal.ZERO : sku.getSkuPrice();
+            BigDecimal itemPrice = resolveEffectivePrice(goods, sku);
             BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(quantity));
             totalAmount = totalAmount.add(itemTotal);
 
@@ -133,10 +158,14 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setPrice(itemPrice);
             orderItem.setQuantity(quantity);
             orderItem.setTotalPrice(itemTotal);
-            orderItem.setSourceType(normalizeSourceType(entry.getSourceType()));
+            orderItem.setSourceType(resolveItemSourceType(entry.getSourceType(), flashActive));
             orderItem.setSourcePlanId(entry.getSourcePlanId());
-            orderItem.setSourceScene(safeText(entry.getSourceScene()));
+            orderItem.setSourceScene(resolveItemSourceScene(entry.getSourceScene(), flashActive));
             orderItems.add(orderItem);
+        }
+
+        if (isDirectPlanOrder(orderItems) && request.getPackPrice() != null && request.getPackPrice().compareTo(BigDecimal.ZERO) > 0) {
+            totalAmount = request.getPackPrice();
         }
 
         String receiverName = emptyToDefault(request.getReceiverName(), "默认收货人");
@@ -268,6 +297,7 @@ public class OrderServiceImpl implements OrderService {
         if (restoreCount <= 0) {
             return ApiResponse.badRequest("库存回补失败，请重试");
         }
+        orderMapper.restoreFlashStockByOrderId(orderId);
 
         int updated = orderMapper.updateOrderStatus(orderId, userId, order.getStatus(), 4);
         if (updated <= 0) {
@@ -293,7 +323,7 @@ public class OrderServiceImpl implements OrderService {
             return ApiResponse.badRequest("当前状态不可确认收货");
         }
 
-        int updated = orderMapper.updateOrderStatus(orderId, userId, 2, 3);
+        int updated = orderMapper.finishOrder(orderId, userId);
         if (updated <= 0) {
             return ApiResponse.badRequest("确认收货失败，请重试");
         }
@@ -409,6 +439,7 @@ public class OrderServiceImpl implements OrderService {
         if (restoreCount <= 0) {
             return ApiResponse.badRequest("库存回补失败，请重试");
         }
+        orderMapper.restoreFlashStockByOrderId(orderId);
         int updated = orderMapper.updateOrderStatus(orderId, userId, 0, 4);
         if (updated <= 0) {
             return ApiResponse.badRequest("过期取消失败，请重试");
@@ -491,6 +522,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderMapper.restoreSkuStockByOrderId(orderId);
+        orderMapper.restoreFlashStockByOrderId(orderId);
         int updated = orderMapper.finishRefund(orderId, userId);
         if (updated <= 0) {
             return ApiResponse.badRequest("退款完成失败，请重试");
@@ -515,6 +547,9 @@ public class OrderServiceImpl implements OrderService {
         row.put("payTradeNo", order.getPayTradeNo());
         row.put("payStatus", order.getPayStatus());
         row.put("payTime", order.getPayTime());
+        row.put("deliverTime", order.getDeliverTime());
+        row.put("finishTime", order.getFinishTime());
+        row.put("cancelTime", order.getCancelTime());
         row.put("statusText", mapStatusText(order.getStatus()));
         row.put("items", orderMapper.selectOrderItemsByOrderId(order.getId(), order.getUserId()));
         return row;
@@ -537,6 +572,8 @@ public class OrderServiceImpl implements OrderService {
                 return "已退款";
             case 6:
                 return "退款中";
+            case 7:
+                return "售后待审核";
             default:
                 return "未知状态";
         }
@@ -591,9 +628,31 @@ public class OrderServiceImpl implements OrderService {
         return value.trim();
     }
 
+    private boolean isDirectPlanOrder(List<OrderItemInfo> orderItems) {
+        if (orderItems == null || orderItems.isEmpty()) {
+            return false;
+        }
+        String sourceType = "";
+        for (OrderItemInfo item : orderItems) {
+            String current = normalizeSourceType(item.getSourceType());
+            if (!(OrderInfo.ORDER_SOURCE_MEAL.equals(current) || OrderInfo.ORDER_SOURCE_COMBO.equals(current))) {
+                return false;
+            }
+            if (sourceType.isEmpty()) {
+                sourceType = current;
+                continue;
+            }
+            if (!sourceType.equals(current)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private String normalizeSourceType(String sourceType) {
         String value = safeText(sourceType).toUpperCase();
         if (OrderInfo.ORDER_SOURCE_MEAL.equals(value)
+                || OrderInfo.ORDER_SOURCE_FLASH.equals(value)
                 || OrderInfo.ORDER_SOURCE_COMBO.equals(value)
                 || OrderInfo.ORDER_SOURCE_SEASONAL.equals(value)
                 || OrderInfo.ORDER_SOURCE_MIXED.equals(value)) {
@@ -619,5 +678,56 @@ public class OrderServiceImpl implements OrderService {
 
     private String safeText(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String normalizeSourceScene(String sourceScene) {
+        String text = safeText(sourceScene);
+        if (text.isEmpty()) return "";
+        try {
+            String decoded = URLDecoder.decode(text, StandardCharsets.UTF_8.name()).trim();
+            return decoded.isEmpty() ? text : decoded;
+        } catch (Exception ignored) {
+            return text;
+        }
+    }
+
+    private boolean isFlashActive(Goods goods) {
+        if (goods == null) return false;
+        if (goods.getIsFlash() == null || goods.getIsFlash() != 1) return false;
+        if (goods.getFlashPrice() == null || goods.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
+        if (goods.getFlashStock() == null || goods.getFlashStock() <= 0) return false;
+        LocalDateTime start = goods.getFlashStartTime();
+        LocalDateTime end = goods.getFlashEndTime();
+        if (start == null || end == null) return false;
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(start) && !now.isAfter(end);
+    }
+
+    private BigDecimal resolveEffectivePrice(Goods goods, GoodsSku sku) {
+        BigDecimal skuPrice = sku.getSkuPrice() == null ? BigDecimal.ZERO : sku.getSkuPrice();
+        if (!isFlashActive(goods)) return skuPrice;
+        BigDecimal goodsPrice = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
+        BigDecimal flashPrice = goods.getFlashPrice() == null ? BigDecimal.ZERO : goods.getFlashPrice();
+        if (goodsPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return flashPrice.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal ratio = flashPrice.divide(goodsPrice, 6, RoundingMode.HALF_UP);
+        return skuPrice.multiply(ratio).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String resolveItemSourceType(String sourceType, boolean flashActive) {
+        String normalized = normalizeSourceType(sourceType);
+        if (flashActive && OrderInfo.ORDER_SOURCE_NORMAL.equals(normalized)) {
+            return OrderInfo.ORDER_SOURCE_FLASH;
+        }
+        return normalized;
+    }
+
+    private String resolveItemSourceScene(String sourceScene, boolean flashActive) {
+        String normalized = normalizeSourceScene(sourceScene);
+        if (flashActive && normalized.isEmpty()) {
+            return "限时秒杀";
+        }
+        return normalized;
     }
 }

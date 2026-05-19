@@ -28,10 +28,6 @@ public interface HomeMapper {
             "ORDER BY flash_end_time ASC, home_sort ASC, flash_price ASC, sales_volume DESC LIMIT #{limit}")
     List<Goods> selectFlashSaleList(@Param("now") LocalDateTime now, @Param("limit") Integer limit);
 
-    @Select("SELECT id, title, image, link_type AS linkType, link_value AS linkValue " +
-            "FROM banner WHERE status = 1 ORDER BY sort ASC, create_time DESC LIMIT #{limit}")
-    List<Map<String, Object>> selectActiveBanners(@Param("limit") Integer limit);
-
     @Select("SELECT id, notice_text AS text, link_type AS linkType, link_value AS linkValue " +
             "FROM home_notice WHERE status = 1 ORDER BY sort ASC, create_time DESC LIMIT #{limit}")
     List<Map<String, Object>> selectActiveNotices(@Param("limit") Integer limit);

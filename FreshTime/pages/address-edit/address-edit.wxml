@@ -1,16 +1,48 @@
 <view class='page'>
   <view class='form'>
-    <button class='locate-btn' loading='{{locating}}' disabled='{{locating}}' bindtap='onLocateTap'>{{locating ? '定位中...' : '一键获取当前位置'}}</button>
-    <input placeholder='收货人' data-field='receiverName' value='{{form.receiverName}}' bindinput='onInput' />
-    <input placeholder='手机号' data-field='receiverPhone' value='{{form.receiverPhone}}' bindinput='onInput' />
-    <input placeholder='省份' data-field='province' value='{{form.province}}' bindinput='onInput' />
-    <input placeholder='城市' data-field='city' value='{{form.city}}' bindinput='onInput' />
-    <input placeholder='区县' data-field='district' value='{{form.district}}' bindinput='onInput' />
-    <input placeholder='详细地址' data-field='detail' value='{{form.detail}}' bindinput='onInput' />
-    <view class='default-row'>
-      <text class='default-label'>设为默认地址</text>
-      <switch color='#07c160' checked='{{form.isDefault === 1}}' bindchange='onToggleDefault' />
+    <!-- 联系人信息卡片 -->
+    <view class='card'>
+      <view class='card-title'>联系人</view>
+      <view class='row'>
+        <input class='flex-1' placeholder='收货人' data-field='receiverName' value='{{form.receiverName}}' bindinput='onInput' />
+        <view class='divider'></view>
+        <input class='flex-1' placeholder='手机号' data-field='receiverPhone' value='{{form.receiverPhone}}' bindinput='onInput' type='number' />
+      </view>
     </view>
+
+    <!-- 地图定位卡片 -->
+    <view class='card' bindtap='onLocateTap'>
+      <view class='card-title'>地图定位</view>
+      <view class='location-card'>
+        <view class='location-icon'></view>
+        <view class='location-content'>
+          <text class='location-label'>{{locating ? '定位中...' : '点击地图选择地址'}}</text>
+          <text class='location-addr' wx:if='{{locationPreview}}'>{{locationPreview}}</text>
+        </view>
+        <view class='arrow'></view>
+      </view>
+    </view>
+
+    <!-- 详细地址卡片 -->
+    <view class='card'>
+      <view class='card-title'>详细地址</view>
+      <view class='region-row'>
+        <input class='region-input' placeholder='省份' data-field='province' value='{{form.province}}' bindinput='onInput' />
+        <input class='region-input' placeholder='城市' data-field='city' value='{{form.city}}' bindinput='onInput' />
+        <input class='region-input' placeholder='区县' data-field='district' value='{{form.district}}' bindinput='onInput' />
+      </view>
+      <input placeholder='街道/门牌号，如：朝阳SOHO A座 3层' data-field='detail' value='{{form.detail}}' bindinput='onInput' />
+    </view>
+
+    <!-- 默认地址开关 -->
+    <view class='card'>
+      <view class='default-row'>
+        <text class='default-label'>设为默认收货地址</text>
+        <switch color='#5a8a28' checked='{{form.isDefault === 1}}' bindchange='onToggleDefault' />
+      </view>
+    </view>
+
+    <!-- 保存按钮 -->
     <button class='save-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onSave'>保存地址</button>
   </view>
 </view>

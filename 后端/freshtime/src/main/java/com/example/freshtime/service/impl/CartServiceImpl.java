@@ -11,6 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,19 +31,30 @@ public class CartServiceImpl implements CartService {
         if (userId == null) {
             return ApiResponse.badRequest("userId不能为空");
         }
-        List<CartInfo> list = cartMapper.selectCartListByUserId(userId);
+        List<CartInfo> list;
+        try {
+            list = cartMapper.selectCartListByUserId(userId);
+        } catch (Exception ignored) {
+            list = cartMapper.selectCartListBasicByUserId(userId);
+        }
         List<Map<String, Object>> result = new ArrayList<>();
         for (CartInfo item : list) {
             if (item.getStatus() == null || item.getStatus() != 1) {
                 continue;
             }
             Map<String, Object> row = new HashMap<>();
+            boolean flashActive = isFlashActive(item);
+            BigDecimal originPrice = item.getPrice() == null ? BigDecimal.ZERO : item.getPrice();
+            BigDecimal effectivePrice = resolveEffectivePrice(item);
             row.put("id", item.getId());
             row.put("goodsId", item.getGoodsId());
             row.put("skuId", item.getSkuId());
             row.put("name", item.getName());
             row.put("image", item.getImage());
-            row.put("price", item.getPrice());
+            row.put("price", effectivePrice);
+            row.put("originPrice", originPrice);
+            row.put("priceType", flashActive ? CartInfo.SOURCE_TYPE_FLASH : CartInfo.SOURCE_TYPE_NORMAL);
+            row.put("flashActive", flashActive);
             row.put("stock", item.getStock());
             row.put("unit", item.getUnit());
             row.put("skuName", item.getSkuName());
@@ -50,7 +65,7 @@ public class CartServiceImpl implements CartService {
             row.put("selected", item.getSelected() != null && item.getSelected() == 1);
             row.put("sourceType", normalizeSourceType(item.getSourceType()));
             row.put("sourcePlanId", item.getSourcePlanId());
-            row.put("sourceScene", safeText(item.getSourceScene()));
+            row.put("sourceScene", normalizeSourceScene(item.getSourceScene()));
             result.add(row);
         }
         return ApiResponse.success(result);
@@ -74,38 +89,45 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApiResponse<?> addToCart(Long userId, Long goodsId, Long skuId, Integer quantity, String sourceType, Long sourcePlanId, String sourceScene) {
-        if (userId == null || goodsId == null || skuId == null) {
-            return ApiResponse.badRequest("userId、goodsId或skuId不能为空");
+        if (userId == null || goodsId == null) {
+            return ApiResponse.badRequest("userId或goodsId不能为空");
         }
         int addQuantity = (quantity == null || quantity <= 0) ? 1 : quantity;
         String finalSourceType = normalizeSourceType(sourceType);
         Long finalSourcePlanId = sourcePlanId;
-        String finalSourceScene = safeText(sourceScene);
+        String finalSourceScene = normalizeSourceScene(sourceScene);
         Goods goods = cartMapper.selectGoodsById(goodsId);
         if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
             return ApiResponse.badRequest("商品不存在或已下架");
         }
-        GoodsSku sku = cartMapper.selectSkuById(skuId);
+        GoodsSku sku = resolveAvailableSku(goodsId, skuId);
         if (sku == null || sku.getGoodsId() == null || !goodsId.equals(sku.getGoodsId()) || sku.getStatus() == null || sku.getStatus() != 1) {
             return ApiResponse.badRequest("商品规格不存在或不可用");
         }
+        Long finalSkuId = sku.getId();
         int stock = sku.getSkuStock() == null ? 0 : sku.getSkuStock();
         if (stock <= 0) {
             return ApiResponse.badRequest("规格库存不足");
         }
+        if (CartInfo.SOURCE_TYPE_NORMAL.equals(finalSourceType) && isFlashActive(goods)) {
+            finalSourceType = CartInfo.SOURCE_TYPE_FLASH;
+            if (finalSourceScene.isEmpty()) {
+                finalSourceScene = "限时秒杀";
+            }
+        }
 
-        CartInfo cart = cartMapper.selectCartByUserIdAndGoodsIdAndSkuId(userId, goodsId, skuId);
+        CartInfo cart = findCartItem(userId, goodsId, finalSkuId);
         if (cart == null) {
             CartInfo insert = new CartInfo();
             insert.setUserId(userId);
             insert.setGoodsId(goodsId);
-            insert.setSkuId(skuId);
+            insert.setSkuId(finalSkuId);
             insert.setQuantity(Math.min(addQuantity, stock));
             insert.setSelected(1);
             insert.setSourceType(finalSourceType);
             insert.setSourcePlanId(finalSourcePlanId);
             insert.setSourceScene(finalSourceScene);
-            cartMapper.insertCart(insert);
+            saveCart(insert);
             return ApiResponse.success("加入购物车成功", null);
         }
 
@@ -119,7 +141,7 @@ public class CartServiceImpl implements CartService {
         cart.setSourceType(mergeSourceType(cart.getSourceType(), finalSourceType));
         cart.setSourcePlanId(resolveSourcePlanId(cart.getSourcePlanId(), finalSourcePlanId));
         cart.setSourceScene(resolveSourceScene(cart.getSourceScene(), finalSourceScene));
-        cartMapper.updateCart(cart);
+        updateCartSafely(cart);
         return ApiResponse.success("加入购物车成功", null);
     }
 
@@ -133,7 +155,7 @@ public class CartServiceImpl implements CartService {
             return deleteItem(userId, goodsId, skuId);
         }
 
-        CartInfo cart = cartMapper.selectCartByUserIdAndGoodsIdAndSkuId(userId, goodsId, skuId);
+        CartInfo cart = findCartItem(userId, goodsId, skuId);
         if (cart == null) {
             return ApiResponse.notFound("购物车项不存在");
         }
@@ -205,7 +227,8 @@ public class CartServiceImpl implements CartService {
 
     private String normalizeSourceType(String sourceType) {
         String value = safeText(sourceType).toUpperCase();
-        if (CartInfo.SOURCE_TYPE_MEAL.equals(value)
+        if (CartInfo.SOURCE_TYPE_FLASH.equals(value)
+                || CartInfo.SOURCE_TYPE_MEAL.equals(value)
                 || CartInfo.SOURCE_TYPE_COMBO.equals(value)
                 || CartInfo.SOURCE_TYPE_SEASONAL.equals(value)
                 || OrderInfo.ORDER_SOURCE_MIXED.equals(value)) {
@@ -230,14 +253,96 @@ public class CartServiceImpl implements CartService {
     }
 
     private String resolveSourceScene(String currentSourceScene, String nextSourceScene) {
-        String current = safeText(currentSourceScene);
-        String next = safeText(nextSourceScene);
+        String current = normalizeSourceScene(currentSourceScene);
+        String next = normalizeSourceScene(nextSourceScene);
         if (current.isEmpty()) return next;
         if (next.isEmpty() || current.equals(next)) return current;
         return OrderInfo.ORDER_SOURCE_MIXED;
     }
 
+    private GoodsSku resolveAvailableSku(Long goodsId, Long skuId) {
+        if (goodsId == null) return null;
+        if (skuId != null && skuId > 0) {
+            GoodsSku matched = cartMapper.selectSkuById(skuId);
+            if (matched != null) {
+                return matched;
+            }
+        }
+        return cartMapper.selectFirstAvailableSkuByGoodsId(goodsId);
+    }
+
+    private CartInfo findCartItem(Long userId, Long goodsId, Long skuId) {
+        try {
+            return cartMapper.selectCartByUserIdAndGoodsIdAndSkuId(userId, goodsId, skuId);
+        } catch (Exception ignored) {
+            return cartMapper.selectCartBasicByUserIdAndGoodsIdAndSkuId(userId, goodsId, skuId);
+        }
+    }
+
+    private void saveCart(CartInfo cartInfo) {
+        try {
+            cartMapper.insertCart(cartInfo);
+        } catch (Exception ignored) {
+            cartMapper.insertCartBasic(cartInfo);
+        }
+    }
+
+    private void updateCartSafely(CartInfo cartInfo) {
+        try {
+            cartMapper.updateCart(cartInfo);
+        } catch (Exception ignored) {
+            cartMapper.updateCartBasic(cartInfo);
+        }
+    }
+
     private String safeText(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private String normalizeSourceScene(String sourceScene) {
+        String text = safeText(sourceScene);
+        if (text.isEmpty()) return "";
+        try {
+            String decoded = URLDecoder.decode(text, StandardCharsets.UTF_8.name()).trim();
+            return decoded.isEmpty() ? text : decoded;
+        } catch (Exception ignored) {
+            return text;
+        }
+    }
+
+    private boolean isFlashActive(CartInfo item) {
+        if (item == null) return false;
+        if (item.getIsFlash() == null || item.getIsFlash() != 1) return false;
+        if (item.getFlashPrice() == null || item.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
+        if (item.getFlashStock() == null || item.getFlashStock() <= 0) return false;
+        LocalDateTime start = item.getFlashStartTime();
+        LocalDateTime end = item.getFlashEndTime();
+        if (start == null || end == null) return false;
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(start) && !now.isAfter(end);
+    }
+
+    private boolean isFlashActive(Goods goods) {
+        if (goods == null) return false;
+        if (goods.getIsFlash() == null || goods.getIsFlash() != 1) return false;
+        if (goods.getFlashPrice() == null || goods.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
+        if (goods.getFlashStock() == null || goods.getFlashStock() <= 0) return false;
+        LocalDateTime start = goods.getFlashStartTime();
+        LocalDateTime end = goods.getFlashEndTime();
+        if (start == null || end == null) return false;
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(start) && !now.isAfter(end);
+    }
+
+    private BigDecimal resolveEffectivePrice(CartInfo item) {
+        BigDecimal skuPrice = item.getPrice() == null ? BigDecimal.ZERO : item.getPrice();
+        if (!isFlashActive(item)) return skuPrice;
+        BigDecimal goodsPrice = item.getGoodsPrice() == null ? BigDecimal.ZERO : item.getGoodsPrice();
+        BigDecimal flashPrice = item.getFlashPrice() == null ? BigDecimal.ZERO : item.getFlashPrice();
+        if (goodsPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return flashPrice.setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+        BigDecimal ratio = flashPrice.divide(goodsPrice, 6, java.math.RoundingMode.HALF_UP);
+        return skuPrice.multiply(ratio).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 }

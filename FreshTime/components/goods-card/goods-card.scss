@@ -3,17 +3,17 @@ $bg-card: #ffffff;
 $primary: #73a937;
 $primary-dark: #1e3311;
 $primary-light: #edf6e0;
-$accent-price: #ffd84d;
+$accent-price: #5a8a28;
 $accent-warm: #fff8e9;
 $text-dark: #1e3311;
 $text-secondary: #647457;
-$shadow-sm: 0 8rpx 20rpx rgba(31, 43, 36, 0.05);
+$shadow-sm: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
 $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
 .goods-card {
   width: 100%;
   background: $bg-card;
-  border-radius: 24rpx;
+  border-radius: 22rpx;
   overflow: hidden;
   box-shadow: $shadow-sm;
   box-sizing: border-box;
@@ -33,7 +33,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
   width: 100%;
   padding-bottom: 100%;
-  background: $accent-warm;
+  background: linear-gradient(180deg, #f8fbf4 0%, $accent-warm 100%);
   box-sizing: border-box;
 }
 
@@ -48,20 +48,20 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 .add-btn {
   position: absolute;
   bottom: 16rpx; right: 16rpx;
-  width: 72rpx; height: 72rpx;
+  width: 68rpx; height: 68rpx;
   background: linear-gradient(135deg, #73a937, #5a8a28);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6rpx 14rpx rgba(115, 169, 55, 0.26);
+  box-shadow: 0 10rpx 18rpx rgba(115, 169, 55, 0.22);
   transition: transform 0.25s $spring-curve, background 0.25s $spring-curve;
-  .add-icon { font-size: 40rpx; color: #ffffff; font-weight: 600; }
+  .add-icon { font-size: 36rpx; color: #ffffff; font-weight: 600; }
   &:active { transform: scale(0.9); background: linear-gradient(135deg, darken($primary, 4%), darken(#5a8a28, 4%)); }
 }
 
 .goods-info {
-  padding: 20rpx 16rpx 24rpx;
+  padding: 18rpx 16rpx 20rpx;
   box-sizing: border-box;
 }
 
@@ -73,14 +73,19 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   margin-bottom: 8rpx;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  min-height: 78rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
 }
 
 .goods-desc {
   font-size: 24rpx;
   color: $text-secondary;
   display: block;
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -93,7 +98,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .price {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 700;
   color: $accent-price;
 }
@@ -111,7 +116,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     height: 64rpx;
     bottom: 12rpx;
     right: 12rpx;
-    .add-icon { font-size: 36rpx; }
+    .add-icon { font-size: 34rpx; }
   }
 
   .goods-info { padding: 16rpx 12rpx 18rpx; }

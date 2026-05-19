@@ -26,10 +26,9 @@
       <header class="topbar">
         <div>
           <h1 class="page-title">FreshTime 店铺经营后台</h1>
-          <p class="page-subtitle">当前为单商户模式，支持商品、订单、分类与营销管理</p>
+          <p class="page-subtitle">支持商品、订单、分类、优惠券与运营配置管理</p>
         </div>
         <div class="topbar-actions">
-          <div class="topbar-tag">SpringBoot + Vue</div>
           <button class="ghost-btn" @click="onLogout">退出</button>
         </div>
       </header>

@@ -16,3 +16,58 @@
 .img { width: 100%; height: 220rpx; border-radius: 12rpx; background: #f8faf5; }
 .name { margin-top: 10rpx; font-size: 26rpx; color: #1e3311; }
 .price { margin-top: 8rpx; color: #5a8a28; font-weight: 600; }
+
+.search-bar {
+  padding: 16rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  border: 1rpx solid #e4eadf;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.search-bar input {
+  background: #f6faf2;
+  border: 1rpx solid #edf2e7;
+}
+
+.search-btn {
+  margin: 0;
+  min-width: 132rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, #73a937, #5a8a28);
+  color: #ffffff;
+  box-shadow: 0 10rpx 20rpx rgba(115, 169, 55, 0.18);
+}
+
+.history {
+  border-radius: 20rpx;
+  padding: 18rpx;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.state {
+  color: #7b8d75;
+  padding: 90rpx 24rpx;
+  line-height: 1.6;
+}
+
+.item {
+  border-radius: 20rpx;
+  box-shadow: 0 10rpx 20rpx rgba(31, 43, 36, 0.05);
+}
+
+.name {
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 74rpx;
+}
+
+.price {
+  font-weight: 700;
+  font-size: 30rpx;
+}

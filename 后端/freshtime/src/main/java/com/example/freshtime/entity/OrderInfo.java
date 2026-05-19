@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class OrderInfo {
     public static final String ORDER_SOURCE_NORMAL = "NORMAL";
+    public static final String ORDER_SOURCE_FLASH = "FLASH";
     public static final String ORDER_SOURCE_MEAL = "MEAL";
     public static final String ORDER_SOURCE_COMBO = "COMBO";
     public static final String ORDER_SOURCE_SEASONAL = "SEASONAL";

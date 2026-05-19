@@ -1,36 +1,47 @@
 <view class='page'>
-  <view class='address' bindtap='onChooseAddress'>
+  <view class='address card-shell' bindtap='onChooseAddress'>
+    <view class='section-title'>收货地址</view>
     <view wx:if='{{address}}'>
       <view class='name'>{{address.receiverName}} {{address.receiverPhone}}</view>
       <view class='text'>{{address.province}}{{address.city}}{{address.district}}{{address.detail}}</view>
     </view>
     <view wx:else>
-      <view class='text'>请选择收货地址</view>
-      <view class='hint'>点击这里去新增或选择地址</view>
+      <view class='text'>请选择收货地址，方便我们尽快为你配送</view>
+      <view class='hint'>点击选择已有地址或新增地址</view>
     </view>
   </view>
 
-  <view class='list' wx:if='{{items.length > 0}}'>
+  <view class='list card-shell' wx:if='{{items.length > 0}}'>
+    <view class='section-title'>商品清单</view>
     <view class='item' wx:for='{{items}}' wx:key='id'>
-      <text>{{item.name}} {{item.skuName ? ("(" + item.skuName + ")") : ""}} x{{item.quantity}}</text>
-      <text>¥{{item.price}}</text>
-      <text wx:if='{{item.sourceType && item.sourceType !== "NORMAL"}}'>{{item.sourceScene || item.sourceType}}</text>
+      <view class='item-main'>
+        <text class='item-name'>{{item.name}} {{item.specLabel ? ("(" + item.specLabel + ")") : ""}}</text>
+        <text class='item-sub' wx:if='{{item.sourceLabel}}'>{{item.sourceLabel}}</text>
+      </view>
+      <view class='item-side'>
+        <view class='item-price-row'>
+          <text class='item-price {{item.flashActive ? "item-price-flash" : ""}}'>¥{{item.price}}</text>
+          <text class='item-origin-price' wx:if='{{item.flashActive && item.originPrice > item.price}}'>¥{{item.originPrice}}</text>
+        </view>
+        <text class='item-price-tag' wx:if='{{item.flashActive}}'>秒杀价</text>
+        <text class='item-qty'>x{{item.quantity}}</text>
+      </view>
     </view>
   </view>
-  <view class='list empty-list' wx:else>
-    <text class='text'>暂无可结算商品</text>
-    <button size='mini' bindtap='onGoCart'>去购物车</button>
+  <view class='list empty-list card-shell' wx:else>
+    <text class='text'>你还没有勾选可结算商品，先回购物车看看</text>
+    <button size='mini' bindtap='onGoCart'>返回购物车</button>
   </view>
 
-  <view class='remark'>
-    <text class='remark-label'>订单备注</text>
-    <input class='remark-input' placeholder='选填：口味偏好、配送时间等' value='{{remark}}' bindinput='onInputRemark' />
+  <view class='remark card-shell'>
+    <text class='remark-label'>备注给商家</text>
+    <input class='remark-input' placeholder='选填：如口味偏好、送达时间要求等' value='{{remark}}' bindinput='onInputRemark' />
   </view>
 
-  <view class='remark'>
+  <view class='remark card-shell'>
     <text class='remark-label'>优惠券</text>
     <view class='coupon-section'>
-      <view class='coupon-title'>推荐可用券（自动优选）</view>
+      <view class='coupon-title'>可用优惠券（系统将优先帮你选择更划算的一张）</view>
       <view wx:if='{{availableCouponList.length}}' class='coupon-list'>
         <view
           wx:for='{{availableCouponList}}'
@@ -43,8 +54,8 @@
           <view class='coupon-sub'>有效期至：{{item.expireAt}}</view>
         </view>
       </view>
-      <view wx:else class='coupon-empty'>当前无可用优惠券</view>
-      <view wx:if='{{selectedCouponId}}' class='coupon-clear' bindtap='onClearCoupon'>不使用优惠券</view>
+      <view wx:else class='coupon-empty'>当前没有可用优惠券，后续活动可再来看看</view>
+      <view wx:if='{{selectedCouponId}}' class='coupon-clear' bindtap='onClearCoupon'>本单不使用优惠券</view>
       <view wx:if='{{unavailableCouponList.length}}' class='coupon-title'>不可用优惠券</view>
       <view wx:if='{{unavailableCouponList.length}}' class='coupon-list'>
         <view wx:for='{{unavailableCouponList}}' wx:key='id' class='coupon-item coupon-item-disabled'>
@@ -55,9 +66,11 @@
     </view>
   </view>
 
-  <view class='summary'>
+  <view class='summary card-shell'>
+    <view class='section-title'>金额明细</view>
+    <view class='hint' wx:if='{{orderTipText}}'>{{orderTipText}}</view>
     <view class='summary-line'>
-      <text>商品总额</text>
+      <text>{{amountLabel}}</text>
       <text>¥{{amount}}</text>
     </view>
     <view class='summary-line'>
@@ -65,7 +78,7 @@
       <text>¥0.00</text>
     </view>
     <view class='summary-line'>
-      <text>优惠抵扣</text>
+      <text>优惠金额</text>
       <text>-¥{{discountAmount}}</text>
     </view>
     <view class='summary-line total'>
@@ -74,13 +87,16 @@
     </view>
   </view>
 
-  <view class='bottom'>
-    <text>合计：¥{{actualAmount}}</text>
+  <view class='bottom card-shell'>
+    <view class='bottom-main'>
+      <text class='bottom-total'>合计：¥{{actualAmount}}</text>
+      <text class='bottom-tip'>下单后可在订单页查看处理进度，如支付未完成也可稍后继续支付</text>
+    </view>
     <button
       class='submit {{submitting ? "submit-disabled" : ""}}'
       loading='{{submitting}}'
       disabled='{{submitting}}'
       bindtap='onSubmit'
-    >提交订单</button>
+    >提交并支付</button>
   </view>
 </view>

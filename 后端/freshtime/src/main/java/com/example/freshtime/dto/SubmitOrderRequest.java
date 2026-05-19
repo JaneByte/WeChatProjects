@@ -2,6 +2,7 @@ package com.example.freshtime.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -13,6 +14,7 @@ public class SubmitOrderRequest {
     private String receiverPhone;
     private String receiverAddress;
     private String remark;
+    private BigDecimal packPrice;
     private List<Item> items;
 
     @Data

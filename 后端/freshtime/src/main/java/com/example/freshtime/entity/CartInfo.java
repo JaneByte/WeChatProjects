@@ -3,10 +3,12 @@ package com.example.freshtime.entity;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 public class CartInfo {
     public static final String SOURCE_TYPE_NORMAL = "NORMAL";
+    public static final String SOURCE_TYPE_FLASH = "FLASH";
     public static final String SOURCE_TYPE_MEAL = "MEAL";
     public static final String SOURCE_TYPE_COMBO = "COMBO";
     public static final String SOURCE_TYPE_SEASONAL = "SEASONAL";
@@ -30,4 +32,10 @@ public class CartInfo {
     private Integer skuWeightG;
     private Integer status;
     private String origin;
+    private BigDecimal goodsPrice;
+    private Integer isFlash;
+    private BigDecimal flashPrice;
+    private LocalDateTime flashStartTime;
+    private LocalDateTime flashEndTime;
+    private Integer flashStock;
 }

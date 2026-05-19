@@ -1,7 +1,7 @@
 ﻿<view class='page'>
   <view class='hero'>
-    <view class='hero-title'>蔬果搭配生成器</view>
-    <view class='hero-sub'>按场景生成可替换、可加购的搭配方案</view>
+    <view class='hero-title'>场景搭配推荐</view>
+    <view class='hero-sub'>按你的场景，帮你一次配齐更合适的一组蔬果</view>
   </view>
 
   <view class='card'>
@@ -60,5 +60,5 @@
     </view>
   </view>
 
-  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>生成搭配方案</button>
+  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>帮我配一组搭配</button>
 </view>

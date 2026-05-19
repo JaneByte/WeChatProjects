@@ -1,21 +1,20 @@
 <view class="cart-page">
   <view class="empty-state state-block" wx:if="{{cartItems.length === 0}}">
     <view class="empty-icon state-icon">空</view>
-    <text class="empty-text state-text">购物车还是空的</text>
-    <view class="go-shop-btn press-effect" bindtap="goShopping">去逛逛</view>
+    <text class="empty-text state-text">还没选商品，先去挑点新鲜好物吧</text>
+    <view class="go-shop-btn press-effect" bindtap="goShopping">去挑商品</view>
   </view>
 
   <block wx:else>
-    <view class="top-header-bar">
-      <text class="bar-title">我的购物车</text>
-      <view class="edit-btn press-effect" bindtap="toggleEditMode">
-        {{editMode ? '完成' : '编辑'}}
-      </view>
-    </view>
+    <!-- 头部已删除 -->
 
     <scroll-view class="cart-scroll" scroll-y>
       <view class="cart-list">
         <view wx:for="{{cartItems}}" wx:key="id" class="cart-item-wrapper">
+          <view class="delete-area" catchtap="deleteItem" data-id="{{item.id}}">
+            <text class="delete-icon">删</text>
+            <text class="delete-text">删除</text>
+          </view>
           <view
             class="cart-item {{item.selected ? 'item-selected' : ''}} {{item.stock <= 0 ? 'sold-out' : ''}}"
             style="transform: translateX(-{{item.slideOffset || 0}}rpx); transition: {{slideTransition ? 'transform 0.2s linear' : ''}};"
@@ -41,13 +40,13 @@
 
               <view class="goods-info" catchtap="goToDetail" data-id="{{item.id}}">
                 <text class="goods-name">{{item.name}}</text>
-                <text class="goods-desc" wx:if="{{item.sourceType && item.sourceType !== 'NORMAL'}}">{{item.sourceScene || item.sourceType}}</text>
-                <text class="goods-desc" wx:if="{{item.skuText}}">{{item.skuText}}</text>
-                <text class="goods-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+                <text class="goods-desc" wx:if="{{item.specLabel}}">{{item.specLabel}}</text>
                 <text class="goods-unit" wx:else>/{{item.unit}}</text>
                 <view class="price-row">
-                  <text class="goods-price">¥{{item.price}}</text>
-                  <text wx:if="{{item.stock <= 0}}" class="sold-out-tag">售罄</text>
+                  <text class="goods-price {{item.flashActive ? 'goods-price-flash' : ''}}">¥{{item.price}}</text>
+                  <text class="goods-origin-price" wx:if="{{item.flashActive && item.originPrice > item.price}}">¥{{item.originPrice}}</text>
+                  <text class="goods-price-tag" wx:if="{{item.flashActive}}">秒杀价</text>
+                  <text wx:if="{{item.stock <= 0}}" class="sold-out-tag">暂时售空</text>
                 </view>
               </view>
 
@@ -69,10 +68,6 @@
                 </view>
               </view>
             </view>
-
-            <view class="delete-area" catchtap="deleteItem" data-id="{{item.id}}">
-              <text class="delete-text">删除</text>
-            </view>
           </view>
         </view>
       </view>
@@ -87,6 +82,9 @@
           </view>
         </view>
         <text class="select-all-text">全选</text>
+        <view class="edit-btn-in-footer press-effect" bindtap="toggleEditMode">
+          {{editMode ? '完成' : '编辑'}}
+        </view>
       </view>
       <view class="footer-right">
         <view class="total-info">
@@ -95,7 +93,7 @@
         </view>
         <block wx:if="{{!editMode}}">
           <view class="action-btn checkout-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="onCheckout">
-            结算 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
+            去结算 {{selectedCount > 0 ? '(' + selectedCount + ')' : ''}}
           </view>
         </block>
         <block wx:else>

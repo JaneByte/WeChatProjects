@@ -9,23 +9,29 @@
     <view class='skeleton-card shimmer' wx:for='{{[1,2,3]}}' wx:key='*this'></view>
   </view>
   <view wx:elif='{{loadError}}' class='state'>
-    <text>加载失败，请重试</text>
+    <text>订单暂时没加载出来，点一下重试</text>
     <button size='mini' bindtap='onRetryLoad'>重试</button>
   </view>
-  <view wx:elif='{{!list.length}}' class='state'>暂无订单记录</view>
+  <view wx:elif='{{!list.length}}' class='state'>你还没有下过单，先去逛逛今天的新鲜好物</view>
   <view wx:else class='list'>
     <view class='card' wx:for='{{list}}' wx:key='id' data-id='{{item.id}}' bindtap='onTapItem'>
-      <view class='line'>订单号：{{item.orderNo}}</view>
-      <view class='line'>状态：{{item.statusText}}</view>
-      <view class='line'>金额：¥{{item.actualAmount}}</view>
-      <view class='line danger' wx:if='{{item.status === 0}}'>剩余支付时间：{{item.countdownText}}</view>
+      <view class='card-top'>
+        <text class='order-no'>订单号：{{item.orderNo}}</text>
+        <text class='status-tag'>{{item.statusText}}</text>
+      </view>
+      <view class='amount-row'>
+        <text class='amount-label'>实付金额</text>
+        <text class='amount-value'>¥{{item.actualAmount}}</text>
+      </view>
+      <view class='line danger' wx:if='{{item.status === 0}}'>请尽快完成支付，剩余 {{item.countdownText}}</view>
       <view class='actions'>
-        <button size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onTapItem'>查看详情</button>
-        <button wx:if='{{item.status === 0}}' size='mini' class='mini-btn primary' data-id='{{item.id}}' catchtap='onPay'>去支付</button>
+        <button size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onTapItem'>查看订单</button>
+        <button wx:if='{{item.status === 0}}' size='mini' class='mini-btn primary' data-id='{{item.id}}' catchtap='onPay'>继续支付</button>
         <button wx:if='{{item.status === 0 || item.status === 1}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onCancel'>取消订单</button>
         <button wx:if='{{item.status === 2}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onFinish'>确认收货</button>
         <button wx:if='{{item.canAfterSale}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onRefund'>{{item.status === 3 ? "申请售后" : "申请退款"}}</button>
-        <button wx:if='{{item.status === 6}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onRefundFinish'>确认退款成功</button>
+        <button wx:if='{{item.status === 7}}' size='mini' class='mini-btn' data-id='{{item.id}}' disabled>售后审核中</button>
+        <button wx:if='{{item.status === 6}}' size='mini' class='mini-btn' data-id='{{item.id}}' catchtap='onRefundFinish'>确认已退款</button>
       </view>
     </view>
   </view>

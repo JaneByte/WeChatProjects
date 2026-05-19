@@ -24,4 +24,162 @@
 .submit { background: linear-gradient(135deg, #73a937, #5a8a28); color: #fff; border-radius: 14rpx; height: 68rpx; line-height: 68rpx; }
 .submit.submit-disabled { background: #b8c2ae; color: #f8faf5; }
 
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f4f8ef 0%, #ffffff 30%);
+}
+
+.address,
+.list,
+.remark,
+.summary,
+.bottom {
+  border-radius: 22rpx;
+  padding: 22rpx;
+}
+
+.card-shell {
+  border: 1rpx solid #e4eadf;
+  box-shadow: 0 12rpx 24rpx rgba(31, 43, 36, 0.05);
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: #1e3311;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+
+.item {
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #eef2ea;
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 26rpx;
+  color: #1e3311;
+  line-height: 1.45;
+}
+
+.item-sub {
+  display: block;
+  margin-top: 8rpx;
+  color: #7b8d75;
+  font-size: 22rpx;
+}
+
+.item-side {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  text-align: right;
+}
+
+.item-price-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.item-price {
+  display: block;
+  font-size: 28rpx;
+  color: #5a8a28;
+  font-weight: 700;
+}
+
+.item-price-flash {
+  color: #df5d49;
+}
+
+.item-origin-price {
+  font-size: 20rpx;
+  color: #b8c2ae;
+  text-decoration: line-through;
+}
+
+.item-price-tag {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #df5d49;
+}
+
+.item-qty {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #7b8d75;
+}
+
+.remark-input {
+  border-radius: 14rpx;
+  border: 1rpx solid #edf2e7;
+}
+
+.coupon-item {
+  padding: 16rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(180deg, #f7fbf2 0%, #edf6e0 100%);
+}
+
+.coupon-item-active {
+  background: linear-gradient(180deg, #f5fbe9 0%, #e8f4d5 100%);
+  box-shadow: 0 10rpx 18rpx rgba(115, 169, 55, 0.12);
+}
+
+.summary-line {
+  padding: 12rpx 0;
+}
+
+.summary-line.total {
+  margin-top: 6rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #edf2e7;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.bottom {
+  gap: 16rpx;
+}
+
+.bottom-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.bottom-total {
+  display: block;
+  font-size: 32rpx;
+  color: #1e3311;
+  font-weight: 700;
+}
+
+.bottom-tip {
+  display: block;
+  margin-top: 8rpx;
+  color: #7b8d75;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.submit {
+  min-width: 220rpx;
+  border-radius: 16rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  box-shadow: 0 12rpx 22rpx rgba(115, 169, 55, 0.18);
+}
+
 

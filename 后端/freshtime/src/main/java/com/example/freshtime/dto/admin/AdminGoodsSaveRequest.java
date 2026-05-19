@@ -35,4 +35,16 @@ public class AdminGoodsSaveRequest {
     private String seasonPeakHint;
     private String seasonLateHint;
     private List<Long> tagIds;
+    private List<SkuItem> skuList;
+
+    @Data
+    public static class SkuItem {
+        private Long id;
+        private String skuName;
+        private Integer skuWeightG;
+        private BigDecimal skuPrice;
+        private Integer skuStock;
+        private Integer status;
+        private Integer sort;
+    }
 }

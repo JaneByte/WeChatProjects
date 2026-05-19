@@ -179,7 +179,7 @@ Page({
   addToCart(e) {
     const goodsId = e.currentTarget.dataset.id;
     const goods = this.data.goodsList.find((item) => item.id === goodsId);
-    if (!goods) return;
+    if (!goods || this.data.addCartLoadingId) return;
 
     if (Number(goods.stock || 0) <= 0) {
       wx.showToast({ title: '暂无库存', icon: 'none', duration: 1500 });
@@ -195,11 +195,14 @@ Page({
       wx.showToast({ title: '暂无可用规格', icon: 'none', duration: 1500 });
       return;
     }
-    this.setData({
-      specPopupVisible: true,
-      specGoods: goods,
-      selectedSkuId: Number(selectedSku.id || 0)
-    });
+    this.setData({ addCartLoadingId: Number(goods.id) });
+    post(`/cart/add?goodsId=${goods.id}&skuId=${selectedSku.id}&quantity=1`, {}, { retry: 0 })
+      .then(() => {
+        wx.showToast({ title: '已加入购物车', icon: 'success', duration: 1200 });
+        if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+      })
+      .catch((error) => showRequestError(error, '加入购物车失败'))
+      .finally(() => this.setData({ addCartLoadingId: 0 }));
   },
 
   onCloseSpecPopup() {
@@ -245,7 +248,11 @@ Page({
     const enabled = list.filter((sku) => Number(sku.status) === 1 && Number(sku.skuStock || 0) > 0);
     if (!enabled.length) return null;
     const sorted = enabled.slice().sort((a, b) => Number(a.sort || 0) - Number(b.sort || 0));
-    return sorted[0];
+    const standardSku = sorted.find((sku) => {
+      const name = `${sku.skuName || ''}`.trim();
+      return name.includes('标准') || name.includes('默认');
+    });
+    return standardSku || sorted[0];
   },
 
   getSelectedSku(goods = {}, selectedSkuId = 0) {

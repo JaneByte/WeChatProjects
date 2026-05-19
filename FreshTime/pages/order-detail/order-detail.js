@@ -19,6 +19,7 @@ Page({
   },
 
   onLoad(options) {
+    this.pageActive = true;
     const id = Number(options.id || 0);
     this.setData({ id });
     if (!app.getUserId()) {
@@ -29,21 +30,25 @@ Page({
   },
 
   onShow() {
+    this.pageActive = true;
     this.loadDetail();
     this.startCountdownTicker();
   },
 
   onHide() {
+    this.pageActive = false;
     this.stopCountdownTicker();
   },
 
   onUnload() {
+    this.pageActive = false;
     this.stopCountdownTicker();
   },
 
   startCountdownTicker() {
     this.stopCountdownTicker();
     this.countdownTimer = setInterval(() => {
+      if (!this.pageActive) return;
       if (Number(this.data.detail && this.data.detail.status) !== 0) return;
       const next = Math.max(0, Number(this.data.remainSeconds || 0) - 1);
       this.setData({ remainSeconds: next, countdownText: this.formatCountdown(next) });
@@ -66,9 +71,18 @@ Page({
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
   },
 
+  parseDateTime(value) {
+    if (!value) return NaN;
+    const normalized = String(value)
+      .replace('T', ' ')
+      .replace(/\.\d+/, '')
+      .replace(/-/g, '/');
+    return new Date(normalized).getTime();
+  },
+
   calcRemainSeconds(createTime) {
     if (!createTime) return 0;
-    const ts = new Date(String(createTime).replace(/-/g, '/')).getTime();
+    const ts = this.parseDateTime(createTime);
     if (Number.isNaN(ts)) return 0;
     const remainMs = ts + 30 * 60 * 1000 - Date.now();
     return Math.max(0, Math.floor(remainMs / 1000));
@@ -77,7 +91,7 @@ Page({
   canAfterSale(detail = {}) {
     if (Number(detail.status) === 1) return true;
     if (Number(detail.status) !== 3 || !detail.finishTime) return false;
-    const ts = new Date(String(detail.finishTime).replace(/-/g, '/')).getTime();
+    const ts = this.parseDateTime(detail.finishTime);
     if (Number.isNaN(ts)) return false;
     return (Date.now() - ts) <= AFTER_SALE_MS;
   },
@@ -169,10 +183,11 @@ Page({
 
   onRefund() {
     if (!app.getUserId() || !this.data.detail) return;
+    const isAfterSale = Number(this.data.detail.status) === 3;
     this.executeAction(
       () => post(`/order/refund/apply?orderId=${this.data.detail.id}`, {}, { retry: 0 }),
-      '退款申请已提交',
-      '退款申请失败'
+      isAfterSale ? '售后申请已提交' : '退款申请已提交',
+      isAfterSale ? '售后申请失败' : '退款申请失败'
     );
   },
 

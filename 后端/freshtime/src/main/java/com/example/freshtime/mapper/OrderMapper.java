@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -34,6 +35,10 @@ public interface OrderMapper {
     @Update("UPDATE goods_sku SET sku_stock = sku_stock - #{quantity} " +
             "WHERE id = #{skuId} AND sku_stock >= #{quantity}")
     int deductSkuStock(@Param("skuId") Long skuId, @Param("quantity") Integer quantity);
+
+    @Update("UPDATE goods SET flash_stock = flash_stock - #{quantity} " +
+            "WHERE id = #{goodsId} AND flash_stock >= #{quantity}")
+    int deductFlashStock(@Param("goodsId") Long goodsId, @Param("quantity") Integer quantity);
 
     @Insert("INSERT INTO `order`(order_no, user_id, total_amount, discount_amount, actual_amount, " +
             "receiver_name, receiver_phone, receiver_address, remark, coupon_id, order_source, status, pay_status) " +
@@ -63,6 +68,9 @@ public interface OrderMapper {
                           @Param("fromStatus") Integer fromStatus,
                           @Param("toStatus") Integer toStatus);
 
+    @Update("UPDATE `order` SET status = 3, finish_time = NOW() WHERE id = #{orderId} AND user_id = #{userId} AND status = 2")
+    int finishOrder(@Param("orderId") Long orderId, @Param("userId") Long userId);
+
     @Update("UPDATE `order` SET pay_channel = #{payChannel}, pay_trade_no = #{payTradeNo}, pay_status = 1 " +
             "WHERE id = #{orderId} AND user_id = #{userId} AND status = 0")
     int createMockPay(@Param("orderId") Long orderId,
@@ -79,7 +87,7 @@ public interface OrderMapper {
     @Update("UPDATE `order` SET status = 2, deliver_time = NOW() WHERE id = #{orderId} AND user_id = #{userId} AND status = 1")
     int deliverOrder(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
-    @Update("UPDATE `order` SET status = 6 WHERE id = #{orderId} AND user_id = #{userId} AND status IN (1, 2, 3)")
+    @Update("UPDATE `order` SET status = 7 WHERE id = #{orderId} AND user_id = #{userId} AND status IN (1, 2, 3)")
     int applyRefund(@Param("orderId") Long orderId, @Param("userId") Long userId);
 
     @Update("UPDATE `order` SET status = 5 WHERE id = #{orderId} AND user_id = #{userId} AND status = 6")
@@ -90,6 +98,14 @@ public interface OrderMapper {
             "SET s.sku_stock = s.sku_stock + oi.quantity " +
             "WHERE oi.order_id = #{orderId}")
     int restoreSkuStockByOrderId(@Param("orderId") Long orderId);
+
+    @Update("UPDATE goods g " +
+            "JOIN (" +
+            "  SELECT goods_id, SUM(quantity) AS total_qty FROM order_item " +
+            "  WHERE order_id = #{orderId} AND source_type = 'FLASH' GROUP BY goods_id" +
+            ") t ON t.goods_id = g.id " +
+            "SET g.flash_stock = g.flash_stock + t.total_qty")
+    int restoreFlashStockByOrderId(@Param("orderId") Long orderId);
 
     @Select("SELECT " +
             "oi.id, oi.order_id, oi.goods_id, oi.sku_id, oi.goods_name, oi.goods_image, oi.sku_name, oi.sku_weight_g, oi.price, oi.quantity, oi.total_price, oi.source_type, oi.source_plan_id, oi.source_scene, " +
@@ -118,6 +134,11 @@ public interface OrderMapper {
     @Update("UPDATE `order` SET status = #{status} WHERE id = #{orderId}")
     int updateOrderStatusDirect(@Param("orderId") Long orderId, @Param("status") Integer status);
 
+    @Update("UPDATE `order` SET status = #{toStatus} WHERE id = #{orderId} AND status = #{fromStatus}")
+    int updateOrderStatusIfCurrent(@Param("orderId") Long orderId,
+                                   @Param("fromStatus") Integer fromStatus,
+                                   @Param("toStatus") Integer toStatus);
+
     @Select("SELECT COUNT(1) FROM `order`")
     Integer countAllOrders();
 
@@ -129,6 +150,40 @@ public interface OrderMapper {
 
     @Select("SELECT COUNT(1) FROM `order` WHERE order_source = #{orderSource}")
     Integer countOrdersBySource(@Param("orderSource") String orderSource);
+
+    @Select("SELECT COUNT(DISTINCT oi.order_id) " +
+            "FROM order_item oi " +
+            "INNER JOIN `order` o ON o.id = oi.order_id " +
+            "WHERE oi.source_type = #{sourceType} AND o.pay_status = 2")
+    Integer countPaidOrdersContainingItemSource(@Param("sourceType") String sourceType);
+
+    @Select("SELECT COUNT(1) FROM `order` WHERE order_source = #{orderSource} AND pay_status = 2")
+    Integer countPaidOrdersBySource(@Param("orderSource") String orderSource);
+
+    @Select("SELECT oi.sku_id AS skuId, COALESCE(SUM(oi.quantity), 0) AS salesVolume " +
+            "FROM order_item oi " +
+            "INNER JOIN `order` o ON o.id = oi.order_id " +
+            "WHERE oi.sku_id IS NOT NULL AND o.pay_status = 2 " +
+            "GROUP BY oi.sku_id")
+    List<Map<String, Object>> selectPaidSkuSalesSummary();
+
+    @Select("SELECT " + ORDER_COLUMNS + " FROM `order` ORDER BY id ASC")
+    List<OrderInfo> selectAllOrders();
+
+    @Select("SELECT id, source_scene AS source_scene FROM order_item WHERE source_scene IS NOT NULL AND source_scene <> ''")
+    List<OrderItemInfo> selectAllSourceSceneRows();
+
+    @Update("UPDATE order_item SET source_scene = #{sourceScene} WHERE id = #{id}")
+    int updateOrderItemSourceSceneById(@Param("id") Long id, @Param("sourceScene") String sourceScene);
+
+    @Select("SELECT " + ORDER_ITEM_COLUMNS + " FROM order_item WHERE order_id = #{orderId} ORDER BY id ASC")
+    List<OrderItemInfo> selectOrderItemsByOrderIdRaw(@Param("orderId") Long orderId);
+
+    @Update("UPDATE order_item SET source_type = #{sourceType}, source_scene = #{sourceScene} WHERE id = #{id}")
+    int updateOrderItemSourceFieldsById(@Param("id") Long id, @Param("sourceType") String sourceType, @Param("sourceScene") String sourceScene);
+
+    @Update("UPDATE `order` SET order_source = #{orderSource} WHERE id = #{orderId}")
+    int updateOrderSourceById(@Param("orderId") Long orderId, @Param("orderSource") String orderSource);
 
     @org.apache.ibatis.annotations.Delete("DELETE oi FROM order_item oi INNER JOIN `order` o ON oi.order_id = o.id WHERE o.user_id = #{userId}")
     int deleteOrderItemsByUserId(@Param("userId") Long userId);

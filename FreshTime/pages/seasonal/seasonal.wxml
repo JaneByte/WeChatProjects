@@ -54,11 +54,12 @@
     </scroll-view>
   </view>
 
-  <view class='state' wx:if='{{loading}}'>正在加载当季精选...</view>
-  <view class='state error' wx:elif='{{loadError}}' bindtap='onRetry'>加载失败，点击重试</view>
-  <view class='state' wx:elif='{{items.length === 0}}'>当前暂无当季商品</view>
+  <view class='state' wx:if='{{loading}}'>正在为你整理当季推荐，请稍等</view>
+  <view class='state error' wx:elif='{{loadError}}' bindtap='onRetry'>当季推荐暂时没加载出来，点一下重试</view>
+  <view class='state' wx:elif='{{items.length === 0}}'>这一档当季商品刚好售空，先看看其他新鲜推荐</view>
 
   <view class='list' wx:else>
+    <view class='fallback-tip' wx:if='{{fallbackUsed && fallbackMessage}}'>{{fallbackMessage}}</view>
     <view class='card' wx:for='{{items}}' wx:key='id' data-id='{{item.id}}' bindtap='onTapItem'>
       <image class='cover' src='{{item.mainImage}}' mode='aspectFill'></image>
       <view class='info'>
@@ -66,30 +67,27 @@
           <text class='name'>{{item.name}}</text>
           <text class='score'>{{item.totalScore}}</text>
         </view>
-        <view class='meta'>{{item.origin || '时令优选'}} · 销量{{item.salesVolume}}</view>
+        <view class='meta meta-main'>近期销量{{item.salesVolume}}</view>
         <view class='status-row'>
           <text class='status-tag' wx:if='{{item.statusTagText}}'>{{item.statusTagText}}</text>
           <text class='status-tag warn' wx:if='{{item.urgencyText}}'>{{item.urgencyText}}</text>
         </view>
-        <view class='meta' wx:if='{{item.supplyText}}'>供应期：{{item.supplyText}}</view>
-        <view class='reason'>{{item.recommendReason}}</view>
-        <view class='reason' wx:if='{{item.freshnessText}}'>{{item.freshnessText}}</view>
-        <view class='reason' wx:if='{{item.marketingText}}'>{{item.marketingText}}</view>
-        <view class='tag-row'>
+        <view class='reason reason-main'>{{item.listReason}}</view>
+        <view class='tag-row' wx:if='{{item.tags && item.tags.length > 0}}'>
           <text class='tag' wx:for='{{item.tags}}' wx:key='index'>{{item}}</text>
         </view>
         <view class='foot'>
-          <view class='price-row'>
-            <text class='price'>¥{{item.price}}</text>
-            <text class='origin-price' wx:if='{{item.originalPrice > item.price}}'>¥{{item.originalPrice}}</text>
+          <view class='price-block'>
+            <view class='price-row'>
+              <text class='price'>¥{{item.price}}</text>
+              <text class='origin-price' wx:if='{{item.originalPrice > item.price}}'>¥{{item.originalPrice}}</text>
+            </view>
           </view>
-          <button
-            class='add-btn'
-            loading='{{addingId === item.id}}'
-            disabled='{{addingId === item.id}}'
+          <view
+            class='add-btn {{addingId === item.id ? "add-btn--loading" : ""}}'
             catchtap='onAddCart'
             data-id='{{item.id}}'
-          >加购</button>
+          >{{addingId === item.id ? '加购中' : '加入购物车'}}</view>
         </view>
       </view>
     </view>

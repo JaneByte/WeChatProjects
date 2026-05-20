@@ -32,6 +32,8 @@
             <th class="table-title-cell">商品名</th>
             <th class="table-category-cell">分类</th>
             <th class="table-amount-cell">价格</th>
+            <th class="table-amount-cell">秒杀</th>
+            <th class="table-amount-cell">首页运营</th>
             <th class="table-unit-cell">单位</th>
             <th class="table-number-cell">总库存</th>
             <th class="table-number-cell">总销量</th>
@@ -49,6 +51,14 @@
             <td class="table-amount-cell">
               <div class="cell-title">{{ formatGoodsPrice(item) }}</div>
               <div class="cell-sub" v-if="item.originalPrice">原价 ¥{{ item.originalPrice }}</div>
+            </td>
+            <td class="table-amount-cell">
+              <div class="cell-title">{{ resolveFlashSummary(item).title }}</div>
+              <div class="cell-sub">{{ resolveFlashSummary(item).subtitle }}</div>
+            </td>
+            <td class="table-amount-cell">
+              <div class="cell-title">{{ resolveHomeDisplaySummary(item).title }}</div>
+              <div class="cell-sub">{{ resolveHomeDisplaySummary(item).subtitle }}</div>
             </td>
             <td class="table-unit-cell">{{ item.unit || '-' }}</td>
             <td class="table-number-cell">
@@ -143,11 +153,67 @@
         </div>
 
         <div class="form-section-head">
+          <h3 class="form-section-title">秒杀配置</h3>
+          <p class="form-section-desc">用于控制首页秒杀、秒杀列表与秒杀结算价格。</p>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-block">
+            <span class="field-label">参与秒杀</span>
+            <select v-model.number="form.isFlash" class="input select">
+              <option :value="0">否</option>
+              <option :value="1">是</option>
+            </select>
+            <span class="field-hint">开启后，前台会按秒杀时间和库存判断是否展示。</span>
+          </label>
+          <label class="field-block">
+            <span class="field-label">秒杀价</span>
+            <input v-model.number="form.flashPrice" class="input" placeholder="必须低于当前售价" type="number" min="0" step="0.01" />
+          </label>
+          <label class="field-block">
+            <span class="field-label">秒杀库存</span>
+            <input v-model.number="form.flashStock" class="input" placeholder="建议小于等于总库存" type="number" min="0" />
+          </label>
+          <label class="field-block">
+            <span class="field-label">开始时间</span>
+            <input v-model.trim="form.flashStartTime" class="input" type="datetime-local" />
+          </label>
+          <label class="field-block">
+            <span class="field-label">结束时间</span>
+            <input v-model.trim="form.flashEndTime" class="input" type="datetime-local" />
+          </label>
+          <div class="field-block">
+            <span class="field-label">秒杀状态</span>
+            <div class="readonly-field">{{ resolveFlashStatusText(form) }}</div>
+            <span class="field-hint">未开始、进行中、已结束会根据当前时间自动判断。</span>
+          </div>
+        </div>
+
+        <div class="form-section-head">
           <h3 class="form-section-title">季节与推荐配置</h3>
           <p class="form-section-desc">用于控制当季推荐窗口、提示文案与特色标签。</p>
         </div>
 
         <div class="form-grid">
+          <label class="field-block">
+            <span class="field-label">是否推荐</span>
+            <select v-model.number="form.isRecommend" class="input select">
+              <option :value="0">否</option>
+              <option :value="1">是</option>
+            </select>
+          </label>
+          <label class="field-block">
+            <span class="field-label">首页展示</span>
+            <select v-model.number="form.showInHome" class="input select">
+              <option :value="0">否</option>
+              <option :value="1">是</option>
+            </select>
+          </label>
+          <label class="field-block">
+            <span class="field-label">首页排序</span>
+            <input v-model.number="form.homeSort" class="input" placeholder="数值越小越靠前" type="number" min="0" />
+            <span class="field-hint">建议只给重点商品设置较小排序值，普通商品可保留默认值。</span>
+          </label>
           <label class="field-block">
             <span class="field-label">供应起始月</span>
             <input v-model.number="form.seasonStartMonth" class="input" placeholder="1-12" type="number" min="1" max="12" />
@@ -320,6 +386,14 @@ function createEmptyForm() {
     price: '',
     originalPrice: '',
     stock: 0,
+    isRecommend: 0,
+    showInHome: 1,
+    homeSort: 0,
+    isFlash: 0,
+    flashPrice: '',
+    flashStock: 0,
+    flashStartTime: '',
+    flashEndTime: '',
     unit: '斤',
     origin: '',
     keywords: '',
@@ -383,6 +457,53 @@ function formatGoodsPrice(item = {}) {
   }
   const minPrice = Math.min(...priceList);
   return `¥${minPrice} 起`;
+}
+
+function resolveFlashSummary(item = {}) {
+  const enabled = Number(item.isFlash || 0) === 1;
+  if (!enabled) {
+    return {
+      title: '未开启',
+      subtitle: '普通售价'
+    };
+  }
+  const flashPrice = Number(item.flashPrice || 0);
+  const flashStock = Number(item.flashStock || 0);
+  const start = String(item.flashStartTime || '').trim();
+  const end = String(item.flashEndTime || '').trim();
+  if (!(flashPrice > 0) || !(flashStock > 0) || !start || !end) {
+    return {
+      title: '待完善',
+      subtitle: '缺少时间或库存'
+    };
+  }
+  const startTs = new Date(start.replace(/-/g, '/')).getTime();
+  const endTs = new Date(end.replace(/-/g, '/')).getTime();
+  const now = Date.now();
+  let statusText = '待完善';
+  if (!Number.isNaN(startTs) && !Number.isNaN(endTs)) {
+    if (now < startTs) statusText = '未开始';
+    else if (now > endTs) statusText = '已结束';
+    else statusText = '进行中';
+  }
+  return {
+    title: `¥${flashPrice.toFixed(2)} · ${statusText}`,
+    subtitle: `库存 ${flashStock}`
+  };
+}
+
+function resolveHomeDisplaySummary(item = {}) {
+  const showInHome = Number(item.showInHome || 0) === 1;
+  const isRecommend = Number(item.isRecommend || 0) === 1;
+  const homeSort = Number(item.homeSort || 0);
+  const title = showInHome ? '首页展示中' : '未在首页展示';
+  const tags = [];
+  if (isRecommend) tags.push('推荐');
+  if (showInHome) tags.push(`排序 ${homeSort}`);
+  return {
+    title,
+    subtitle: tags.length ? tags.join(' · ') : '普通商品'
+  };
 }
 
 function buildSeasonHintSummary(item = {}) {
@@ -460,6 +581,14 @@ async function openEditDialog(item) {
     price: item.price,
     originalPrice: item.originalPrice,
     stock: item.stock,
+    isRecommend: Number(item.isRecommend || 0),
+    showInHome: Number(item.showInHome ?? 1),
+    homeSort: Number(item.homeSort || 0),
+    isFlash: Number(item.isFlash || 0),
+    flashPrice: item.flashPrice ?? '',
+    flashStock: item.flashStock ?? 0,
+    flashStartTime: toDateTimeLocalValue(item.flashStartTime),
+    flashEndTime: toDateTimeLocalValue(item.flashEndTime),
     unit: item.unit || '斤',
     origin: item.origin || '',
     keywords: item.keywords || '',
@@ -559,6 +688,14 @@ async function submitGoods() {
   const safePrice = form.price === '' ? null : Number(form.price);
   const safeOriginalPrice = form.originalPrice === '' ? null : Number(form.originalPrice);
   const safeStock = Number(form.stock || 0);
+  const safeIsRecommend = Number(form.isRecommend || 0) === 1 ? 1 : 0;
+  const safeShowInHome = Number(form.showInHome || 0) === 1 ? 1 : 0;
+  const safeHomeSort = Number(form.homeSort || 0);
+  const safeIsFlash = Number(form.isFlash || 0) === 1 ? 1 : 0;
+  const safeFlashPrice = form.flashPrice === '' || form.flashPrice == null ? null : Number(form.flashPrice);
+  const safeFlashStock = Number(form.flashStock || 0);
+  const safeFlashStartTime = normalizeDateTimeValue(form.flashStartTime);
+  const safeFlashEndTime = normalizeDateTimeValue(form.flashEndTime);
   if (!form.name) {
     error.value = '商品名称不能为空';
     return;
@@ -579,6 +716,36 @@ async function submitGoods() {
     error.value = '库存不能为负数';
     return;
   }
+  if (Number.isNaN(safeHomeSort) || safeHomeSort < 0) {
+    error.value = '首页排序不能为负数';
+    return;
+  }
+  if (safeIsFlash === 1) {
+    if (safeFlashPrice === null || Number.isNaN(safeFlashPrice) || safeFlashPrice <= 0) {
+      error.value = '开启秒杀时，请填写有效的秒杀价';
+      return;
+    }
+    if (safeFlashPrice >= safePrice) {
+      error.value = '秒杀价必须低于当前售价';
+      return;
+    }
+    if (Number.isNaN(safeFlashStock) || safeFlashStock <= 0) {
+      error.value = '开启秒杀时，秒杀库存必须大于0';
+      return;
+    }
+    if (safeFlashStock > safeStock) {
+      error.value = '秒杀库存不能大于商品总库存';
+      return;
+    }
+    if (!safeFlashStartTime || !safeFlashEndTime) {
+      error.value = '开启秒杀时，请完整填写开始和结束时间';
+      return;
+    }
+    if (new Date(safeFlashEndTime).getTime() <= new Date(safeFlashStartTime).getTime()) {
+      error.value = '秒杀结束时间必须晚于开始时间';
+      return;
+    }
+  }
   if (form.seasonStartMonth !== '' && (Number(form.seasonStartMonth) < 1 || Number(form.seasonStartMonth) > 12)) {
     error.value = '供应起始月必须在1到12之间';
     return;
@@ -591,7 +758,15 @@ async function submitGoods() {
     ...form,
     price: safePrice,
     originalPrice: safeOriginalPrice,
-    stock: safeStock
+    stock: safeStock,
+    isRecommend: safeIsRecommend,
+    showInHome: safeShowInHome,
+    homeSort: safeHomeSort,
+    isFlash: safeIsFlash,
+    flashPrice: safeFlashPrice,
+    flashStock: safeFlashStock,
+    flashStartTime: safeFlashStartTime,
+    flashEndTime: safeFlashEndTime
   });
   const confirmText = changeList.length
     ? `即将更新以下字段：\n${changeList.join('\n')}\n\n确认保存吗？`
@@ -611,6 +786,14 @@ async function submitGoods() {
       price: safePrice,
       originalPrice: safeOriginalPrice,
       stock: safeStock,
+      isRecommend: safeIsRecommend,
+      showInHome: safeShowInHome,
+      homeSort: safeHomeSort,
+      isFlash: safeIsFlash,
+      flashPrice: safeIsFlash === 1 ? safeFlashPrice : null,
+      flashStock: safeIsFlash === 1 ? safeFlashStock : 0,
+      flashStartTime: safeIsFlash === 1 ? safeFlashStartTime : null,
+      flashEndTime: safeIsFlash === 1 ? safeFlashEndTime : null,
       seasonStartMonth: form.seasonStartMonth === '' ? null : Number(form.seasonStartMonth),
       seasonEndMonth: form.seasonEndMonth === '' ? null : Number(form.seasonEndMonth),
       seasonLateThresholdDays: Number(form.seasonLateThresholdDays || 20),
@@ -644,6 +827,14 @@ function resolveChangeList(next) {
     ['售价', Number(originalSnapshot.price || 0), Number(next.price || 0)],
     ['原价', Number(originalSnapshot.originalPrice || 0), Number(next.originalPrice || 0)],
     ['库存', Number(originalSnapshot.stock || 0), Number(next.stock || 0)],
+    ['是否推荐', Number(originalSnapshot.isRecommend || 0) === 1 ? '是' : '否', Number(next.isRecommend || 0) === 1 ? '是' : '否'],
+    ['首页展示', Number(originalSnapshot.showInHome || 0) === 1 ? '是' : '否', Number(next.showInHome || 0) === 1 ? '是' : '否'],
+    ['首页排序', Number(originalSnapshot.homeSort || 0), Number(next.homeSort || 0)],
+    ['参与秒杀', Number(originalSnapshot.isFlash || 0) === 1 ? '是' : '否', Number(next.isFlash || 0) === 1 ? '是' : '否'],
+    ['秒杀价', Number(originalSnapshot.flashPrice || 0), Number(next.flashPrice || 0)],
+    ['秒杀库存', Number(originalSnapshot.flashStock || 0), Number(next.flashStock || 0)],
+    ['秒杀开始时间', originalSnapshot.flashStartTime || '', next.flashStartTime || ''],
+    ['秒杀结束时间', originalSnapshot.flashEndTime || '', next.flashEndTime || ''],
     ['单位', originalSnapshot.unit || '', next.unit || ''],
     ['产地', originalSnapshot.origin || '', next.origin || ''],
     ['关键词', originalSnapshot.keywords || '', next.keywords || ''],
@@ -792,6 +983,14 @@ async function submitSkuOnly() {
       price: Number(target.price),
       originalPrice: target.originalPrice === '' || target.originalPrice == null ? null : Number(target.originalPrice),
       stock: Number(target.stock || 0),
+      isRecommend: Number(target.isRecommend || 0),
+      showInHome: Number(target.showInHome ?? 1),
+      homeSort: Number(target.homeSort || 0),
+      isFlash: Number(target.isFlash || 0),
+      flashPrice: target.flashPrice === '' || target.flashPrice == null ? null : Number(target.flashPrice),
+      flashStock: Number(target.flashStock || 0),
+      flashStartTime: normalizeDateTimeValue(target.flashStartTime),
+      flashEndTime: normalizeDateTimeValue(target.flashEndTime),
       unit: target.unit || '斤',
       origin: target.origin || '',
       keywords: target.keywords || '',
@@ -839,4 +1038,32 @@ onUnmounted(() => {
   document.body.style.overflow = '';
   window.removeEventListener('keydown', onEscClose);
 });
+
+function toDateTimeLocalValue(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.length >= 16 ? text.slice(0, 16).replace(' ', 'T') : text.replace(' ', 'T');
+}
+
+function normalizeDateTimeValue(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  return text.replace('T', ' ') + (text.length === 16 ? ':00' : '');
+}
+
+function resolveFlashStatusText(item = {}) {
+  if (Number(item.isFlash || 0) !== 1) return '未开启';
+  const start = normalizeDateTimeValue(item.flashStartTime);
+  const end = normalizeDateTimeValue(item.flashEndTime);
+  const flashPrice = Number(item.flashPrice || 0);
+  const flashStock = Number(item.flashStock || 0);
+  if (!(flashPrice > 0) || !(flashStock > 0) || !start || !end) return '待完善';
+  const now = Date.now();
+  const startTs = new Date(start.replace(/-/g, '/')).getTime();
+  const endTs = new Date(end.replace(/-/g, '/')).getTime();
+  if (Number.isNaN(startTs) || Number.isNaN(endTs)) return '待完善';
+  if (now < startTs) return '未开始';
+  if (now > endTs) return '已结束';
+  return '进行中';
+}
 </script>

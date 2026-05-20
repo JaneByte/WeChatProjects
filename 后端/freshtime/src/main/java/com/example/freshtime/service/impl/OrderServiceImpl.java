@@ -706,13 +706,9 @@ public class OrderServiceImpl implements OrderService {
     private BigDecimal resolveEffectivePrice(Goods goods, GoodsSku sku) {
         BigDecimal skuPrice = sku.getSkuPrice() == null ? BigDecimal.ZERO : sku.getSkuPrice();
         if (!isFlashActive(goods)) return skuPrice;
-        BigDecimal goodsPrice = goods.getPrice() == null ? BigDecimal.ZERO : goods.getPrice();
         BigDecimal flashPrice = goods.getFlashPrice() == null ? BigDecimal.ZERO : goods.getFlashPrice();
-        if (goodsPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            return flashPrice.setScale(2, RoundingMode.HALF_UP);
-        }
-        BigDecimal ratio = flashPrice.divide(goodsPrice, 6, RoundingMode.HALF_UP);
-        return skuPrice.multiply(ratio).setScale(2, RoundingMode.HALF_UP);
+        if (flashPrice.compareTo(BigDecimal.ZERO) <= 0) return skuPrice;
+        return flashPrice.setScale(2, RoundingMode.HALF_UP);
     }
 
     private String resolveItemSourceType(String sourceType, boolean flashActive) {

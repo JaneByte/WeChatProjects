@@ -79,15 +79,12 @@
         <view class="section-head">
           <view class="head-left">
             <text class="head-title">限时秒杀</text>
-            <view class="flash-countdown">
-              <text class="flash-countdown-label">距结束</text>
-              <text class="flash-countdown-text">{{flashCountdown}}</text>
-            </view>
           </view>
           <text class="head-more press-effect" bindtap="onFlashMoreTap">{{moreText}}</text>
         </view>
         <view class="flash-tip-row">
           <text class="flash-tip-text">库存实时变化，秒杀价仅在本场有效</text>
+          <text class="flash-tip-sub">默认按标准规格享受秒杀价</text>
         </view>
 
         <scroll-view class="flash-scroll" scroll-x show-scrollbar="{{false}}">
@@ -96,9 +93,10 @@
               <image class="flash-image" src="{{item.image}}" mode="aspectFill" lazy-load></image>
               <view class="flash-item-info">
                 <text class="flash-name">{{item.name}}</text>
+                <text class="flash-item-remain" wx:if="{{item.flashRemainText}}">{{item.flashRemainText}}</text>
                 <view class="flash-price-row">
-                  <text class="flash-price">{{priceSymbol}}{{item.flashPrice || item.price}}</text>
-                  <text class="flash-origin">{{priceSymbol}}{{item.originPrice}}</text>
+                  <text class="flash-price">¥{{item.flashPrice || item.price}}</text>
+                  <text class="flash-origin" wx:if="{{Number(item.originPrice) > Number(item.flashPrice || item.price)}}">¥{{item.originPrice}}</text>
                 </view>
                 <view class="flash-progress">
                   <view class="flash-progress-track">

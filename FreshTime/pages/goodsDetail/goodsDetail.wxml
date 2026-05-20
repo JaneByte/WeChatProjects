@@ -3,7 +3,7 @@
   <view wx:elif='{{!detail}}' class='state'>商品不存在</view>
 
   <view wx:else>
-    <image class='cover' src='{{detail.mainImage}}' mode='aspectFill'></image>
+    <image class='cover' src='{{detail.mainImage}}' mode='aspectFit'></image>
     <view class='card'>
       <view class='price-row-main'>
         <view class='title-wrap'>
@@ -25,23 +25,19 @@
         <view class='section-caption'>商品详情</view>
         <view class='detail-text'>{{detail.detail}}</view>
       </view>
-      <view class='meta'>当前可售：{{selectedSku ? (selectedSku.skuStock || 0) : detail.stock}} {{detail.unit || '件'}}</view>
       <view class='meta' wx:if='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>当前规格暂时售空，可看看其他规格</view>
       <view class='spec-select-wrap' wx:if='{{detail.skuList && detail.skuList.length > 0}}'>
         <view class='section-caption'>规格选择</view>
         <picker mode='selector' range='{{detail.skuList}}' range-key='skuName' value='{{selectedSkuIndex || 0}}' bindchange='onPickerSkuChange'>
           <view class='spec-picker'>
-            <text class='spec-picker-label'>规格</text>
-            <text class='spec-picker-value'>
-              {{selectedSku ? (selectedSku.skuName || '标准装') : '请选择规格'}}
-              {{selectedSku && selectedSku.skuWeightG ? (' · ' + selectedSku.skuWeightG + 'g') : ''}}
-            </text>
+            <view class='spec-picker-value'>
+              规格：{{selectedSku ? (selectedSku.skuName || '标准装') : '请选择规格'}}{{selectedSku && selectedSku.skuWeightG ? (' · ' + selectedSku.skuWeightG + 'g') : ''}}
+            </view>
             <text class='spec-picker-arrow'>▼</text>
           </view>
         </picker>
         <view class='spec-hint' wx:if='{{selectedSku}}'>
-          <text>价格：¥{{selectedSku.skuPrice || detail.price}}</text>
-          <text>库存：{{selectedSku.skuStock || 0}}</text>
+          <text>当前可售：{{selectedSku.skuStock || 0}} {{detail.unit || '件'}}</text>
         </view>
       </view>
     </view>
@@ -52,7 +48,7 @@
         <input class='qty' type='number' value='{{quantity}}' bindinput='onInputQuantity' />
         <view class='qty-btn' bindtap='onPlus'>+</view>
       </view>
-      <button class='btn ghost' bindtap='onAddCart' disabled='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>先加入购物车</button>
+      <button class='btn ghost' bindtap='onAddCart' disabled='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>加入</button>
       <button class='btn primary' bindtap='onBuyNow' disabled='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>立即下单</button>
     </view>
     <view class='card'>

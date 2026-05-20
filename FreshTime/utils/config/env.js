@@ -1,6 +1,6 @@
 const API_BASE_URL_MAP = {
-  develop: 'http://10.200.6.174:8080/api',
-  trial: 'http://10.200.6.174:8080/api',
+  develop: 'http://10.200.62.227:8080/api',
+  trial: 'http://10.200.62.227:8080/api',
   release: 'https://api.freshtime.com/api'
 };
 

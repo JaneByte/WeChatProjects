@@ -92,53 +92,11 @@ Page({
   onLocateTap() {
     if (this.data.locating) return;
     this.setData({ locating: true });
-    wx.getSetting({
-      success: (settingRes) => {
-        const auth = settingRes && settingRes.authSetting ? settingRes.authSetting['scope.userLocation'] : false;
-        if (auth === false) {
-          this.setData({ locating: false });
-          wx.showModal({
-            title: '需要定位权限',
-            content: '请先授权定位后再获取当前地址',
-            confirmText: '去授权',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                wx.openSetting({});
-              }
-            }
-          });
-          return;
-        }
-        this.requestLocationAndFill();
-      },
-      fail: () => {
-        this.setData({ locating: false });
-        wx.showToast({ title: '获取授权状态失败', icon: 'none' });
-      }
-    });
-  },
-
-  requestLocationAndFill() {
-    wx.getLocation({
-      type: 'gcj02',
-      success: (locRes) => {
-        const { latitude, longitude } = locRes || {};
-        this.openLocationPicker(latitude, longitude);
-      },
-      fail: () => {
-        this.setData({ locating: false });
-        wx.showToast({ title: '定位失败，请检查定位权限', icon: 'none' });
-      },
-      complete: () => {
-        this.setData({ locating: false });
-      }
-    });
+    this.openLocationPicker();
   },
 
   openLocationPicker(latitude, longitude) {
     wx.chooseLocation({
-      latitude,
-      longitude,
       success: (chooseRes) => {
         const addressText = `${chooseRes.address || ''}`.trim();
         const nameText = `${chooseRes.name || ''}`.trim();
@@ -167,6 +125,9 @@ Page({
         }
         const shortMsg = `${error && error.errMsg ? error.errMsg : '地图选址失败'}`.slice(0, 28);
         wx.showToast({ title: shortMsg, icon: 'none' });
+      },
+      complete: () => {
+        this.setData({ locating: false });
       }
     });
   },

@@ -370,10 +370,8 @@ Page({
     if (this.data.sourceType !== 'FLASH' || !this.isFlashActive(detail)) {
       return skuPrice;
     }
-    const goodsPrice = Number(detail.price || 0);
     const flashPrice = Number(detail.flashPrice || detail.flash_price || 0);
-    if (!(goodsPrice > 0) || !(flashPrice > 0)) return skuPrice;
-    const ratio = flashPrice / goodsPrice;
-    return Number((skuPrice * ratio).toFixed(2));
+    if (!(flashPrice > 0)) return skuPrice;
+    return Number(flashPrice.toFixed(2));
   }
 });

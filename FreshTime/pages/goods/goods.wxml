@@ -16,11 +16,8 @@
       <text class="flash-hero-title">限时秒杀进行中</text>
       <text class="flash-hero-badge">限量</text>
     </view>
-    <view class="flash-hero-countdown">
-      <text class="flash-hero-label">距结束</text>
-      <text class="flash-hero-time">{{flashCountdown}}</text>
-    </view>
     <text class="flash-hero-tip">库存实时变动，建议尽快下单锁定优惠价</text>
+    <text class="flash-hero-note">当前秒杀价默认对应标准规格</text>
   </view>
   <view class="scene-filter-wrap" wx:if="{{sceneFilterOptions.length > 0}}">
     <view class="scene-filter-list">
@@ -47,12 +44,13 @@
           <text class="tag" wx:if="{{sceneMeta}}">{{scene === '时令' ? '当季推荐' : (scene === '小份量' ? '适合小份优选' : '已配好组合')}}</text>
           <text class="flash-tag" wx:if="{{currentType === 'flash'}}">秒杀</text>
         </view>
+        <text class="flash-item-remain" wx:if="{{currentType === 'flash' && item.flashRemainText}}">{{item.flashRemainText}}</text>
         <text class="hint" wx:if="{{item.sceneHint}}">{{item.sceneHint}}</text>
         <text class="hint coupon-hint" wx:if="{{item.couponThresholdHint}}">{{item.couponThresholdHint}}</text>
         <view class="foot-row">
           <view class="flash-price-box" wx:if="{{currentType === 'flash'}}">
             <text class="price">¥{{item.flashPrice}}</text>
-            <text class="origin-price">¥{{item.displayPrice || item.price}}</text>
+            <text class="origin-price" wx:if="{{Number(item.displayPrice || item.price) > Number(item.flashPrice)}}">¥{{item.displayPrice || item.price}}</text>
           </view>
           <text class="price" wx:else>¥{{item.displayPrice || item.price}}</text>
           <view class="right-foot">
@@ -63,7 +61,7 @@
               </view>
               <text class="flash-progress-text">已抢{{item.flashPercent}}%</text>
             </view>
-            <view class="add-btn" catchtap="onAddCart" data-id="{{item.id}}">先加入购物车</view>
+            <view class="add-btn" catchtap="onAddCart" data-id="{{item.id}}">加入</view>
           </view>
         </view>
       </view>

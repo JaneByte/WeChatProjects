@@ -110,6 +110,8 @@ Page({
         const displayPrice = this.getSkuDisplayPrice(firstSku, item.price);
         const flashPrice = this.getFlashPrice(item);
         const flashPercent = this.getFlashSoldPercent(item);
+        const flashEndTimestamp = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
+        const flashRemainText = this.formatFlashRemainText(flashEndTimestamp);
         const comboBadge = this.resolveComboBadge(sceneType);
         const couponThresholdHint = item.couponThresholdHint || this.resolveCouponThresholdHintByPrice(item);
         return {
@@ -119,6 +121,8 @@ Page({
           displayPrice,
           flashPrice,
           flashPercent,
+          flashEndTimestamp,
+          flashRemainText,
           comboBadge,
           couponThresholdHint
         };
@@ -378,10 +382,28 @@ Page({
     const hour = Math.floor(remain / (1000 * 60 * 60));
     const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
     const second = Math.floor((remain % (1000 * 60)) / 1000);
-    this.setData({ flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}` });
+    const list = (this.data.list || []).map((item) => ({
+      ...item,
+      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
+    }));
+    this.setData({
+      flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`,
+      list
+    });
   },
 
   pad2(num) { return num < 10 ? `0${num}` : `${num}`; },
+
+  formatFlashRemainText(timestamp) {
+    const ts = Number(timestamp || 0);
+    if (!(ts > 0)) return '';
+    const remain = ts - Date.now();
+    if (remain <= 0) return '即将结束';
+    const hour = Math.floor(remain / (1000 * 60 * 60));
+    const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
+    const second = Math.floor((remain % (1000 * 60)) / 1000);
+    return `还剩 ${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`;
+  },
 
   onUnload() {
     this.pageActive = false;

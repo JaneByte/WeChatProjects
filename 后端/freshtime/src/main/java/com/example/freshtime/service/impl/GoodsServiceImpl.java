@@ -90,6 +90,11 @@ public class GoodsServiceImpl implements GoodsService {
             data.put("stock", goods.getStock());
             data.put("unit", goods.getUnit());
             data.put("salesVolume", goods.getSalesVolume());
+            data.put("isFlash", goods.getIsFlash());
+            data.put("flashPrice", goods.getFlashPrice());
+            data.put("flashStartTime", goods.getFlashStartTime());
+            data.put("flashEndTime", goods.getFlashEndTime());
+            data.put("flashStock", goods.getFlashStock());
             data.put("status", goods.getStatus());
             data.put("origin", goods.getOrigin());
             data.put("keywords", goods.getKeywords());
@@ -137,6 +142,11 @@ public class GoodsServiceImpl implements GoodsService {
             row.put("stock", goods.getStock());
             row.put("unit", goods.getUnit());
             row.put("salesVolume", goods.getSalesVolume());
+            row.put("isFlash", goods.getIsFlash());
+            row.put("flashPrice", goods.getFlashPrice());
+            row.put("flashStartTime", goods.getFlashStartTime());
+            row.put("flashEndTime", goods.getFlashEndTime());
+            row.put("flashStock", goods.getFlashStock());
             row.put("status", goods.getStatus());
             row.put("origin", goods.getOrigin());
             row.put("keywords", goods.getKeywords());
@@ -163,6 +173,11 @@ public class GoodsServiceImpl implements GoodsService {
             row.put("stock", goods.getStock());
             row.put("unit", goods.getUnit());
             row.put("salesVolume", goods.getSalesVolume());
+            row.put("isFlash", goods.getIsFlash());
+            row.put("flashPrice", goods.getFlashPrice());
+            row.put("flashStartTime", goods.getFlashStartTime());
+            row.put("flashEndTime", goods.getFlashEndTime());
+            row.put("flashStock", goods.getFlashStock());
             row.put("origin", goods.getOrigin());
             row.put("keywords", goods.getKeywords());
             row.put("sceneType", resolveSceneType(scene, goods));

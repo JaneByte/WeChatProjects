@@ -87,7 +87,7 @@
             class='add-btn {{addingId === item.id ? "add-btn--loading" : ""}}'
             catchtap='onAddCart'
             data-id='{{item.id}}'
-          >{{addingId === item.id ? '加购中' : '加入购物车'}}</view>
+          >{{addingId === item.id ? '加购中' : '加入'}}</view>
         </view>
       </view>
     </view>

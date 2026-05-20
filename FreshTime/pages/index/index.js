@@ -202,6 +202,8 @@ Page({
       const flashPrice = Number(item.flashPrice || item.price || 0);
       const flashStock = Number(item.flashStock || 0);
       const soldPercent = this.calcSoldPercent(stock, flashStock);
+      const flashEndTimestamp = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
+      const flashRemainText = this.formatFlashRemainText(flashEndTimestamp);
       return {
         ...item,
         mainImage: image,
@@ -210,7 +212,9 @@ Page({
         skuList: Array.isArray(item.skuList) ? item.skuList : [],
         originPrice: originPrice.toFixed(2),
         flashPrice: flashPrice.toFixed(2),
-        soldPercent
+        soldPercent,
+        flashEndTimestamp,
+        flashRemainText
       };
     });
   },
@@ -309,10 +313,28 @@ Page({
     const hour = Math.floor(remain / (1000 * 60 * 60));
     const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
     const second = Math.floor((remain % (1000 * 60)) / 1000);
-    this.setData({ flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}` });
+    const flashSaleList = (this.data.flashSaleList || []).map((item) => ({
+      ...item,
+      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
+    }));
+    this.setData({
+      flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`,
+      flashSaleList
+    });
   },
 
   pad2(num) { return num < 10 ? `0${num}` : `${num}`; },
+
+  formatFlashRemainText(timestamp) {
+    const ts = Number(timestamp || 0);
+    if (!(ts > 0)) return '';
+    const remain = ts - Date.now();
+    if (remain <= 0) return '即将结束';
+    const hour = Math.floor(remain / (1000 * 60 * 60));
+    const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
+    const second = Math.floor((remain % (1000 * 60)) / 1000);
+    return `还剩 ${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`;
+  },
 
   onScrollToLower() { this.loadGoods(false); },
 

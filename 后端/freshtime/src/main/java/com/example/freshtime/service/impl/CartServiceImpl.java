@@ -337,12 +337,8 @@ public class CartServiceImpl implements CartService {
     private BigDecimal resolveEffectivePrice(CartInfo item) {
         BigDecimal skuPrice = item.getPrice() == null ? BigDecimal.ZERO : item.getPrice();
         if (!isFlashActive(item)) return skuPrice;
-        BigDecimal goodsPrice = item.getGoodsPrice() == null ? BigDecimal.ZERO : item.getGoodsPrice();
         BigDecimal flashPrice = item.getFlashPrice() == null ? BigDecimal.ZERO : item.getFlashPrice();
-        if (goodsPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            return flashPrice.setScale(2, java.math.RoundingMode.HALF_UP);
-        }
-        BigDecimal ratio = flashPrice.divide(goodsPrice, 6, java.math.RoundingMode.HALF_UP);
-        return skuPrice.multiply(ratio).setScale(2, java.math.RoundingMode.HALF_UP);
+        if (flashPrice.compareTo(BigDecimal.ZERO) <= 0) return skuPrice;
+        return flashPrice.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 }

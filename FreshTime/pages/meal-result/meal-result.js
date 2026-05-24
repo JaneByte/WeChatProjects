@@ -11,9 +11,7 @@ Page({
     plan: null,
     payload: null,
     planSummaryTitle: '',
-    planSummaryText: '',
-    replaceDeltaText: '',
-    reasonExpandedMap: {}
+    planSummaryText: ''
   },
 
   onLoad() {
@@ -24,13 +22,12 @@ Page({
 
   loadPlan(payload) {
     this.setData({ loading: true });
-    generateMealPlan(payload)
+    return generateMealPlan(payload)
       .then((plan) => {
         this.setData({
           plan: this.decoratePlan(plan || null),
           planSummaryTitle: this.buildSummaryTitle(plan || {}, payload || {}),
-          planSummaryText: this.buildSummaryText(plan || {}, payload || {}),
-          reasonExpandedMap: {}
+          planSummaryText: this.buildSummaryText(plan || {}, payload || {})
         });
         if (plan && plan.planId) {
           trackEvent('plan_generate_success', {
@@ -47,6 +44,11 @@ Page({
         showRequestError(error, '小份优选方案生成失败');
       })
       .finally(() => this.setData({ loading: false }));
+  },
+
+  onPullDownRefresh() {
+    const payload = this.data.payload || wx.getStorageSync('mealPlanPayload') || {};
+    this.loadPlan(payload).finally(() => wx.stopPullDownRefresh());
   },
 
   onRegenerate() {
@@ -101,19 +103,43 @@ Page({
   },
 
   buildSummaryTitle(plan = {}, payload = {}) {
-    const sceneText = `${payload.sceneText || payload.sceneType || '小份优选'}`.trim();
+    const sceneText = this.formatSceneText(payload.sceneText || payload.sceneType || '');
     return sceneText ? `${sceneText}已配好` : '小份优选已配好';
   },
 
   buildSummaryText(plan = {}, payload = {}) {
-    const budget = `${payload.budgetLabel || payload.budgetLevel || ''}`.trim();
+    const budget = this.formatBudgetText(payload.budgetLabel || payload.budgetLevel || '');
     const servings = Number(plan.serving || payload.serving || 1);
     const parts = [
       `${servings} 人份量`,
-      '优先蔬菜搭水果',
+      '已经帮你搭配好',
       budget ? budget : ''
     ].filter(Boolean);
     return parts.join(' · ');
+  },
+
+  formatSceneText(scene) {
+    const text = `${scene || ''}`.trim();
+    if (!text) return '';
+    const sceneMap = {
+      lunch: '午餐小份优选',
+      dinner: '晚餐小份优选',
+      breakfast: '早餐小份优选',
+      light_meal: '轻食小份优选',
+      small_portion: '小份优选'
+    };
+    return sceneMap[text] || text;
+  },
+
+  formatBudgetText(budget) {
+    const text = `${budget || ''}`.trim();
+    if (!text) return '';
+    const budgetMap = {
+      economy: '经济档',
+      standard: '标准档',
+      plus: '升级档'
+    };
+    return budgetMap[text] || text;
   },
 
   formatRoleText(role) {
@@ -142,18 +168,14 @@ Page({
     return `¥${amount.toFixed(2)}`;
   },
 
-  onToggleReason(e) {
-    const key = `${e.currentTarget.dataset.itemKey || ''}`;
-    if (!key) return;
-    const nextExpanded = !this.data.reasonExpandedMap[key];
-    this.setData({
-      [`reasonExpandedMap.${key}`]: nextExpanded
-    });
-  },
-
   onReplaceItem(e) {
     if (this.data.replacing) return;
-    const itemIndex = Number(e.currentTarget.dataset.index || -1);
+    const rawIndex = e && e.currentTarget && e.currentTarget.dataset
+      ? e.currentTarget.dataset.index
+      : undefined;
+    const itemIndex = rawIndex === undefined || rawIndex === null || rawIndex === ''
+      ? -1
+      : Number(rawIndex);
     const sourceItem = (this.data.plan && this.data.plan.items && this.data.plan.items[itemIndex]) || null;
     const plan = this.data.plan || {};
     if (!sourceItem || !plan.planId) return;
@@ -162,7 +184,9 @@ Page({
       planType: 'meal',
       planId: plan.planId,
       originGoodsId: sourceItem.goodsId,
-      originSkuId: sourceItem.skuId
+      originSkuId: sourceItem.skuId,
+      originRole: sourceItem.role || '',
+      itemIndex
     })
       .then((result) => {
         const beforeTotal = Number((plan.priceSummary && plan.priceSummary.totalPrice) || 0);
@@ -175,9 +199,6 @@ Page({
           price: Number(next.price || sourceItem.price || 0),
           reason: next.reason || '已为你换成更适合的一项'
         }, result.priceSummary);
-        this.setData({
-          replaceDeltaText: `替换后总价：¥${beforeTotal.toFixed(2)} -> ¥${nextTotal.toFixed(2)}`
-        });
         wx.showToast({ title: '已替换', icon: 'success' });
         trackEvent('plan_item_replace', {
           planType: 'meal',

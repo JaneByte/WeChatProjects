@@ -133,7 +133,7 @@ Page({
     if (!app.getUserId()) {
       this.setData({ list: [] });
       app.requireLogin({ redirect: `/pages/order-list/order-list?status=${encodeURIComponent(this.data.status)}`, silent: true }).catch(() => {});
-      return;
+      return Promise.resolve();
     }
 
     const params = { limit: 50 };
@@ -141,7 +141,7 @@ Page({
     if (!isAfterSaleTab && this.data.status !== '') params.status = Number(this.data.status);
 
     this.setData({ loading: true });
-    get('/order/list', params, { retry: 0 })
+    return get('/order/list', params, { retry: 0 })
       .then((res) => {
         let sourceList = (res && res.data) || [];
         if (isAfterSaleTab) {
@@ -158,6 +158,10 @@ Page({
         showRequestError(error, '订单加载失败');
       })
       .finally(() => this.setData({ loading: false }));
+  },
+
+  onPullDownRefresh() {
+    this.loadList().finally(() => wx.stopPullDownRefresh());
   },
 
   onRetryLoad() {
@@ -186,8 +190,13 @@ Page({
     const id = Number(e.currentTarget.dataset.id || 0);
     if (!id || !app.getUserId()) return;
     if (this.data.actionLoading) return;
+    const current = (this.data.list || []).find((item) => Number(item.id) === id) || {};
     this.setData({ actionLoading: true });
-    runMockPayFlow({ orderId: id })
+    runMockPayFlow({
+      orderId: id,
+      orderNo: current.orderNo || '',
+      actualAmount: Number(current.actualAmount || 0)
+    })
       .then(() => {
         wx.redirectTo({
           url: `/pages/pay-result/pay-result?result=success&orderId=${id}`

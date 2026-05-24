@@ -224,7 +224,12 @@ Page({
           specDisplayPrice: '0.00'
         });
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'))
+      .catch((error) => {
+        if (error && (error.message === 'LOGIN_REQUIRED' || error.message === 'LOGIN_TIMEOUT' || error.message === 'MANUAL_LOGOUT')) {
+          return;
+        }
+        showRequestError(error, '加入购物车失败');
+      })
       .finally(() => this.setData({ addCartLoadingId: 0 }));
   },
 

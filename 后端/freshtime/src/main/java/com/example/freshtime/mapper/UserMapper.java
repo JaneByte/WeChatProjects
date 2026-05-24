@@ -34,19 +34,6 @@ public interface UserMapper {
     @Select("SELECT " + USER_COLUMNS + " FROM `user` ORDER BY id ASC")
     List<UserInfo> selectAllUsers();
 
-    @Select("<script>" +
-            "SELECT " + USER_COLUMNS + " FROM `user` WHERE 1 = 1 " +
-            "<if test='status != null'> AND status = #{status} </if>" +
-            "<if test='keyword != null and keyword != \"\"'> " +
-            "AND (nickname LIKE CONCAT('%',#{keyword},'%') OR openid LIKE CONCAT('%',#{keyword},'%')) " +
-            "</if>" +
-            "ORDER BY create_time DESC, id DESC" +
-            "</script>")
-    List<UserInfo> selectAdminUserList(@Param("status") Integer status, @Param("keyword") String keyword);
-
-    @Update("UPDATE `user` SET status = #{status} WHERE id = #{id}")
-    int updateUserStatus(@Param("id") Long id, @Param("status") Integer status);
-
     @Select("SELECT COUNT(1) FROM `user`")
     Integer countAllUsers();
 

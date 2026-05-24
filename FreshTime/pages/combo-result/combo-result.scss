@@ -1,12 +1,14 @@
 ﻿.page {
   min-height: 100vh;
   padding: 20rpx;
-  background: #f8fbf1;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #f6faf5;
+  box-sizing: border-box;
 }
 
 .state {
   text-align: center;
-  color: #7a8764;
+  color: #7b8f74;
   padding: 80rpx 0;
   font-size: 26rpx;
 }
@@ -14,7 +16,7 @@
 .hero {
   padding: 20rpx;
   border-radius: 24rpx;
-  background: linear-gradient(145deg, #7aa44a 0%, #587e3b 100%);
+  background: linear-gradient(145deg, #4d9f6a 0%, #377f56 100%);
   color: #ffffff;
   margin-bottom: 14rpx;
 }
@@ -40,7 +42,55 @@
   margin-left: 10rpx;
   font-size: 38rpx;
   font-weight: 700;
-  color: #fff7cd;
+  color: #fff6cf;
+}
+
+.price-card {
+  margin-top: 14rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.price-row:first-child {
+  margin-top: 0;
+}
+
+.price-label {
+  font-size: 22rpx;
+  opacity: 0.9;
+}
+
+.price-value {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.price-value--line {
+  text-decoration: line-through;
+  opacity: 0.82;
+}
+
+.price-value--discount,
+.price-value--save {
+  color: #fff1a8;
+}
+
+.price-hint {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .summary-card {
@@ -65,7 +115,7 @@
 
 .card {
   background: #ffffff;
-  border: 1rpx solid #e4ebd2;
+  border: 1rpx solid #dae8d4;
   border-radius: 20rpx;
   padding: 16rpx;
   margin-bottom: 12rpx;
@@ -74,13 +124,13 @@
 .card-title {
   font-size: 24rpx;
   font-weight: 600;
-  color: #30401f;
+  color: #243622;
   margin-bottom: 8rpx;
 }
 
 .item {
   padding: 12rpx 0;
-  border-bottom: 1rpx solid #f0f4e4;
+  border-bottom: 1rpx solid #edf4ea;
 }
 
 .item:last-child {
@@ -105,7 +155,7 @@
 
 .item-name {
   font-size: 24rpx;
-  color: #34452a;
+  color: #2f4530;
   flex: 1;
   min-width: 0;
 }
@@ -113,9 +163,9 @@
 .replace-btn {
   flex-shrink: 0;
   font-size: 20rpx;
-  color: #688443;
-  background: #f6f9ee;
-  border: 1rpx solid #dce8c3;
+  color: #4c815f;
+  background: #f3faf4;
+  border: 1rpx solid #d4e7d7;
   border-radius: 999rpx;
   padding: 3rpx 12rpx;
 }
@@ -125,7 +175,7 @@
 .meta-line {
   margin-top: 4rpx;
   font-size: 20rpx;
-  color: #5f7150;
+  color: #5f7460;
 }
 
 .item-unit-price {
@@ -136,44 +186,60 @@
 }
 
 .item-tagline {
-  color: #597043;
+  color: #4e6c52;
 }
 
 .item-reason {
   margin-top: 6rpx;
-  color: #6f7c63;
+  color: #70816f;
   line-height: 1.45;
 }
 
 .action-row {
   margin-top: 16rpx;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12rpx;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .ghost-btn,
 .primary-btn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
   height: 72rpx;
+  padding: 0 12rpx;
+  margin: 0;
   line-height: 72rpx;
   border-radius: 14rpx;
   font-size: 24rpx;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ghost-btn {
-  color: #60704f;
-  background: #f4f7ee;
+  margin-right: 12rpx;
+  color: #546756;
+  background: #f3f7f1;
 }
 
 .primary-btn {
   color: #ffffff;
-  background: linear-gradient(135deg, #6d9944, #537a34);
+  background: linear-gradient(135deg, #4d9f6a, #377f56);
+}
+
+.ghost-btn::after,
+.primary-btn::after {
+  border: none;
 }
 
 .hero {
   border-radius: 28rpx;
   margin-bottom: 16rpx;
-  box-shadow: 0 14rpx 28rpx rgba(88, 126, 59, 0.16);
+  box-shadow: 0 14rpx 28rpx rgba(55, 127, 86, 0.16);
 }
 
 .hero-note {
@@ -198,15 +264,15 @@
 }
 
 .primary-btn {
-  box-shadow: 0 10rpx 18rpx rgba(88, 126, 59, 0.16);
+  box-shadow: 0 10rpx 18rpx rgba(55, 127, 86, 0.16);
 }
 
 .reason-highlight {
   margin-top: 14rpx;
   padding: 14rpx;
   border-radius: 16rpx;
-  background: #f5f8ed;
-  color: #43553a;
+  background: #f3f8f1;
+  color: #3f5944;
   font-size: 20rpx;
   line-height: 1.5;
 }

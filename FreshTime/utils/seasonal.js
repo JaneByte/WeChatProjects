@@ -131,21 +131,8 @@ function getSeasonalConfig() {
   });
 }
 
-function updateSeasonalConfig(config = {}) {
-  return post('/seasonal/config/update', { config }, { retry: 0 }).then((res) => {
-    const { code, message, data } = unwrapApiResponse(res);
-    if (code !== 200) {
-      const err = new Error(message || '当季配置更新失败');
-      err.code = code;
-      throw err;
-    }
-    return data || {};
-  });
-}
-
 module.exports = {
   getSeasonalList,
   refreshSeasonal,
-  getSeasonalConfig,
-  updateSeasonalConfig
+  getSeasonalConfig
 };

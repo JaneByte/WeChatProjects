@@ -2,11 +2,9 @@
 const { get, post, TOKEN_STORAGE_KEY } = require('./utils/request');
 
 const USER_ID_KEY = 'userId';
-const OPENID_KEY = 'mockOpenid';
 const LOGIN_PROFILE_KEY = 'loginProfile';
 const MANUAL_LOGOUT_KEY = 'manualLogout';
 const DEFAULT_AVATAR = '/assets/icon/my.png';
-const DEFAULT_NICKNAME = '微信用户';
 const DEFAULT_NICKNAME_PREFIX = '微信用户';
 
 App({
@@ -20,7 +18,7 @@ App({
     this.initToken();
     this.initLoginProfile();
     this.initCartData();
-    this.bootstrapLogin({ guestFallback: false, skipIfLoggedOut: true })
+    this.bootstrapLogin({ skipIfLoggedOut: true })
       .catch(() => {})
       .finally(() => {
         this.globalData.loginReady = true;
@@ -162,11 +160,6 @@ App({
     return !!this.globalData.loggingIn;
   },
 
-  clearUserId() {
-    this.globalData.userId = null;
-    wx.removeStorageSync(USER_ID_KEY);
-  },
-
   clearLoginState() {
     this.globalData.userId = null;
     this.globalData.token = '';
@@ -176,7 +169,6 @@ App({
     wx.removeStorageSync(USER_ID_KEY);
     wx.removeStorageSync(TOKEN_STORAGE_KEY);
     wx.removeStorageSync(LOGIN_PROFILE_KEY);
-    wx.removeStorageSync(OPENID_KEY);
     wx.removeStorageSync('cartList');
     wx.removeStorageSync('checkoutItems');
     wx.removeStorageSync('checkoutMeta');
@@ -210,15 +202,6 @@ App({
     }
   },
 
-  syncCartToStorage() {
-    try {
-      wx.setStorageSync('cartList', this.globalData.cartList);
-      this.updateCartBadge();
-    } catch (error) {
-      // noop
-    }
-  },
-
   refreshCartBadgeFromServer() {
     if (!this.getUserId()) return Promise.resolve();
     return get('/cart/list', {}, { retry: 0 })
@@ -239,13 +222,8 @@ App({
       return Promise.reject(new Error('MANUAL_LOGOUT'));
     }
 
-    const guestFallback = options.guestFallback === true;
     this.globalData.loggingIn = true;
     this.loginPromise = this.loginByCode()
-      .catch((error) => {
-        if (!guestFallback) throw error;
-        return this.loginByStoredOpenid();
-      })
       .finally(() => {
         this.globalData.loggingIn = false;
         if (this.getUserId() && this.getToken()) {
@@ -260,7 +238,7 @@ App({
   ensureLoginReady() {
     if (this.isLoggedIn()) return Promise.resolve(this.globalData.userId);
     if (this.hasManualLogoutFlag()) return Promise.resolve(null);
-    return this.bootstrapLogin({ guestFallback: false, skipIfLoggedOut: true })
+    return this.bootstrapLogin({ skipIfLoggedOut: true })
       .then(() => this.globalData.userId || null)
       .catch(() => null);
   },
@@ -269,7 +247,7 @@ App({
     if (this.isLoggedIn()) return Promise.resolve(this.globalData.userId);
     const timeoutMs = Number(options.timeoutMs || 1800);
     return Promise.race([
-      this.bootstrapLogin({ guestFallback: false, skipIfLoggedOut: false })
+      this.bootstrapLogin({ skipIfLoggedOut: false })
         .then(() => {
           if (!this.isLoggedIn()) throw new Error('LOGIN_REQUIRED');
           return this.globalData.userId;
@@ -329,51 +307,7 @@ App({
       nickname: this.resolveNickname(profile.nickname, code),
       avatar: profile.avatar || ''
     });
-    if (data.openid) {
-      wx.setStorageSync(OPENID_KEY, data.openid);
-    }
     return data;
-  },
-
-  async fetchWechatProfile() {
-    if (typeof wx.getUserProfile !== 'function') {
-      const unsupportedError = new Error('当前微信版本暂不支持获取微信资料');
-      unsupportedError.code = 'PROFILE_UNSUPPORTED';
-      throw unsupportedError;
-    }
-    const profileRes = await new Promise((resolve, reject) => {
-      wx.getUserProfile({
-        desc: '用于完善会员资料',
-        success: resolve,
-        fail: reject
-      });
-    });
-    const userInfo = (profileRes && profileRes.userInfo) || {};
-    return {
-      nickname: userInfo.nickName || '',
-      avatar: userInfo.avatarUrl || ''
-    };
-  },
-
-  async loginByStoredOpenid(profile = {}) {
-    let openid = '';
-    try {
-      openid = wx.getStorageSync(OPENID_KEY) || '';
-    } catch (error) {
-      openid = '';
-    }
-
-    if (!openid) {
-      openid = `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      wx.setStorageSync(OPENID_KEY, openid);
-    }
-
-    return this.loginRequest({
-      openid,
-      nickname: this.resolveNickname(profile.nickname, openid),
-      avatar: profile.avatar || '',
-      loginType: 'guest'
-    });
   },
 
   async loginRequest(payload) {

@@ -57,9 +57,13 @@ public final class PlanRoleHelper {
         if ("fruit".equals(role)) return isFruit || isFruitLike(text);
         if ("main".equals(role)) return (isVeg && isMealMainLike(text)) || (!isFruit && isMealMainLike(text));
         if ("side".equals(role)) return (isVeg && isMealSideLike(text)) || (!isFruit && isMealSideLike(text));
-        if ("veg".equals(role)) return isVeg && isMealVegLike(text);
         if ("base".equals(role)) return (isVeg && isComboBaseLike(text)) || (!isFruit && isComboBaseLike(text));
-        if ("veg".equals(role)) return (isVeg && isComboVegLike(text)) || (!isFruit && isComboVegLike(text));
+        if ("veg".equals(role)) {
+            if ("combo".equals(type)) {
+                return (isVeg && isComboVegLike(text)) || (!isFruit && isComboVegLike(text));
+            }
+            return isVeg && isMealVegLike(text);
+        }
         return fallbackRoleMatchByText(goods, role, type);
     }
 

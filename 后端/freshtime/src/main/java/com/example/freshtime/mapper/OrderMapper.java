@@ -22,7 +22,7 @@ public interface OrderMapper {
             "home_sort, show_in_home, status, origin, keywords, create_time";
     String SKU_COLUMNS = "id, goods_id, sku_name, sku_weight_g, sku_price, sku_stock, status, sort";
     String ORDER_COLUMNS = "id, order_no, user_id, total_amount, discount_amount, actual_amount, receiver_name, receiver_phone, " +
-            "receiver_address, remark, coupon_id, order_source, status, pay_channel, pay_trade_no, pay_status, pay_time, deliver_time, " +
+            "receiver_address, remark, user_coupon_id, order_source, status, pay_channel, pay_trade_no, pay_status, pay_time, deliver_time, " +
             "finish_time, cancel_time, create_time";
     String ORDER_ITEM_COLUMNS = "id, order_id, goods_id, sku_id, goods_name, goods_image, sku_name, sku_weight_g, price, quantity, total_price, source_type, source_plan_id, source_scene";
 
@@ -41,9 +41,9 @@ public interface OrderMapper {
     int deductFlashStock(@Param("goodsId") Long goodsId, @Param("quantity") Integer quantity);
 
     @Insert("INSERT INTO `order`(order_no, user_id, total_amount, discount_amount, actual_amount, " +
-            "receiver_name, receiver_phone, receiver_address, remark, coupon_id, order_source, status, pay_status) " +
+            "receiver_name, receiver_phone, receiver_address, remark, user_coupon_id, order_source, status, pay_status) " +
             "VALUES(#{orderNo}, #{userId}, #{totalAmount}, #{discountAmount}, #{actualAmount}, " +
-            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{couponId}, #{orderSource}, #{status}, #{payStatus})")
+            "#{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}, #{userCouponId}, #{orderSource}, #{status}, #{payStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertOrder(OrderInfo orderInfo);
 
@@ -166,24 +166,6 @@ public interface OrderMapper {
             "WHERE oi.sku_id IS NOT NULL AND o.pay_status = 2 " +
             "GROUP BY oi.sku_id")
     List<Map<String, Object>> selectPaidSkuSalesSummary();
-
-    @Select("SELECT " + ORDER_COLUMNS + " FROM `order` ORDER BY id ASC")
-    List<OrderInfo> selectAllOrders();
-
-    @Select("SELECT id, source_scene AS source_scene FROM order_item WHERE source_scene IS NOT NULL AND source_scene <> ''")
-    List<OrderItemInfo> selectAllSourceSceneRows();
-
-    @Update("UPDATE order_item SET source_scene = #{sourceScene} WHERE id = #{id}")
-    int updateOrderItemSourceSceneById(@Param("id") Long id, @Param("sourceScene") String sourceScene);
-
-    @Select("SELECT " + ORDER_ITEM_COLUMNS + " FROM order_item WHERE order_id = #{orderId} ORDER BY id ASC")
-    List<OrderItemInfo> selectOrderItemsByOrderIdRaw(@Param("orderId") Long orderId);
-
-    @Update("UPDATE order_item SET source_type = #{sourceType}, source_scene = #{sourceScene} WHERE id = #{id}")
-    int updateOrderItemSourceFieldsById(@Param("id") Long id, @Param("sourceType") String sourceType, @Param("sourceScene") String sourceScene);
-
-    @Update("UPDATE `order` SET order_source = #{orderSource} WHERE id = #{orderId}")
-    int updateOrderSourceById(@Param("orderId") Long orderId, @Param("orderSource") String orderSource);
 
     @org.apache.ibatis.annotations.Delete("DELETE oi FROM order_item oi INNER JOIN `order` o ON oi.order_id = o.id WHERE o.user_id = #{userId}")
     int deleteOrderItemsByUserId(@Param("userId") Long userId);

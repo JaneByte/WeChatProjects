@@ -1,4 +1,4 @@
-﻿<view class='page'>
+<view class='page'>
   <view class='hero'>
     <view class='hero-title'>场景搭配推荐</view>
     <view class='hero-sub'>按你的场景，帮你一次配齐更合适的一组蔬果</view>
@@ -14,6 +14,7 @@
         data-field='goalScene'
         data-value='{{item.key}}'
         bindtap='onChooseOption'
+        hover-class='pill--hover'
       >{{item.label}}</view>
     </view>
   </view>
@@ -28,6 +29,7 @@
         data-field='peopleCount'
         data-value='{{item.key}}'
         bindtap='onChooseOption'
+        hover-class='pill--hover'
       >{{item.label}}</view>
     </view>
   </view>
@@ -42,6 +44,7 @@
         data-field='budgetLevel'
         data-value='{{item.key}}'
         bindtap='onChooseOption'
+        hover-class='pill--hover'
       >{{item.label}}</view>
     </view>
   </view>
@@ -56,6 +59,7 @@
         data-field='tastePref'
         data-value='{{item.key}}'
         bindtap='onChooseOption'
+        hover-class='pill--hover'
       >{{item.label}}</view>
     </view>
   </view>

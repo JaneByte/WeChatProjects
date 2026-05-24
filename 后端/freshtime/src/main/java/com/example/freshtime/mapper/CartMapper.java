@@ -94,10 +94,4 @@ public interface CartMapper {
 
     @Delete("DELETE FROM cart WHERE user_id = #{userId}")
     int deleteAllByUserId(@Param("userId") Long userId);
-
-    @Select("SELECT id, source_scene AS source_scene FROM cart WHERE source_scene IS NOT NULL AND source_scene <> ''")
-    List<CartInfo> selectAllSourceSceneRows();
-
-    @Update("UPDATE cart SET source_scene = #{sourceScene} WHERE id = #{id}")
-    int updateSourceSceneById(@Param("id") Long id, @Param("sourceScene") String sourceScene);
 }

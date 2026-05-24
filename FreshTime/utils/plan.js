@@ -27,6 +27,8 @@ function createContractError(message, responseMeta = {}) {
 function normalizePriceSummary(source = {}, fallbackPrice = 0) {
   return {
     totalPrice: toNumber(source.totalPrice, fallbackPrice),
+    originalTotalPrice: toNumber(source.originalTotalPrice, fallbackPrice),
+    packDiscount: toNumber(source.packDiscount, 0),
     savedAmount: toNumber(source.savedAmount, 0),
     couponHint: source.couponHint || ''
   };
@@ -173,29 +175,8 @@ function replacePlanItem(payload = {}) {
     });
 }
 
-function addPlanToCart(payload = {}) {
-  return post('/plan/add-cart', payload, { retry: 0 })
-    .then((res) => {
-      const { code, message, data } = unwrapApiResponse(res);
-      if (code !== 200) {
-        const err = new Error(message || '方案加购失败');
-        err.code = code;
-        throw err;
-      }
-      const normalized = normalizeAddCartResult(data || {});
-      return {
-        ...normalized,
-        _meta: {
-          fallbackUsed: false,
-          errorCode: ''
-        }
-      };
-    });
-}
-
 module.exports = {
   generateMealPlan,
   generateComboPlan,
-  replacePlanItem,
-  addPlanToCart
+  replacePlanItem
 };

@@ -19,6 +19,7 @@ public final class PlanScoringHelper {
             BigDecimal budgetMax,
             String dietGoal,
             String cookMode,
+            boolean preferSatiety,
             int salesWeight,
             int stockWeight,
             int budgetWeight,
@@ -43,6 +44,10 @@ public final class PlanScoringHelper {
         if ("fruit".equals(role) && hasTag(tagCodes, "role_fruit")) score += 18;
         if ("high_fiber".equals(dietGoal) && !hasTag(tagCodes, "diet_high_fiber") && text.matches(".*(菜|豆|麦|菌|瓜).*")) score += 8;
         if ("light".equals(dietGoal) && !hasTag(tagCodes, "diet_light") && text.matches(".*(生菜|黄瓜|番茄|西兰花|蓝莓|苹果).*")) score += 8;
+        if (preferSatiety) {
+            if (hasTag(tagCodes, "role_main")) score += 20;
+            else if (text.matches(".*(菌|菇|番茄|土豆|南瓜|玉米|山药|红薯|芋头|胡萝卜|彩椒|豆腐|茄子).*")) score += 10;
+        }
         score += scoreCookModeFit(goods, role, cookMode);
         score += safeInt(mealPortionFitSupplier.apply(role));
         score += safeInt(commonConstraintSupplier.apply(new ScoreConstraintInput(goods, role, role)));
@@ -56,13 +61,15 @@ public final class PlanScoringHelper {
             String role,
             String peopleCount,
             String tastePref,
+            boolean preferSatiety,
             int salesWeight,
             int stockWeight,
             boolean roleMatched,
             boolean sceneTagged,
             boolean mixTagged,
             Function<ScoreConstraintInput, Integer> commonConstraintSupplier,
-            Function<String, Integer> peopleCountFitSupplier
+            Function<String, Integer> peopleCountFitSupplier,
+            Set<String> tagCodes
     ) {
         int score = 0;
         score += Math.min(safeInt(goods == null ? null : goods.getSalesVolume()) / 100, salesWeight);
@@ -72,6 +79,10 @@ public final class PlanScoringHelper {
         if ("juice".equals(goalScene) && mixTagged) score += 8;
         if ("hotpot".equals(goalScene) && mixTagged) score += 8;
         if ("bento_side".equals(goalScene) && mixTagged) score += 8;
+        if (preferSatiety) {
+            if (hasTag(tagCodes, "role_main")) score += 8;
+            else if (hasTag(tagCodes, "role_base")) score += 6;
+        }
         score += scoreComboSceneFit(goods, goalScene, role);
         score += scoreTastePreference(goods, goalScene, role, tastePref);
         score += safeInt(peopleCountFitSupplier.apply(peopleCount));

@@ -218,7 +218,7 @@ Page({
     }
     const payload = {
       addressId: this.data.address.id,
-      couponId: this.data.selectedCouponId,
+      userCouponId: this.data.selectedCouponId,
       remark: (this.data.remark || '').trim(),
       packPrice: this.data.checkoutMeta && this.data.checkoutMeta.source === 'plan'
         ? Number(this.data.checkoutMeta.packPrice || 0)

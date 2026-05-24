@@ -47,9 +47,9 @@ Page({
   loadCartData() {
     if (!app.getUserId()) {
       this.resetCartState();
-      return;
+      return Promise.resolve();
     }
-    get('/cart/list', {}, { retry: 0 })
+    return get('/cart/list', {}, { retry: 0 })
       .then((res) => {
         const raw = (res && res.data) || [];
         const cartItems = (Array.isArray(raw) ? raw : []).map((item) => ({
@@ -84,6 +84,10 @@ Page({
         this.resetCartState();
         showRequestError(error, '购物车加载失败');
       });
+  },
+
+  onPullDownRefresh() {
+    this.loadCartData().finally(() => wx.stopPullDownRefresh());
   },
 
   formatSourceLabel(sourceType, sourceScene) {

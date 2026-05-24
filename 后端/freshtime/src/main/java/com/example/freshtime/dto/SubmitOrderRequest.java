@@ -9,7 +9,7 @@ import java.util.List;
 public class SubmitOrderRequest {
     private Long userId;
     private Long addressId;
-    private Long couponId;
+    private Long userCouponId;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;

@@ -16,7 +16,6 @@ Page({
     selectedSkuId: 0,
     comboPackTips: '',
     flashEndTimestamp: 0,
-    flashCountdown: '00:00:00',
     addCartLoadingId: 0,
     specPopupVisible: false,
     specGoods: null,
@@ -162,7 +161,6 @@ Page({
             const endTs = this.parseTimeToTimestamp(flash.endTime);
             this.setData({ flashEndTimestamp: endTs });
             if (endTs > Date.now()) this.startFlashCountdown();
-            else this.setData({ flashCountdown: '00:00:00' });
           }
         })
         .catch((error) => {
@@ -263,7 +261,12 @@ Page({
           selectedSkuId: 0
         });
       })
-      .catch((error) => showRequestError(error, '加入购物车失败'))
+      .catch((error) => {
+        if (error && (error.message === 'LOGIN_REQUIRED' || error.message === 'LOGIN_TIMEOUT' || error.message === 'MANUAL_LOGOUT')) {
+          return;
+        }
+        showRequestError(error, '加入购物车失败');
+      })
       .finally(() => this.setData({ addCartLoadingId: 0 }));
   },
 
@@ -375,7 +378,6 @@ Page({
     if (!this.pageActive) return;
     const remain = this.data.flashEndTimestamp - Date.now();
     if (remain <= 0) {
-      this.setData({ flashCountdown: '00:00:00' });
       this.clearFlashCountdown();
       return;
     }
@@ -386,10 +388,7 @@ Page({
       ...item,
       flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
     }));
-    this.setData({
-      flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`,
-      list
-    });
+    this.setData({ list });
   },
 
   pad2(num) { return num < 10 ? `0${num}` : `${num}`; },

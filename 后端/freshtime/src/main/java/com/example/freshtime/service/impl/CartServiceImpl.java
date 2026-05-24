@@ -4,27 +4,33 @@ import com.example.freshtime.common.ApiResponse;
 import com.example.freshtime.entity.CartInfo;
 import com.example.freshtime.entity.Goods;
 import com.example.freshtime.entity.GoodsSku;
-import com.example.freshtime.entity.OrderInfo;
 import com.example.freshtime.mapper.CartMapper;
 import com.example.freshtime.service.CartService;
+import com.example.freshtime.service.impl.support.CartPriceHelper;
+import com.example.freshtime.service.impl.support.CartSourceHelper;
+import com.example.freshtime.service.impl.support.CartViewAssembler;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class CartServiceImpl implements CartService {
 
     @Autowired
     private CartMapper cartMapper;
+
+    @Autowired
+    private CartPriceHelper cartPriceHelper;
+
+    @Autowired
+    private CartSourceHelper cartSourceHelper;
+
+    @Autowired
+    private CartViewAssembler cartViewAssembler;
 
     @Override
     public ApiResponse<?> getCartList(Long userId) {
@@ -37,53 +43,14 @@ public class CartServiceImpl implements CartService {
         } catch (Exception ignored) {
             list = cartMapper.selectCartListBasicByUserId(userId);
         }
-        List<Map<String, Object>> result = new ArrayList<>();
+        List<java.util.Map<String, Object>> result = new ArrayList<>();
         for (CartInfo item : list) {
             if (item.getStatus() == null || item.getStatus() != 1) {
                 continue;
             }
-            Map<String, Object> row = new HashMap<>();
-            boolean flashActive = isFlashActive(item);
-            BigDecimal originPrice = item.getPrice() == null ? BigDecimal.ZERO : item.getPrice();
-            BigDecimal effectivePrice = resolveEffectivePrice(item);
-            row.put("id", item.getId());
-            row.put("goodsId", item.getGoodsId());
-            row.put("skuId", item.getSkuId());
-            row.put("name", item.getName());
-            row.put("image", item.getImage());
-            row.put("price", effectivePrice);
-            row.put("originPrice", originPrice);
-            row.put("priceType", flashActive ? CartInfo.SOURCE_TYPE_FLASH : CartInfo.SOURCE_TYPE_NORMAL);
-            row.put("flashActive", flashActive);
-            row.put("stock", item.getStock());
-            row.put("unit", item.getUnit());
-            row.put("skuName", item.getSkuName());
-            row.put("skuWeightG", item.getSkuWeightG());
-            row.put("skuText", buildSkuText(item));
-            row.put("desc", item.getOrigin() == null ? "" : item.getOrigin());
-            row.put("quantity", item.getQuantity());
-            row.put("selected", item.getSelected() != null && item.getSelected() == 1);
-            row.put("sourceType", normalizeSourceType(item.getSourceType()));
-            row.put("sourcePlanId", item.getSourcePlanId());
-            row.put("sourceScene", normalizeSourceScene(item.getSourceScene()));
-            result.add(row);
+            result.add(cartViewAssembler.buildCartItemRow(item));
         }
         return ApiResponse.success(result);
-    }
-
-    private String buildSkuText(CartInfo item) {
-        String skuName = item.getSkuName() == null ? "" : item.getSkuName();
-        Integer weight = item.getSkuWeightG();
-        if (skuName.isEmpty() && weight == null) {
-            return "";
-        }
-        if (weight == null || weight <= 0) {
-            return skuName;
-        }
-        if (skuName.isEmpty()) {
-            return weight + "g";
-        }
-        return skuName + " · " + weight + "g";
     }
 
     @Override
@@ -93,9 +60,9 @@ public class CartServiceImpl implements CartService {
             return ApiResponse.badRequest("userId或goodsId不能为空");
         }
         int addQuantity = (quantity == null || quantity <= 0) ? 1 : quantity;
-        String finalSourceType = normalizeSourceType(sourceType);
+        String finalSourceType = cartSourceHelper.normalizeSourceType(sourceType);
         Long finalSourcePlanId = sourcePlanId;
-        String finalSourceScene = normalizeSourceScene(sourceScene);
+        String finalSourceScene = cartSourceHelper.normalizeSourceScene(sourceScene);
         Goods goods = cartMapper.selectGoodsById(goodsId);
         if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
             return ApiResponse.badRequest("商品不存在或已下架");
@@ -109,7 +76,7 @@ public class CartServiceImpl implements CartService {
         if (stock <= 0) {
             return ApiResponse.badRequest("规格库存不足");
         }
-        if (CartInfo.SOURCE_TYPE_NORMAL.equals(finalSourceType) && isFlashActive(goods)) {
+        if (CartInfo.SOURCE_TYPE_NORMAL.equals(finalSourceType) && cartPriceHelper.isFlashActive(goods)) {
             finalSourceType = CartInfo.SOURCE_TYPE_FLASH;
             if (finalSourceScene.isEmpty()) {
                 finalSourceScene = "限时秒杀";
@@ -127,7 +94,11 @@ public class CartServiceImpl implements CartService {
             insert.setSourceType(finalSourceType);
             insert.setSourcePlanId(finalSourcePlanId);
             insert.setSourceScene(finalSourceScene);
-            saveCart(insert);
+            try {
+                saveCart(insert);
+            } catch (DuplicateKeyException ex) {
+                return mergeExistingCartItem(userId, goodsId, finalSkuId, addQuantity, stock, finalSourceType, finalSourcePlanId, finalSourceScene);
+            }
             return ApiResponse.success("加入购物车成功", null);
         }
 
@@ -138,9 +109,9 @@ public class CartServiceImpl implements CartService {
         }
         cart.setQuantity(next);
         cart.setSelected(1);
-        cart.setSourceType(mergeSourceType(cart.getSourceType(), finalSourceType));
-        cart.setSourcePlanId(resolveSourcePlanId(cart.getSourcePlanId(), finalSourcePlanId));
-        cart.setSourceScene(resolveSourceScene(cart.getSourceScene(), finalSourceScene));
+        cart.setSourceType(cartSourceHelper.mergeSourceType(cart.getSourceType(), finalSourceType));
+        cart.setSourcePlanId(cartSourceHelper.resolveSourcePlanId(cart.getSourcePlanId(), finalSourcePlanId));
+        cart.setSourceScene(cartSourceHelper.resolveSourceScene(cart.getSourceScene(), finalSourceScene));
         updateCartSafely(cart);
         return ApiResponse.success("加入购物车成功", null);
     }
@@ -225,41 +196,6 @@ public class CartServiceImpl implements CartService {
         return ApiResponse.success("删除成功", null);
     }
 
-    private String normalizeSourceType(String sourceType) {
-        String value = safeText(sourceType).toUpperCase();
-        if (CartInfo.SOURCE_TYPE_FLASH.equals(value)
-                || CartInfo.SOURCE_TYPE_MEAL.equals(value)
-                || CartInfo.SOURCE_TYPE_COMBO.equals(value)
-                || CartInfo.SOURCE_TYPE_SEASONAL.equals(value)
-                || OrderInfo.ORDER_SOURCE_MIXED.equals(value)) {
-            return value;
-        }
-        return CartInfo.SOURCE_TYPE_NORMAL;
-    }
-
-    private String mergeSourceType(String currentSourceType, String nextSourceType) {
-        String current = normalizeSourceType(currentSourceType);
-        String next = normalizeSourceType(nextSourceType);
-        if (CartInfo.SOURCE_TYPE_NORMAL.equals(current)) return next;
-        if (CartInfo.SOURCE_TYPE_NORMAL.equals(next) || current.equals(next)) return current;
-        return OrderInfo.ORDER_SOURCE_MIXED;
-    }
-
-    private Long resolveSourcePlanId(Long currentSourcePlanId, Long nextSourcePlanId) {
-        if (currentSourcePlanId == null || currentSourcePlanId <= 0) return nextSourcePlanId;
-        if (nextSourcePlanId == null || nextSourcePlanId <= 0) return currentSourcePlanId;
-        if (currentSourcePlanId.equals(nextSourcePlanId)) return currentSourcePlanId;
-        return null;
-    }
-
-    private String resolveSourceScene(String currentSourceScene, String nextSourceScene) {
-        String current = normalizeSourceScene(currentSourceScene);
-        String next = normalizeSourceScene(nextSourceScene);
-        if (current.isEmpty()) return next;
-        if (next.isEmpty() || current.equals(next)) return current;
-        return OrderInfo.ORDER_SOURCE_MIXED;
-    }
-
     private GoodsSku resolveAvailableSku(Long goodsId, Long skuId) {
         if (goodsId == null) return null;
         if (skuId != null && skuId > 0) {
@@ -282,9 +218,37 @@ public class CartServiceImpl implements CartService {
     private void saveCart(CartInfo cartInfo) {
         try {
             cartMapper.insertCart(cartInfo);
+        } catch (DuplicateKeyException ex) {
+            throw ex;
         } catch (Exception ignored) {
             cartMapper.insertCartBasic(cartInfo);
         }
+    }
+
+    private ApiResponse<?> mergeExistingCartItem(Long userId,
+                                                 Long goodsId,
+                                                 Long skuId,
+                                                 int addQuantity,
+                                                 int stock,
+                                                 String sourceType,
+                                                 Long sourcePlanId,
+                                                 String sourceScene) {
+        CartInfo existing = findCartItem(userId, goodsId, skuId);
+        if (existing == null) {
+            return ApiResponse.fail("加入购物车失败，请稍后重试");
+        }
+        int current = existing.getQuantity() == null ? 0 : existing.getQuantity();
+        int next = Math.min(stock, current + addQuantity);
+        if (next <= current) {
+            return ApiResponse.badRequest("已达库存上限");
+        }
+        existing.setQuantity(next);
+        existing.setSelected(1);
+        existing.setSourceType(cartSourceHelper.mergeSourceType(existing.getSourceType(), sourceType));
+        existing.setSourcePlanId(cartSourceHelper.resolveSourcePlanId(existing.getSourcePlanId(), sourcePlanId));
+        existing.setSourceScene(cartSourceHelper.resolveSourceScene(existing.getSourceScene(), sourceScene));
+        updateCartSafely(existing);
+        return ApiResponse.success("加入购物车成功", null);
     }
 
     private void updateCartSafely(CartInfo cartInfo) {
@@ -295,50 +259,4 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    private String safeText(String text) {
-        return text == null ? "" : text.trim();
-    }
-
-    private String normalizeSourceScene(String sourceScene) {
-        String text = safeText(sourceScene);
-        if (text.isEmpty()) return "";
-        try {
-            String decoded = URLDecoder.decode(text, StandardCharsets.UTF_8.name()).trim();
-            return decoded.isEmpty() ? text : decoded;
-        } catch (Exception ignored) {
-            return text;
-        }
-    }
-
-    private boolean isFlashActive(CartInfo item) {
-        if (item == null) return false;
-        if (item.getIsFlash() == null || item.getIsFlash() != 1) return false;
-        if (item.getFlashPrice() == null || item.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
-        if (item.getFlashStock() == null || item.getFlashStock() <= 0) return false;
-        LocalDateTime start = item.getFlashStartTime();
-        LocalDateTime end = item.getFlashEndTime();
-        if (start == null || end == null) return false;
-        LocalDateTime now = LocalDateTime.now();
-        return !now.isBefore(start) && !now.isAfter(end);
-    }
-
-    private boolean isFlashActive(Goods goods) {
-        if (goods == null) return false;
-        if (goods.getIsFlash() == null || goods.getIsFlash() != 1) return false;
-        if (goods.getFlashPrice() == null || goods.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
-        if (goods.getFlashStock() == null || goods.getFlashStock() <= 0) return false;
-        LocalDateTime start = goods.getFlashStartTime();
-        LocalDateTime end = goods.getFlashEndTime();
-        if (start == null || end == null) return false;
-        LocalDateTime now = LocalDateTime.now();
-        return !now.isBefore(start) && !now.isAfter(end);
-    }
-
-    private BigDecimal resolveEffectivePrice(CartInfo item) {
-        BigDecimal skuPrice = item.getPrice() == null ? BigDecimal.ZERO : item.getPrice();
-        if (!isFlashActive(item)) return skuPrice;
-        BigDecimal flashPrice = item.getFlashPrice() == null ? BigDecimal.ZERO : item.getFlashPrice();
-        if (flashPrice.compareTo(BigDecimal.ZERO) <= 0) return skuPrice;
-        return flashPrice.setScale(2, java.math.RoundingMode.HALF_UP);
-    }
 }

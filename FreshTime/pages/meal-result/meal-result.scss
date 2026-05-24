@@ -1,7 +1,9 @@
 .page {
   min-height: 100vh;
   padding: 20rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
   background: #f6faf5;
+  box-sizing: border-box;
 }
 
 .state {
@@ -41,6 +43,54 @@
   font-size: 38rpx;
   font-weight: 700;
   color: #fff6cf;
+}
+
+.price-card {
+  margin-top: 14rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.price-row:first-child {
+  margin-top: 0;
+}
+
+.price-label {
+  font-size: 22rpx;
+  opacity: 0.9;
+}
+
+.price-value {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.price-value--line {
+  text-decoration: line-through;
+  opacity: 0.82;
+}
+
+.price-value--discount,
+.price-value--save {
+  color: #fff1a8;
+}
+
+.price-hint {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .summary-card {
@@ -147,20 +197,31 @@
 
 .action-row {
   margin-top: 16rpx;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12rpx;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .ghost-btn,
 .primary-btn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
   height: 72rpx;
+  padding: 0 12rpx;
+  margin: 0;
   line-height: 72rpx;
   border-radius: 14rpx;
   font-size: 24rpx;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ghost-btn {
+  margin-right: 12rpx;
   color: #546756;
   background: #f3f7f1;
 }
@@ -168,6 +229,11 @@
 .primary-btn {
   color: #ffffff;
   background: linear-gradient(135deg, #4d9f6a, #377f56);
+}
+
+.ghost-btn::after,
+.primary-btn::after {
+  border: none;
 }
 
 .hero {

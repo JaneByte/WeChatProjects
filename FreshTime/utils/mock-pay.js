@@ -31,11 +31,13 @@ async function runMockPayFlow(options = {}) {
   if (!payTradeNo) {
     throw new Error('支付单创建失败');
   }
+  const displayAmount = Number(actualAmount || payData.actualAmount || 0);
+  const displayOrderNo = orderNo || payData.orderNo || '';
 
   const confirmRes = await new Promise((resolve) => {
     wx.showModal({
       title: '微信支付（模拟）',
-      content: buildPayTip(orderNo, actualAmount),
+      content: buildPayTip(displayOrderNo, displayAmount),
       confirmText: '确认支付',
       cancelText: '取消',
       success: resolve,

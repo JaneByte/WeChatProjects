@@ -1,5 +1,5 @@
 {
   "navigationBarTitleText": "当季精选",
-  "usingComponents": {}
+  "usingComponents": {},
+  "enablePullDownRefresh": true
 }
-

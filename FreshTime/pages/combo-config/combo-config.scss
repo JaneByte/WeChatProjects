@@ -1,13 +1,13 @@
-﻿.page {
+.page {
   min-height: 100vh;
   padding: 24rpx;
-  background: linear-gradient(180deg, #f7f9ee 0%, #fbfcf5 100%);
+  background: linear-gradient(180deg, #f1f8ef 0%, #f8fcf7 100%);
 }
 
 .hero {
   padding: 24rpx;
   border-radius: 20rpx;
-  background: linear-gradient(145deg, #82b34c 0%, #5f9d58 100%);
+  background: linear-gradient(145deg, #68b96a 0%, #4d9f6a 100%);
   color: #ffffff;
   margin-bottom: 20rpx;
 }
@@ -20,12 +20,12 @@
 .hero-sub {
   margin-top: 8rpx;
   font-size: 24rpx;
-  opacity: 0.92;
+  opacity: 0.9;
 }
 
 .card {
   background: #ffffff;
-  border: 1rpx solid #e2e8d2;
+  border: 1rpx solid #dcead7;
   border-radius: 18rpx;
   padding: 18rpx;
   margin-bottom: 16rpx;
@@ -33,7 +33,7 @@
 
 .section-title {
   font-size: 26rpx;
-  color: #2e3a1e;
+  color: #21331f;
   font-weight: 600;
   margin-bottom: 12rpx;
 }
@@ -47,16 +47,22 @@
 .pill {
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  border: 1rpx solid #d4e0c2;
+  border: 1rpx solid #cde2c7;
   font-size: 23rpx;
-  color: #5b6948;
-  background: #f8faef;
+  color: #4d6649;
+  background: #f4faf2;
+  position: relative;
+  z-index: 2;
+}
+
+.pill--hover {
+  opacity: 0.85;
 }
 
 .pill--active {
   color: #ffffff;
-  border-color: #5f9d58;
-  background: #5f9d58;
+  border-color: #4d9f6a;
+  background: #4d9f6a;
 }
 
 .submit-btn {
@@ -66,5 +72,5 @@
   border-radius: 16rpx;
   font-size: 28rpx;
   color: #ffffff;
-  background: linear-gradient(135deg, #5f9d58, #4d8349);
+  background: linear-gradient(135deg, #4d9f6a, #3f895a);
 }

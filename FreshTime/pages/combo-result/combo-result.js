@@ -11,9 +11,7 @@ Page({
     combo: null,
     payload: null,
     comboSummaryTitle: '',
-    comboSummaryText: '',
-    replaceDeltaText: '',
-    reasonExpandedMap: {}
+    comboSummaryText: ''
   },
 
   onLoad() {
@@ -24,13 +22,12 @@ Page({
 
   loadPlan(payload) {
     this.setData({ loading: true });
-    generateComboPlan(payload)
+    return generateComboPlan(payload)
       .then((combo) => {
         this.setData({
           combo: this.decorateCombo(combo || null),
           comboSummaryTitle: this.buildSummaryTitle(combo || {}, payload || {}),
-          comboSummaryText: this.buildSummaryText(combo || {}, payload || {}),
-          reasonExpandedMap: {}
+          comboSummaryText: this.buildSummaryText(combo || {}, payload || {})
         });
         if (combo && combo.comboId) {
           trackEvent('plan_generate_success', {
@@ -47,6 +44,11 @@ Page({
         showRequestError(error, '搭配方案生成失败');
       })
       .finally(() => this.setData({ loading: false }));
+  },
+
+  onPullDownRefresh() {
+    const payload = this.data.payload || wx.getStorageSync('comboPlanPayload') || {};
+    this.loadPlan(payload).finally(() => wx.stopPullDownRefresh());
   },
 
   onRegenerate() {
@@ -101,21 +103,61 @@ Page({
   },
 
   buildSummaryTitle(combo = {}, payload = {}) {
-    const sceneText = `${payload.sceneText || payload.sceneType || combo.comboName || '蔬果搭配'}`.trim();
+    const sceneText = this.formatSceneText(
+      payload.sceneText || payload.sceneType || payload.goalScene || combo.comboName || ''
+    );
     return `${sceneText}已配好`;
   },
 
   buildSummaryText(combo = {}, payload = {}) {
-    const budget = `${payload.budgetLabel || payload.budgetLevel || ''}`.trim();
+    const budget = this.formatBudgetText(payload.budgetLabel || payload.budgetLevel || '');
+    const peopleCount = this.formatPeopleCount(payload.peopleCount || '');
     const parts = [
       '按场景配齐更省心',
+      peopleCount ? peopleCount : '',
       budget ? budget : ''
     ].filter(Boolean);
     return parts.join(' · ');
   },
 
+  formatSceneText(scene) {
+    const text = `${scene || ''}`.trim();
+    if (!text) return '蔬果搭配';
+    const sceneMap = {
+      hotpot: '火锅配菜',
+      salad: '沙拉轻食',
+      juice: '果蔬榨汁',
+      bento_side: '便当配菜',
+      combo: '蔬果搭配'
+    };
+    return sceneMap[text] || text;
+  },
+
+  formatBudgetText(budget) {
+    const text = `${budget || ''}`.trim();
+    if (!text) return '';
+    const budgetMap = {
+      economy: '经济档',
+      standard: '标准档',
+      plus: '升级档'
+    };
+    return budgetMap[text] || text;
+  },
+
+  formatPeopleCount(peopleCount) {
+    const text = `${peopleCount || ''}`.trim();
+    if (!text) return '';
+    const peopleCountMap = {
+      '1': '1人份',
+      '2': '2人份',
+      '3_4': '3-4人份',
+      '3-4': '3-4人份'
+    };
+    return peopleCountMap[text] || text;
+  },
+
   formatRoleText(role) {
-    if (role === 'base') return '主食材';
+    if (role === 'base') return '优先搭配';
     if (role === 'veg') return '蔬菜';
     if (role === 'fruit') return '水果';
     if (role === 'main') return '主食材';
@@ -140,18 +182,14 @@ Page({
     return `¥${amount.toFixed(2)}`;
   },
 
-  onToggleReason(e) {
-    const key = `${e.currentTarget.dataset.itemKey || ''}`;
-    if (!key) return;
-    const nextExpanded = !this.data.reasonExpandedMap[key];
-    this.setData({
-      [`reasonExpandedMap.${key}`]: nextExpanded
-    });
-  },
-
   onReplaceItem(e) {
     if (this.data.replacing) return;
-    const itemIndex = Number(e.currentTarget.dataset.index || -1);
+    const rawIndex = e && e.currentTarget && e.currentTarget.dataset
+      ? e.currentTarget.dataset.index
+      : undefined;
+    const itemIndex = rawIndex === undefined || rawIndex === null || rawIndex === ''
+      ? -1
+      : Number(rawIndex);
     const sourceItem = (this.data.combo && this.data.combo.items && this.data.combo.items[itemIndex]) || null;
     const combo = this.data.combo || {};
     if (!sourceItem || !combo.comboId) return;
@@ -160,7 +198,18 @@ Page({
       planType: 'combo',
       planId: combo.comboId,
       originGoodsId: sourceItem.goodsId,
-      originSkuId: sourceItem.skuId
+      originSkuId: sourceItem.skuId,
+      originRole: sourceItem.role || sourceItem.group || '',
+      itemIndex,
+      goalScene: this.data.payload && this.data.payload.goalScene ? this.data.payload.goalScene : '',
+      peopleCount: this.data.payload && this.data.payload.peopleCount ? this.data.payload.peopleCount : '1',
+      currentGoodsIds: Array.isArray(combo.items) ? combo.items.map((item) => Number(item.goodsId || 0)).filter((id) => id > 0) : [],
+      currentItems: Array.isArray(combo.items)
+        ? combo.items.map((item) => ({
+            goodsId: Number(item.goodsId || 0),
+            role: item.role || item.group || ''
+          })).filter((item) => item.goodsId > 0)
+        : []
     })
       .then((result) => {
         const beforeTotal = Number((combo.priceSummary && combo.priceSummary.totalPrice) || 0);
@@ -173,9 +222,6 @@ Page({
           price: Number(next.price || sourceItem.price || 0),
           reason: next.reason || '已为你换成更适合的一项'
         }, result.priceSummary);
-        this.setData({
-          replaceDeltaText: `替换后总价：¥${beforeTotal.toFixed(2)} -> ¥${nextTotal.toFixed(2)}`
-        });
         wx.showToast({ title: '已替换', icon: 'success' });
         trackEvent('plan_item_replace', {
           planType: 'combo',

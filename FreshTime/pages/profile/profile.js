@@ -158,8 +158,13 @@ Page({
     const id = Number(e.currentTarget.dataset.id || 0);
     if (!id || !this.getCurrentUserId()) return;
     if (this.data.submittingOrderAction) return;
+    const current = (this.data.orderList || []).find((item) => Number(item.id) === id) || {};
     this.setData({ submittingOrderAction: true });
-    runMockPayFlow({ orderId: id })
+    runMockPayFlow({
+      orderId: id,
+      orderNo: current.orderNo || '',
+      actualAmount: Number(current.actualAmount || 0)
+    })
       .then(() => {
         wx.redirectTo({ url: `/pages/pay-result/pay-result?result=success&orderId=${id}` });
       })

@@ -7,9 +7,7 @@ import com.example.freshtime.dto.admin.AdminCouponSaveRequest;
 import com.example.freshtime.dto.admin.AdminGoodsSaveRequest;
 import com.example.freshtime.dto.admin.AdminShopProfileSaveRequest;
 import com.example.freshtime.entity.AdminInfo;
-import com.example.freshtime.entity.UserInfo;
 import com.example.freshtime.mapper.AdminMapper;
-import com.example.freshtime.mapper.UserMapper;
 import com.example.freshtime.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,9 +27,6 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
-
-    @Autowired
-    private UserMapper userMapper;
 
     @Autowired
     private AdminMapper adminMapper;
@@ -121,17 +116,6 @@ public class AdminController {
         return adminService.updateOrderStatus(orderId, status);
     }
 
-    @GetMapping("/user/list")
-    public ApiResponse<?> getUserList(@RequestParam(required = false) Integer status,
-                                      @RequestParam(required = false) String keyword) {
-        return adminService.getUserList(status, keyword);
-    }
-
-    @PostMapping("/user/status")
-    public ApiResponse<?> updateUserStatus(@RequestParam Long userId, @RequestParam Integer status) {
-        return adminService.updateUserStatus(userId, status);
-    }
-
     @GetMapping("/coupon/list")
     public ApiResponse<?> getCouponList() {
         return adminService.getCouponList();
@@ -177,23 +161,4 @@ public class AdminController {
         return adminService.savePackPricingRules(config);
     }
 
-    @PostMapping("/flash/refresh")
-    public ApiResponse<?> refreshFlashPool(@RequestParam(required = false) Integer targetCount) {
-        return adminService.refreshFlashPool(targetCount);
-    }
-
-    @GetMapping("/flash/overview")
-    public ApiResponse<?> getFlashOverview(@RequestParam(required = false) Integer previewLimit) {
-        return adminService.getFlashOverview(previewLimit);
-    }
-
-    @PostMapping("/data-cleanup/source-scene")
-    public ApiResponse<?> cleanupSourceSceneData() {
-        return adminService.cleanupSourceSceneData();
-    }
-
-    @PostMapping("/data-cleanup/order-sources")
-    public ApiResponse<?> backfillHistoricalOrderSources() {
-        return adminService.backfillHistoricalOrderSources();
-    }
 }

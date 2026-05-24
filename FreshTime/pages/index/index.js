@@ -7,7 +7,7 @@ const app = getApp();
 Page({
   data: {
     brandName: 'FreshTime',
-    brandSub: '鲜时达',
+    brandSub: '鲜时刻',
     greetingWords: '早安，新鲜蔬果已经到店',
     searchIcon: '/assets/icon/search.png',
     searchPlaceholder: '搜苹果、小份蔬菜、当季水果',
@@ -29,7 +29,6 @@ Page({
     },
 
     statusBarHeight: 44,
-    flashCountdown: '00:00:00',
     flashEndTimestamp: 0,
     flashSaleList: [],
     homeHero: null,
@@ -51,7 +50,8 @@ Page({
     loadingMore: false,
     noMore: false,
     loadMoreError: false,
-    bannerHeightPx: 180
+    bannerHeightPx: 180,
+    addingCart: false
   },
 
   onLoad() {
@@ -125,7 +125,6 @@ Page({
 
       if (flashEndTimestamp > Date.now() && flashList.length > 0) this.startFlashCountdown();
       else {
-        this.setData({ flashCountdown: '00:00:00' });
         this.clearFlashCountdown();
       }
     } catch (error) {
@@ -306,7 +305,6 @@ Page({
     if (!this.pageActive) return;
     const remain = this.data.flashEndTimestamp - Date.now();
     if (remain <= 0) {
-      this.setData({ flashCountdown: '00:00:00' });
       this.clearFlashCountdown();
       return;
     }
@@ -318,7 +316,6 @@ Page({
       flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
     }));
     this.setData({
-      flashCountdown: `${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`,
       flashSaleList
     });
   },
@@ -459,15 +456,6 @@ Page({
       wx.navigateTo({ url: '/pages/coupon/coupon' });
       return;
     }
-    if (type === '4' || type === 'knowledge') {
-      if (!value) return;
-      wx.navigateTo({ url: `/pages/knowledge-detail/knowledge-detail?id=${encodeURIComponent(value)}` });
-      return;
-    }
-    if (type === '3' || type === 'url') {
-      if (!value) return;
-      wx.navigateTo({ url: `/pages/webview/webview?url=${encodeURIComponent(value)}` });
-    }
   },
 
   onMoreTap() { wx.navigateTo({ url: `${this.data.paths.goods}?type=weeklyHot` }); },
@@ -500,6 +488,7 @@ Page({
   },
 
   addToCart(goods, quantity = 1, onSuccess, extra = {}) {
+    if (this.data.addingCart) return;
     const target = goods && typeof goods === 'object'
       ? goods
       : ((this.data.goodsList || []).find((item) => Number(item.id) === Number(goods)) || (this.data.flashSaleList || []).find((item) => Number(item.id) === Number(goods)));
@@ -513,6 +502,7 @@ Page({
     if (extra.sourceType) query.push(`sourceType=${encodeURIComponent(extra.sourceType)}`);
     if (extra.sourceScene) query.push(`sourceScene=${encodeURIComponent(extra.sourceScene)}`);
     const suffix = query.length ? `&${query.join('&')}` : '';
+    this.setData({ addingCart: true });
     app.requireLogin({ redirect: '/pages/index/index', message: '正在登录，请稍候' })
       .then(() => post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=${quantity}${suffix}`, {}, { retry: 0 }))
       .then(() => {
@@ -525,11 +515,9 @@ Page({
           return;
         }
         showRequestError(error, '加入购物车失败');
-      });
+      })
+      .finally(() => this.setData({ addingCart: false }));
   }
 });
-
-
-
 
 

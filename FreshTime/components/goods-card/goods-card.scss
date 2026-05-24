@@ -61,7 +61,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .goods-info {
-  padding: 18rpx 16rpx 20rpx;
+  padding: 14rpx 16rpx 16rpx;
   box-sizing: border-box;
 }
 
@@ -70,11 +70,11 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-weight: 600;
   color: $text-dark;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
-  min-height: 78rpx;
+  min-height: 70rpx;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -85,7 +85,7 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-size: 24rpx;
   color: $text-secondary;
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: 8rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -119,6 +119,6 @@ $spring-curve: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     .add-icon { font-size: 34rpx; }
   }
 
-  .goods-info { padding: 16rpx 12rpx 18rpx; }
+  .goods-info { padding: 14rpx 12rpx 14rpx; }
   .goods-name { font-size: 24rpx; }
 }

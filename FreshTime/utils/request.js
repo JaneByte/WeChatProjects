@@ -1,4 +1,4 @@
-const { BASE_URL, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
+const { BASE_URL, getBaseUrl, ENV_VERSION, REQUEST_LOG_ENABLED } = require('./config');
 
 const DEFAULT_TIMEOUT = 15000;
 const TOKEN_STORAGE_KEY = 'token';
@@ -113,7 +113,8 @@ function request(options = {}) {
     return Promise.reject(new Error('request url is required'));
   }
 
-  const finalUrl = /^https?:\/\//.test(url) ? url : `${BASE_URL}${url}`;
+  const runtimeBaseUrl = getBaseUrl();
+  const finalUrl = /^https?:\/\//.test(url) ? url : `${runtimeBaseUrl}${url}`;
   const traceId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return new Promise((resolve, reject) => {
@@ -249,7 +250,7 @@ function del(url, data = {}, options = {}) {
 const uploadFile = (url, filePath, formData = {}) => {
   return new Promise((resolve, reject) => {
     wx.uploadFile({
-      url: BASE_URL + url, // 修复：使用正确的全局变量名
+      url: getBaseUrl() + url,
       filePath: filePath,
       name: 'file',
       formData: formData,

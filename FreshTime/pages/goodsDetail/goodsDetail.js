@@ -11,7 +11,7 @@ Page({
     selectedSkuIndex: 0,
     selectedSku: null,
     loading: false,
-    loadError: false,
+    actionLoading: false,
     quantity: 1,
     commentSummary: null,
     commentList: [],
@@ -53,7 +53,7 @@ Page({
   },
 
   loadDetail() {
-    this.setData({ loading: true, loadError: false });
+    this.setData({ loading: true });
     get('/goods/detail', { id: this.data.id }, { retry: 0 })
       .then((res) => {
         const detail = (res && res.data) || null;
@@ -76,7 +76,7 @@ Page({
         });
       })
       .catch((error) => {
-        this.setData({ detail: null, loadError: true });
+        this.setData({ detail: null });
         showRequestError(error, '商品加载失败');
       })
       .finally(() => this.setData({ loading: false }));
@@ -106,6 +106,7 @@ Page({
   },
 
   onAddCart() {
+    if (this.data.actionLoading) return;
     const detail = this.data.detail;
     if (!detail || !detail.id) return;
     const addQty = Number(this.data.quantity || 1);
@@ -114,6 +115,7 @@ Page({
       wx.showToast({ title: '请选择可用规格', icon: 'none' });
       return;
     }
+    this.setData({ actionLoading: true });
     app.requireLogin({ redirect: `/pages/goodsDetail/goodsDetail?id=${this.data.id}`, message: '正在登录，请稍候' })
       .then(() => this.recheckGoodsAvailability(detail.id, addQty))
       .then((freshDetail) => {
@@ -132,10 +134,12 @@ Page({
           return;
         }
         showRequestError(error, error.message || '商品状态已变更，请重试');
-      });
+      })
+      .finally(() => this.setData({ actionLoading: false }));
   },
 
   onBuyNow() {
+    if (this.data.actionLoading) return;
     const detail = this.data.detail;
     if (!detail || !detail.id) return;
     const buyQty = Number(this.data.quantity || 1);
@@ -144,6 +148,7 @@ Page({
       wx.showToast({ title: '请选择可用规格', icon: 'none' });
       return;
     }
+    this.setData({ actionLoading: true });
     app.requireLogin({ redirect: `/pages/goodsDetail/goodsDetail?id=${this.data.id}`, message: '正在登录，请稍候' })
       .then(() => this.recheckGoodsAvailability(detail.id, buyQty))
       .then((freshDetail) => {
@@ -177,7 +182,8 @@ Page({
           return;
         }
         showRequestError(error, error.message || '商品状态已变更，请重试');
-      });
+      })
+      .finally(() => this.setData({ actionLoading: false }));
   },
 
   recheckGoodsAvailability(goodsId, expectQty) {

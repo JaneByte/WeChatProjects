@@ -7,6 +7,17 @@
       <view class='title'>{{plan.planName}}</view>
       <view class='sub'>{{plan.serving}} 人份参考</view>
       <view class='hero-price'>预计总价 <text class='hero-price__value'>¥{{plan.priceSummary.totalPrice}}</text></view>
+      <view class='price-card'>
+        <view class='price-row'>
+          <text class='price-label'>单买小计</text>
+          <text class='price-value price-value--line'>¥{{plan.priceSummary.originalTotalPrice}}</text>
+        </view>
+        <view class='price-row'>
+          <text class='price-label'>套餐优惠</text>
+          <text class='price-value price-value--discount'>-¥{{plan.priceSummary.packDiscount}}</text>
+        </view>
+        <view class='price-hint' wx:if='{{plan.priceSummary.couponHint}}'>{{plan.priceSummary.couponHint}}</view>
+      </view>
       <view class='summary-card'>
         <view class='summary-title'>{{planSummaryTitle}}</view>
         <view class='summary-text'>{{planSummaryText}}</view>
@@ -34,7 +45,6 @@
 
     <view class='card'>
       <view class='card-title'>推荐说明</view>
-      <view class='meta-line'>默认按 2 份蔬菜 + 1 份水果优先搭配，更适合日常单人购买。</view>
       <view class='reason-highlight' wx:if='{{plan.wasteEstimate.reason}}'>{{plan.wasteEstimate.reason}}</view>
     </view>
 

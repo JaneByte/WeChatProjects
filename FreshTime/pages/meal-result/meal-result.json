@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "小份优选方案"
+  "navigationBarTitleText": "小份优选方案",
+  "enablePullDownRefresh": true
 }

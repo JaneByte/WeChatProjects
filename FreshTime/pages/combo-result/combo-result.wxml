@@ -7,6 +7,17 @@
       <view class='title'>{{combo.comboName}}</view>
       <view class='sub'>按场景帮你配齐</view>
       <view class='hero-price'>预计总价 <text class='hero-price__value'>¥{{combo.priceSummary.totalPrice}}</text></view>
+      <view class='price-card'>
+        <view class='price-row'>
+          <text class='price-label'>单买小计</text>
+          <text class='price-value price-value--line'>¥{{combo.priceSummary.originalTotalPrice}}</text>
+        </view>
+        <view class='price-row'>
+          <text class='price-label'>套餐优惠</text>
+          <text class='price-value price-value--discount'>-¥{{combo.priceSummary.packDiscount}}</text>
+        </view>
+        <view class='price-hint' wx:if='{{combo.priceSummary.couponHint}}'>{{combo.priceSummary.couponHint}}</view>
+      </view>
       <view class='summary-card'>
         <view class='summary-title'>{{comboSummaryTitle}}</view>
         <view class='summary-text'>{{comboSummaryText}}</view>
@@ -35,7 +46,6 @@
     <view class='card' wx:if='{{combo.prepHint}}'>
       <view class='card-title'>推荐说明</view>
       <view class='meta-line'>{{combo.prepHint}}</view>
-      <view class='reason-highlight'>更强调场景适配和一次买齐，不强调单人份量。</view>
     </view>
 
     <view class='action-row'>

@@ -24,7 +24,7 @@ public class OrderInfo {
     private String receiverPhone;
     private String receiverAddress;
     private String remark;
-    private Long couponId;
+    private Long userCouponId;
     private String orderSource;
     private Integer status;
     private String payChannel;

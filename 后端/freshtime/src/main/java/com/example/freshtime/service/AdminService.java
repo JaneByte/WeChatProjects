@@ -31,10 +31,6 @@ public interface AdminService {
 
     ApiResponse<?> updateOrderStatus(Long orderId, Integer status);
 
-    ApiResponse<?> getUserList(Integer status, String keyword);
-
-    ApiResponse<?> updateUserStatus(Long userId, Integer status);
-
     ApiResponse<?> getCouponList();
 
     ApiResponse<?> saveCoupon(AdminCouponSaveRequest request);
@@ -55,11 +51,4 @@ public interface AdminService {
 
     ApiResponse<?> savePackPricingRules(java.util.Map<String, String> config);
 
-    ApiResponse<?> refreshFlashPool(Integer targetCount);
-
-    ApiResponse<?> getFlashOverview(Integer previewLimit);
-
-    ApiResponse<?> cleanupSourceSceneData();
-
-    ApiResponse<?> backfillHistoricalOrderSources();
 }

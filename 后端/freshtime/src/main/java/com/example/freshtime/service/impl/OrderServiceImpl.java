@@ -14,14 +14,13 @@ import com.example.freshtime.mapper.CartMapper;
 import com.example.freshtime.mapper.CouponMapper;
 import com.example.freshtime.mapper.OrderMapper;
 import com.example.freshtime.service.OrderService;
+import com.example.freshtime.service.impl.support.OrderPriceHelper;
+import com.example.freshtime.service.impl.support.OrderSourceHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,6 +46,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private CartMapper cartMapper;
+
+    @Autowired
+    private OrderPriceHelper orderPriceHelper;
+
+    @Autowired
+    private OrderSourceHelper orderSourceHelper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -81,11 +86,81 @@ public class OrderServiceImpl implements OrderService {
     private ApiResponse<?> doSubmitOrder(SubmitOrderRequest request) {
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemInfo> orderItems = new ArrayList<>();
-        Map<String, SubmitOrderRequest.Item> mergedItems = new HashMap<>();
+        Map<String, SubmitOrderRequest.Item> mergedItems = mergeSubmitItems(request.getItems());
+        if (mergedItems == null) {
+            return ApiResponse.badRequest("商品参数不合法");
+        }
 
-        for (SubmitOrderRequest.Item item : request.getItems()) {
+        for (SubmitOrderRequest.Item entry : mergedItems.values()) {
+            OrderItemInfo orderItem = buildOrderItem(entry);
+            if (orderItem == null) {
+                return ApiResponse.badRequest("商品不存在、规格异常或库存不足");
+            }
+            totalAmount = totalAmount.add(orderItem.getTotalPrice());
+            orderItems.add(orderItem);
+        }
+
+        if (isDirectPlanOrder(orderItems) && request.getPackPrice() != null && request.getPackPrice().compareTo(BigDecimal.ZERO) > 0) {
+            totalAmount = request.getPackPrice();
+        }
+
+        Map<String, String> receiverInfo = buildReceiverInfo(request);
+        if (receiverInfo == null) {
+            return ApiResponse.badRequest("收货地址不存在");
+        }
+
+        Long userCouponId = request.getUserCouponId();
+        BigDecimal discountAmount = resolveDiscountAmount(request.getUserId(), userCouponId, totalAmount);
+        if (discountAmount == null) {
+            return ApiResponse.badRequest("优惠券不可用或未满足使用条件");
+        }
+
+        BigDecimal actualAmount = totalAmount.subtract(discountAmount);
+        if (actualAmount.compareTo(BigDecimal.ZERO) < 0) {
+            actualAmount = BigDecimal.ZERO;
+        }
+
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setOrderNo(generateOrderNo());
+        orderInfo.setUserId(request.getUserId());
+        orderInfo.setTotalAmount(totalAmount);
+        orderInfo.setDiscountAmount(discountAmount);
+        orderInfo.setActualAmount(actualAmount);
+        orderInfo.setReceiverName(receiverInfo.get("receiverName"));
+        orderInfo.setReceiverPhone(receiverInfo.get("receiverPhone"));
+        orderInfo.setReceiverAddress(receiverInfo.get("receiverAddress"));
+        orderInfo.setRemark(request.getRemark());
+        orderInfo.setUserCouponId(userCouponId);
+        orderInfo.setOrderSource(orderSourceHelper.resolveOrderSource(orderItems));
+        orderInfo.setStatus(0);
+        orderInfo.setPayStatus(0);
+
+        orderMapper.insertOrder(orderInfo);
+
+        if (userCouponId != null) {
+            int marked = couponMapper.markUsed(userCouponId, request.getUserId());
+            if (marked <= 0) {
+                return ApiResponse.badRequest("优惠券使用失败，请重试");
+            }
+        }
+
+        for (OrderItemInfo orderItem : orderItems) {
+            orderItem.setOrderId(orderInfo.getId());
+            orderMapper.insertOrderItem(orderItem);
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("orderId", orderInfo.getId());
+        data.put("orderNo", orderInfo.getOrderNo());
+        data.put("actualAmount", orderInfo.getActualAmount());
+        return ApiResponse.success("下单成功", data);
+    }
+
+    private Map<String, SubmitOrderRequest.Item> mergeSubmitItems(List<SubmitOrderRequest.Item> items) {
+        Map<String, SubmitOrderRequest.Item> mergedItems = new HashMap<>();
+        for (SubmitOrderRequest.Item item : items) {
             if (item.getGoodsId() == null || item.getSkuId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
-                return ApiResponse.badRequest("商品参数不合法");
+                return null;
             }
             String key = item.getGoodsId() + "_" + item.getSkuId();
             SubmitOrderRequest.Item merged = mergedItems.get(key);
@@ -111,63 +186,61 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
         }
+        return mergedItems;
+    }
 
-        for (SubmitOrderRequest.Item entry : mergedItems.values()) {
-            Long goodsId = entry.getGoodsId();
-            Long skuId = entry.getSkuId();
-            Integer quantity = entry.getQuantity();
+    private OrderItemInfo buildOrderItem(SubmitOrderRequest.Item entry) {
+        Long goodsId = entry.getGoodsId();
+        Long skuId = entry.getSkuId();
+        Integer quantity = entry.getQuantity();
 
-            Goods goods = orderMapper.selectGoodsForUpdate(goodsId);
-            if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
-                return ApiResponse.badRequest("商品不存在或已下架");
+        Goods goods = orderMapper.selectGoodsForUpdate(goodsId);
+        if (goods == null || goods.getStatus() == null || goods.getStatus() != 1) {
+            return null;
+        }
+        GoodsSku sku = orderMapper.selectSkuForUpdate(skuId);
+        if (sku == null || sku.getGoodsId() == null || !goodsId.equals(sku.getGoodsId()) || sku.getStatus() == null || sku.getStatus() != 1) {
+            return null;
+        }
+        if (sku.getSkuStock() == null || sku.getSkuStock() < quantity) {
+            return null;
+        }
+        boolean flashActive = orderPriceHelper.isFlashActive(goods);
+        if (flashActive) {
+            if (goods.getFlashStock() == null || goods.getFlashStock() < quantity) {
+                return null;
             }
-            GoodsSku sku = orderMapper.selectSkuForUpdate(skuId);
-            if (sku == null || sku.getGoodsId() == null || !goodsId.equals(sku.getGoodsId()) || sku.getStatus() == null || sku.getStatus() != 1) {
-                return ApiResponse.badRequest("商品规格不存在或已下架: " + goods.getName());
+            int flashUpdated = orderMapper.deductFlashStock(goodsId, quantity);
+            if (flashUpdated <= 0) {
+                return null;
             }
-            if (sku.getSkuStock() == null || sku.getSkuStock() < quantity) {
-                return ApiResponse.badRequest("规格库存不足: " + goods.getName());
-            }
-            boolean flashActive = isFlashActive(goods);
-            if (flashActive) {
-                if (goods.getFlashStock() == null || goods.getFlashStock() < quantity) {
-                    return ApiResponse.badRequest("秒杀库存不足: " + goods.getName());
-                }
-                int flashUpdated = orderMapper.deductFlashStock(goodsId, quantity);
-                if (flashUpdated <= 0) {
-                    return ApiResponse.badRequest("秒杀库存更新失败，请重试");
-                }
-            }
-
-            int updated = orderMapper.deductSkuStock(sku.getId(), quantity);
-            if (updated <= 0) {
-                return ApiResponse.badRequest("库存更新失败，请重试");
-            }
-
-            BigDecimal itemPrice = resolveEffectivePrice(goods, sku);
-            BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(quantity));
-            totalAmount = totalAmount.add(itemTotal);
-
-            OrderItemInfo orderItem = new OrderItemInfo();
-            orderItem.setGoodsId(goods.getId());
-            orderItem.setSkuId(sku.getId());
-            orderItem.setGoodsName(goods.getName());
-            orderItem.setGoodsImage(goods.getMainImage());
-            orderItem.setSkuName(sku.getSkuName());
-            orderItem.setSkuWeightG(sku.getSkuWeightG());
-            orderItem.setPrice(itemPrice);
-            orderItem.setQuantity(quantity);
-            orderItem.setTotalPrice(itemTotal);
-            orderItem.setSourceType(resolveItemSourceType(entry.getSourceType(), flashActive));
-            orderItem.setSourcePlanId(entry.getSourcePlanId());
-            orderItem.setSourceScene(resolveItemSourceScene(entry.getSourceScene(), flashActive));
-            orderItems.add(orderItem);
         }
 
-        if (isDirectPlanOrder(orderItems) && request.getPackPrice() != null && request.getPackPrice().compareTo(BigDecimal.ZERO) > 0) {
-            totalAmount = request.getPackPrice();
+        int updated = orderMapper.deductSkuStock(sku.getId(), quantity);
+        if (updated <= 0) {
+            return null;
         }
 
+        BigDecimal itemPrice = orderPriceHelper.resolveEffectivePrice(goods, sku);
+        BigDecimal itemTotal = itemPrice.multiply(BigDecimal.valueOf(quantity));
+
+        OrderItemInfo orderItem = new OrderItemInfo();
+        orderItem.setGoodsId(goods.getId());
+        orderItem.setSkuId(sku.getId());
+        orderItem.setGoodsName(goods.getName());
+        orderItem.setGoodsImage(goods.getMainImage());
+        orderItem.setSkuName(sku.getSkuName());
+        orderItem.setSkuWeightG(sku.getSkuWeightG());
+        orderItem.setPrice(itemPrice);
+        orderItem.setQuantity(quantity);
+        orderItem.setTotalPrice(itemTotal);
+        orderItem.setSourceType(orderSourceHelper.resolveItemSourceType(entry.getSourceType(), flashActive));
+        orderItem.setSourcePlanId(entry.getSourcePlanId());
+        orderItem.setSourceScene(orderSourceHelper.resolveItemSourceScene(entry.getSourceScene(), flashActive));
+        return orderItem;
+    }
+
+    private Map<String, String> buildReceiverInfo(SubmitOrderRequest request) {
         String receiverName = emptyToDefault(request.getReceiverName(), "默认收货人");
         String receiverPhone = emptyToDefault(request.getReceiverPhone(), "13800000000");
         String receiverAddress = emptyToDefault(request.getReceiverAddress(), "默认收货地址");
@@ -175,7 +248,7 @@ public class OrderServiceImpl implements OrderService {
         if (request.getAddressId() != null) {
             AddressInfo address = addressMapper.selectByIdAndUserId(request.getAddressId(), request.getUserId());
             if (address == null) {
-                return ApiResponse.badRequest("收货地址不存在");
+                return null;
             }
             receiverName = address.getReceiverName();
             receiverPhone = address.getReceiverPhone();
@@ -186,63 +259,30 @@ public class OrderServiceImpl implements OrderService {
                     emptyToDefault(address.getDetail(), ""));
         }
 
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        Long couponId = request.getCouponId();
-        if (couponId != null) {
-            CouponInfo coupon = couponMapper.selectByIdAndUserId(couponId, request.getUserId());
-            if (coupon == null || coupon.getStatus() == null || coupon.getStatus() != 1) {
-                return ApiResponse.badRequest("优惠券不可用");
-            }
-            if (coupon.getExpireDate() != null && coupon.getExpireDate().isBefore(java.time.LocalDate.now())) {
-                return ApiResponse.badRequest("优惠券已过期");
-            }
-            BigDecimal threshold = coupon.getThresholdAmount() == null ? BigDecimal.ZERO : coupon.getThresholdAmount();
-            BigDecimal discount = coupon.getDiscountAmount() == null ? BigDecimal.ZERO : coupon.getDiscountAmount();
-            if (totalAmount.compareTo(threshold) < 0) {
-                return ApiResponse.badRequest("未满足优惠券使用门槛");
-            }
-            discountAmount = discount.min(totalAmount);
+        Map<String, String> result = new HashMap<>();
+        result.put("receiverName", receiverName);
+        result.put("receiverPhone", receiverPhone);
+        result.put("receiverAddress", receiverAddress);
+        return result;
+    }
+
+    private BigDecimal resolveDiscountAmount(Long userId, Long userCouponId, BigDecimal totalAmount) {
+        if (userCouponId == null) {
+            return BigDecimal.ZERO;
         }
-
-        BigDecimal actualAmount = totalAmount.subtract(discountAmount);
-        if (actualAmount.compareTo(BigDecimal.ZERO) < 0) {
-            actualAmount = BigDecimal.ZERO;
+        CouponInfo coupon = couponMapper.selectByIdAndUserId(userCouponId, userId);
+        if (coupon == null || coupon.getStatus() == null || coupon.getStatus() != 1) {
+            return null;
         }
-
-        OrderInfo orderInfo = new OrderInfo();
-        orderInfo.setOrderNo(generateOrderNo());
-        orderInfo.setUserId(request.getUserId());
-        orderInfo.setTotalAmount(totalAmount);
-        orderInfo.setDiscountAmount(discountAmount);
-        orderInfo.setActualAmount(actualAmount);
-        orderInfo.setReceiverName(receiverName);
-        orderInfo.setReceiverPhone(receiverPhone);
-        orderInfo.setReceiverAddress(receiverAddress);
-        orderInfo.setRemark(request.getRemark());
-        orderInfo.setCouponId(couponId);
-        orderInfo.setOrderSource(resolveOrderSource(orderItems));
-        orderInfo.setStatus(0);
-        orderInfo.setPayStatus(0);
-
-        orderMapper.insertOrder(orderInfo);
-
-        if (couponId != null) {
-            int marked = couponMapper.markUsed(couponId, request.getUserId());
-            if (marked <= 0) {
-                return ApiResponse.badRequest("优惠券使用失败，请重试");
-            }
+        if (coupon.getExpireDate() != null && coupon.getExpireDate().isBefore(java.time.LocalDate.now())) {
+            return null;
         }
-
-        for (OrderItemInfo orderItem : orderItems) {
-            orderItem.setOrderId(orderInfo.getId());
-            orderMapper.insertOrderItem(orderItem);
+        BigDecimal threshold = coupon.getThresholdAmount() == null ? BigDecimal.ZERO : coupon.getThresholdAmount();
+        BigDecimal discount = coupon.getDiscountAmount() == null ? BigDecimal.ZERO : coupon.getDiscountAmount();
+        if (totalAmount.compareTo(threshold) < 0) {
+            return null;
         }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("orderId", orderInfo.getId());
-        data.put("orderNo", orderInfo.getOrderNo());
-        data.put("actualAmount", orderInfo.getActualAmount());
-        return ApiResponse.success("下单成功", data);
+        return discount.min(totalAmount);
     }
 
     @Override
@@ -615,10 +655,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void restoreCouponIfNeeded(OrderInfo order) {
-        if (order == null || order.getCouponId() == null || order.getUserId() == null) {
+        if (order == null || order.getUserCouponId() == null || order.getUserId() == null) {
             return;
         }
-        couponMapper.markUnused(order.getCouponId(), order.getUserId());
+        couponMapper.markUnused(order.getUserCouponId(), order.getUserId());
     }
 
     private String emptyToDefault(String value, String fallback) {
@@ -634,7 +674,7 @@ public class OrderServiceImpl implements OrderService {
         }
         String sourceType = "";
         for (OrderItemInfo item : orderItems) {
-            String current = normalizeSourceType(item.getSourceType());
+            String current = orderSourceHelper.normalizeSourceType(item.getSourceType());
             if (!(OrderInfo.ORDER_SOURCE_MEAL.equals(current) || OrderInfo.ORDER_SOURCE_COMBO.equals(current))) {
                 return false;
             }
@@ -649,81 +689,7 @@ public class OrderServiceImpl implements OrderService {
         return true;
     }
 
-    private String normalizeSourceType(String sourceType) {
-        String value = safeText(sourceType).toUpperCase();
-        if (OrderInfo.ORDER_SOURCE_MEAL.equals(value)
-                || OrderInfo.ORDER_SOURCE_FLASH.equals(value)
-                || OrderInfo.ORDER_SOURCE_COMBO.equals(value)
-                || OrderInfo.ORDER_SOURCE_SEASONAL.equals(value)
-                || OrderInfo.ORDER_SOURCE_MIXED.equals(value)) {
-            return value;
-        }
-        return OrderInfo.ORDER_SOURCE_NORMAL;
-    }
-
-    private String resolveOrderSource(List<OrderItemInfo> orderItems) {
-        String current = "";
-        for (OrderItemInfo item : orderItems) {
-            String sourceType = normalizeSourceType(item.getSourceType());
-            if (current.isEmpty()) {
-                current = sourceType;
-                continue;
-            }
-            if (!current.equals(sourceType)) {
-                return OrderInfo.ORDER_SOURCE_MIXED;
-            }
-        }
-        return current.isEmpty() ? OrderInfo.ORDER_SOURCE_NORMAL : current;
-    }
-
     private String safeText(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private String normalizeSourceScene(String sourceScene) {
-        String text = safeText(sourceScene);
-        if (text.isEmpty()) return "";
-        try {
-            String decoded = URLDecoder.decode(text, StandardCharsets.UTF_8.name()).trim();
-            return decoded.isEmpty() ? text : decoded;
-        } catch (Exception ignored) {
-            return text;
-        }
-    }
-
-    private boolean isFlashActive(Goods goods) {
-        if (goods == null) return false;
-        if (goods.getIsFlash() == null || goods.getIsFlash() != 1) return false;
-        if (goods.getFlashPrice() == null || goods.getFlashPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
-        if (goods.getFlashStock() == null || goods.getFlashStock() <= 0) return false;
-        LocalDateTime start = goods.getFlashStartTime();
-        LocalDateTime end = goods.getFlashEndTime();
-        if (start == null || end == null) return false;
-        LocalDateTime now = LocalDateTime.now();
-        return !now.isBefore(start) && !now.isAfter(end);
-    }
-
-    private BigDecimal resolveEffectivePrice(Goods goods, GoodsSku sku) {
-        BigDecimal skuPrice = sku.getSkuPrice() == null ? BigDecimal.ZERO : sku.getSkuPrice();
-        if (!isFlashActive(goods)) return skuPrice;
-        BigDecimal flashPrice = goods.getFlashPrice() == null ? BigDecimal.ZERO : goods.getFlashPrice();
-        if (flashPrice.compareTo(BigDecimal.ZERO) <= 0) return skuPrice;
-        return flashPrice.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private String resolveItemSourceType(String sourceType, boolean flashActive) {
-        String normalized = normalizeSourceType(sourceType);
-        if (flashActive && OrderInfo.ORDER_SOURCE_NORMAL.equals(normalized)) {
-            return OrderInfo.ORDER_SOURCE_FLASH;
-        }
-        return normalized;
-    }
-
-    private String resolveItemSourceScene(String sourceScene, boolean flashActive) {
-        String normalized = normalizeSourceScene(sourceScene);
-        if (flashActive && normalized.isEmpty()) {
-            return "限时秒杀";
-        }
-        return normalized;
     }
 }

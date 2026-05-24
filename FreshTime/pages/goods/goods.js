@@ -93,6 +93,11 @@ Page({
           price: item.price,
           originalPrice: item.originalPrice,
           stock: item.stock,
+          isFlash: item.isFlash,
+          flashPrice: item.flashPrice,
+          flashStock: item.flashStock,
+          flashStartTime: item.flashStartTime,
+          flashEndTime: item.flashEndTime,
           unit: item.unit || '件',
           salesVolume: item.salesVolume || 0,
           origin: item.origin || '',
@@ -108,9 +113,11 @@ Page({
         const firstSku = this.getFirstAvailableSku(item);
         const displayPrice = this.getSkuDisplayPrice(firstSku, item.price);
         const flashPrice = this.getFlashPrice(item);
-        const flashPercent = this.getFlashSoldPercent(item);
+        const flashStock = this.parseNumberField(item.flashStock || item.flash_stock, 0);
+        const flashPercent = this.calcFlashDisplayPercent(item, item.stock, flashStock);
         const flashEndTimestamp = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
         const flashRemainText = this.formatFlashRemainText(flashEndTimestamp);
+        const flashSpecText = this.buildFlashSpecText(item);
         const comboBadge = this.resolveComboBadge(sceneType);
         const couponThresholdHint = item.couponThresholdHint || this.resolveCouponThresholdHintByPrice(item);
         return {
@@ -122,6 +129,7 @@ Page({
           flashPercent,
           flashEndTimestamp,
           flashRemainText,
+          flashSpecText,
           comboBadge,
           couponThresholdHint
         };
@@ -211,6 +219,31 @@ Page({
     if (this.data.addCartLoadingId) return;
     const target = (this.data.list || []).find((item) => Number(item.id) === id) || null;
     if (!target) return;
+    if (this.data.currentType === 'flash') {
+      if (!app.getUserId()) {
+        app.requireLogin({ redirect: '/pages/goods/goods?type=flash' }).catch(() => {});
+        return;
+      }
+      const selectedSku = this.getFirstAvailableSku(target);
+      if (!selectedSku || Number(selectedSku.skuStock || 0) <= 0) {
+        wx.showToast({ title: '当前默认规格库存不足', icon: 'none' });
+        return;
+      }
+      this.setData({ addCartLoadingId: Number(target.id) });
+      post(`/cart/add?goodsId=${target.id}&skuId=${selectedSku.id}&quantity=1&sourceType=FLASH&sourceScene=${encodeURIComponent('限时秒杀')}`, {}, { retry: 0 })
+        .then(() => {
+          wx.showToast({ title: '已加入购物车', icon: 'success' });
+          if (app && app.refreshCartBadgeFromServer) app.refreshCartBadgeFromServer();
+        })
+        .catch((error) => {
+          if (error && (error.message === 'LOGIN_REQUIRED' || error.message === 'LOGIN_TIMEOUT' || error.message === 'MANUAL_LOGOUT')) {
+            return;
+          }
+          showRequestError(error, '加入购物车失败');
+        })
+        .finally(() => this.setData({ addCartLoadingId: 0 }));
+      return;
+    }
     this.setData({
       specPopupVisible: true,
       specGoods: target,
@@ -336,12 +369,51 @@ Page({
   },
 
   getFlashSoldPercent(item = {}) {
-    const stock = Number(item.stock || 0);
-    const flashStock = Number(item.flashStock || item.flash_stock || 0);
+    const stock = this.parseNumberField(item.stock, 0);
+    const flashStock = this.parseNumberField(item.flashStock || item.flash_stock, 0);
     if (stock <= 0 || flashStock <= 0) return 0;
     const sold = Math.max(0, flashStock - stock);
     const p = Math.round((sold * 100) / flashStock);
     return Math.max(0, Math.min(100, p));
+  },
+
+  calcFlashDisplayPercent(item = {}, currentStock = 0, initialFlashStock = 0) {
+    const startTs = this.parseTimeToTimestamp(item.flashStartTime || item.flash_start_time || 0);
+    const endTs = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
+    if (!(startTs > 0) || !(endTs > startTs)) {
+      return 18;
+    }
+    const nowBucket = this.getFlashTimeBucket();
+    const elapsed = Math.max(0, Math.min(nowBucket - startTs, endTs - startTs));
+    const duration = endTs - startTs;
+    const timeRatio = duration > 0 ? elapsed / duration : 0;
+    const stagedPercent = Math.round(18 + (timeRatio * 68));
+    return Math.max(18, Math.min(92, stagedPercent));
+  },
+
+  buildFlashSpecText(item = {}) {
+    const standardSku = this.getFirstAvailableSku(item);
+    if (!standardSku) {
+      return '500g标准装';
+    }
+    const skuName = `${standardSku.skuName || ''}`.trim();
+    const weight = Number(standardSku.skuWeightG || 0);
+    if (weight > 0 && skuName) {
+      return `${weight}g${skuName.includes('标准') ? skuName : skuName}`;
+    }
+    if (weight > 0) return `${weight}g标准装`;
+    if (skuName) return skuName;
+    return '500g标准装';
+  },
+
+  parseNumberField(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  },
+
+  getFlashTimeBucket() {
+    const minuteMs = 60 * 1000;
+    return Math.floor(Date.now() / minuteMs) * minuteMs;
   },
 
   parseTimeToTimestamp(timeValue) {
@@ -386,7 +458,8 @@ Page({
     const second = Math.floor((remain % (1000 * 60)) / 1000);
     const list = (this.data.list || []).map((item) => ({
       ...item,
-      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
+      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp),
+      flashPercent: this.calcFlashDisplayPercent(item, item.stock, item.flashStock || item.flash_stock || 0)
     }));
     this.setData({ list });
   },

@@ -8,7 +8,10 @@
       <view class='price-row-main'>
         <view class='title-wrap'>
           <view class='title'>{{detail.name}}</view>
-          <view class='price'>¥{{selectedSku ? (selectedSku.skuPrice || detail.price) : detail.price}}</view>
+          <view class='goods-price-wrap'>
+            <view class='goods-price-current'>¥{{displayPriceText}}</view>
+            <view class='goods-price-original' wx:if='{{showOriginalPrice}}'>原价 {{originalPriceText}}</view>
+          </view>
         </view>
         <view class='sales-pill'>销量 {{detail.salesVolume || 0}}</view>
       </view>
@@ -21,14 +24,28 @@
         <view class='meta' wx:if='{{seasonalWindowText}}'>{{seasonalWindowText}}</view>
         <view class='meta' wx:if='{{seasonalTipText}}'>{{seasonalTipText}}</view>
       </view>
+      <view class='flash-panel' wx:if='{{sourceType === "FLASH"}}'>
+        <view class='flash-panel-row'>
+          <text class='flash-panel-badge'>秒杀进行中</text>
+          <text class='flash-panel-remain' wx:if='{{flashRemainText}}'>{{flashRemainText}}</text>
+        </view>
+        <view class='flash-panel-spec'>秒杀规格：{{flashSpecLabelText}}</view>
+        <view class='flash-panel-progress'>
+          <view class='flash-panel-track'>
+            <view class='flash-panel-inner' style='width: {{flashDisplayPercent}}%;'></view>
+          </view>
+          <text class='flash-panel-text'>已抢 {{flashDisplayPercent}}%</text>
+        </view>
+      </view>
       <view class='detail-block' wx:if='{{detail.detail}}'>
         <view class='section-caption'>商品详情</view>
         <view class='detail-text'>{{detail.detail}}</view>
       </view>
       <view class='meta' wx:if='{{selectedSku ? ((selectedSku.skuStock || 0) <= 0) : (detail.stock <= 0)}}'>当前规格暂时售空，可看看其他规格</view>
+      <view class='meta' wx:if='{{sourceType === "FLASH"}}'>秒杀价仅适用于 {{flashSpecLabelText}}，默认按该规格下单</view>
       <view class='spec-select-wrap' wx:if='{{detail.skuList && detail.skuList.length > 0}}'>
         <view class='section-caption'>规格选择</view>
-        <picker mode='selector' range='{{detail.skuList}}' range-key='skuName' value='{{selectedSkuIndex || 0}}' bindchange='onPickerSkuChange'>
+        <picker wx:if='{{sourceType !== "FLASH"}}' mode='selector' range='{{detail.skuList}}' range-key='skuName' value='{{selectedSkuIndex || 0}}' bindchange='onPickerSkuChange'>
           <view class='spec-picker'>
             <view class='spec-picker-value'>
               规格：{{selectedSku ? (selectedSku.skuName || '标准装') : '请选择规格'}}{{selectedSku && selectedSku.skuWeightG ? (' · ' + selectedSku.skuWeightG + 'g') : ''}}
@@ -36,6 +53,9 @@
             <text class='spec-picker-arrow'>▼</text>
           </view>
         </picker>
+        <view wx:else class='spec-picker spec-picker--readonly'>
+          <view class='spec-picker-value'>规格：{{flashSpecLabelText}}</view>
+        </view>
         <view class='spec-hint' wx:if='{{selectedSku}}'>
           <text>当前可售：{{selectedSku.skuStock || 0}} {{detail.unit || '件'}}</text>
         </view>

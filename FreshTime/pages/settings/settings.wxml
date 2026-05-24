@@ -12,7 +12,7 @@
   <view class='section-card'>
     <view class='section-head'>
       <text class='section-title'>通知偏好</text>
-      <text class='section-desc'>当前设置仅用于演示页面展示</text>
+      <text class='section-desc'>可根据你的使用习惯调整提醒偏好</text>
     </view>
     <view class='setting-item'>
       <view class='setting-copy'>
@@ -24,7 +24,7 @@
     <view class='setting-item'>
       <view class='setting-copy'>
         <text class='setting-title'>优惠活动通知</text>
-        <text class='setting-sub'>领券、活动与推荐消息提醒</text>
+        <text class='setting-sub'>领券、活动和推荐更新时提醒你</text>
       </view>
       <switch color='#07c160' checked='{{notifyPromo}}' bindchange='onTogglePromo' />
     </view>

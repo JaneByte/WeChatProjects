@@ -24,7 +24,13 @@ Page({
     seasonalBadgeText: '',
     seasonalWindowText: '',
     seasonalTipText: '',
-    seasonalUrgencyText: ''
+    seasonalUrgencyText: '',
+    displayPriceText: '0.00',
+    originalPriceText: '',
+    showOriginalPrice: false,
+    flashSpecLabelText: '标准装',
+    flashDisplayPercent: 0,
+    flashRemainText: ''
   },
 
   onLoad(options) {
@@ -50,6 +56,18 @@ Page({
       this.loadCommentSummary();
       this.loadCommentList(true);
     }
+    if (this.data.sourceType === 'FLASH') {
+      this.syncFlashDisplay(this.data.detail || {});
+      this.startFlashCountdown();
+    }
+  },
+
+  onHide() {
+    this.clearFlashCountdown();
+  },
+
+  onUnload() {
+    this.clearFlashCountdown();
   },
 
   loadDetail() {
@@ -74,6 +92,9 @@ Page({
           selectedSku: firstSku,
           quantity: 1
         });
+        this.syncPriceDisplay(detail, firstSku);
+        this.syncFlashSpecLabel(detail, firstSku);
+        this.syncFlashDisplay(detail);
       })
       .catch((error) => {
         this.setData({ detail: null });
@@ -197,6 +218,9 @@ Page({
         throw new Error('规格库存不足，请调整数量');
       }
       this.setData({ detail: fresh, selectedSku });
+      this.syncPriceDisplay(fresh, selectedSku);
+      this.syncFlashSpecLabel(fresh, selectedSku);
+      this.syncFlashDisplay(fresh);
       return fresh;
     });
   },
@@ -241,6 +265,7 @@ Page({
   },
 
   onSelectSku(e) {
+    if (this.data.sourceType === 'FLASH') return;
     const skuId = Number(e.currentTarget.dataset.skuid || 0);
     if (!skuId) return;
     const sku = this.getSelectedSku(this.data.detail, skuId);
@@ -253,9 +278,12 @@ Page({
       selectedSku: sku,
       quantity
     });
+    this.syncPriceDisplay(this.data.detail, sku);
+    this.syncFlashSpecLabel(this.data.detail, sku);
   },
 
   onPickerSkuChange(e) {
+    if (this.data.sourceType === 'FLASH') return;
     const index = Number((e && e.detail && e.detail.value) || 0);
     const list = Array.isArray(this.data.detail && this.data.detail.skuList) ? this.data.detail.skuList : [];
     const sku = list[index];
@@ -360,24 +388,151 @@ Page({
   isFlashActive(detail = {}) {
     if (Number(detail.isFlash || detail.is_flash || 0) !== 1) return false;
     const flashPrice = Number(detail.flashPrice || detail.flash_price || 0);
-    const flashStock = Number(detail.flashStock || detail.flash_stock || 0);
-    const start = detail.flashStartTime || detail.flash_start_time;
-    const end = detail.flashEndTime || detail.flash_end_time;
-    if (!(flashPrice > 0) || !(flashStock > 0) || !start || !end) return false;
+    const flashStock = this.parseNumberField(detail.flashStock || detail.flash_stock, 0);
+    const startTs = this.parseTimeToTimestamp(detail.flashStartTime || detail.flash_start_time || 0);
+    const endTs = this.parseTimeToTimestamp(detail.flashEndTime || detail.flash_end_time || 0);
+    if (!(flashPrice > 0) || !(flashStock > 0) || !(startTs > 0) || !(endTs > 0)) return false;
     const now = Date.now();
-    const startTs = new Date(String(start).replace(/-/g, '/')).getTime();
-    const endTs = new Date(String(end).replace(/-/g, '/')).getTime();
     if (Number.isNaN(startTs) || Number.isNaN(endTs)) return false;
     return now >= startTs && now <= endTs;
+  },
+
+  parseTimeToTimestamp(timeValue) {
+    if (!timeValue) return 0;
+    if (typeof timeValue === 'number') return timeValue;
+    const raw = String(timeValue).trim();
+    if (!raw) return 0;
+    const normalized = raw.includes('T')
+      ? raw
+      : raw.replace(' ', 'T');
+    const ts = new Date(normalized).getTime();
+    if (!Number.isNaN(ts)) return ts;
+    const fallbackTs = new Date(raw.replace(/-/g, '/')).getTime();
+    if (!Number.isNaN(fallbackTs)) return fallbackTs;
+    const localTs = new Date(raw.replace(/-/g, '/').replace('T', ' ')).getTime();
+    if (!Number.isNaN(localTs)) return localTs;
+    return 0;
+  },
+
+  calcSoldPercent(currentStock, initialFlashStock) {
+    const nowStock = this.parseNumberField(currentStock, 0);
+    const totalStock = this.parseNumberField(initialFlashStock, 0);
+    if (totalStock <= 0) return 0;
+    const sold = Math.max(0, totalStock - nowStock);
+    const ratio = Math.round((sold * 100) / totalStock);
+    return Math.max(0, Math.min(100, ratio));
+  },
+
+  calcFlashDisplayPercent(detail = {}) {
+    const startTs = this.parseTimeToTimestamp(detail.flashStartTime || detail.flash_start_time || 0);
+    const endTs = this.parseTimeToTimestamp(detail.flashEndTime || detail.flash_end_time || 0);
+    if (!(startTs > 0) || !(endTs > startTs)) {
+      return 18;
+    }
+    const nowBucket = this.getFlashTimeBucket();
+    const elapsed = Math.max(0, Math.min(nowBucket - startTs, endTs - startTs));
+    const duration = endTs - startTs;
+    const timeRatio = duration > 0 ? elapsed / duration : 0;
+    const stagedPercent = Math.round(18 + (timeRatio * 68));
+    return Math.max(18, Math.min(92, stagedPercent));
+  },
+
+  parseNumberField(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  },
+
+  getFlashTimeBucket() {
+    const minuteMs = 60 * 1000;
+    return Math.floor(Date.now() / minuteMs) * minuteMs;
+  },
+
+  pad2(num) {
+    return num < 10 ? `0${num}` : `${num}`;
+  },
+
+  formatFlashRemainText(detail = {}) {
+    const endTs = this.parseTimeToTimestamp(detail.flashEndTime || detail.flash_end_time || 0);
+    if (!(endTs > 0)) return '';
+    const remain = endTs - Date.now();
+    if (remain <= 0) return '即将结束';
+    const hour = Math.floor(remain / (1000 * 60 * 60));
+    const minute = Math.floor((remain % (1000 * 60 * 60)) / (1000 * 60));
+    const second = Math.floor((remain % (1000 * 60)) / 1000);
+    return `还剩 ${this.pad2(hour)}:${this.pad2(minute)}:${this.pad2(second)}`;
   },
 
   getCheckoutPrice(detail = {}, sku = {}) {
     const skuPrice = Number((sku && sku.skuPrice) || detail.price || 0);
     if (this.data.sourceType !== 'FLASH' || !this.isFlashActive(detail)) {
-      return skuPrice;
+      return Number(detail.price || skuPrice || 0);
     }
     const flashPrice = Number(detail.flashPrice || detail.flash_price || 0);
     if (!(flashPrice > 0)) return skuPrice;
     return Number(flashPrice.toFixed(2));
+  },
+
+  getOriginalDisplayPrice(detail = {}, sku = {}, currentPrice = 0) {
+    const skuPrice = Number((sku && sku.skuPrice) || 0);
+    const originalPrice = Number(detail.originalPrice || detail.original_price || 0);
+    if (skuPrice > currentPrice) return skuPrice;
+    if (originalPrice > currentPrice) return originalPrice;
+    return Number(currentPrice || 0);
+  },
+
+  syncPriceDisplay(detail = {}, sku = null) {
+    const currentPrice = this.getCheckoutPrice(detail, sku);
+    const originalPrice = this.getOriginalDisplayPrice(detail, sku, currentPrice);
+    this.setData({
+      displayPriceText: Number(currentPrice || 0).toFixed(2),
+      originalPriceText: originalPrice > currentPrice ? Number(originalPrice).toFixed(2) : '',
+      showOriginalPrice: originalPrice > currentPrice
+    });
+  },
+
+  getFlashSpecLabel(detail = {}, sku = null) {
+    const targetSku = sku || this.getFirstAvailableSku(detail);
+    if (!targetSku) return '标准装';
+    const skuName = `${targetSku.skuName || ''}`.trim();
+    const weight = Number(targetSku.skuWeightG || 0);
+    if (weight > 0 && skuName) return `${weight}g${skuName.includes('标准') ? skuName : skuName}`;
+    if (weight > 0) return `${weight}g标准装`;
+    if (skuName) return skuName;
+    return '标准装';
+  },
+
+  syncFlashSpecLabel(detail = {}, sku = null) {
+    this.setData({
+      flashSpecLabelText: this.getFlashSpecLabel(detail, sku)
+    });
+  },
+
+  syncFlashDisplay(detail = {}) {
+    if (this.data.sourceType !== 'FLASH' || !this.isFlashActive(detail)) {
+      this.setData({
+        flashDisplayPercent: 0,
+        flashRemainText: ''
+      });
+      return;
+    }
+    this.setData({
+      flashDisplayPercent: this.calcFlashDisplayPercent(detail),
+      flashRemainText: this.formatFlashRemainText(detail)
+    });
+  },
+
+  startFlashCountdown() {
+    this.clearFlashCountdown();
+    this.flashTimer = setInterval(() => {
+      if (this.data.sourceType !== 'FLASH') return;
+      this.syncFlashDisplay(this.data.detail || {});
+    }, 1000);
+  },
+
+  clearFlashCountdown() {
+    if (this.flashTimer) {
+      clearInterval(this.flashTimer);
+      this.flashTimer = null;
+    }
   }
 });

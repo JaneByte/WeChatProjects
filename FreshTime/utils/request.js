@@ -49,17 +49,6 @@ function normalizeNetworkError(error) {
   return new Error('网络请求失败，请稍后重试');
 }
 
-function parseUploadResponse(rawData) {
-  if (typeof rawData !== 'string') {
-    return rawData;
-  }
-  try {
-    return JSON.parse(rawData);
-  } catch (error) {
-    return rawData;
-  }
-}
-
 function logRequestStart(traceId, method, url, data) {
   if (!REQUEST_LOG_ENABLED) return;
   console.info(`[request:start] id=${traceId} env=${ENV_VERSION} ${method} ${url}`, data || {});
@@ -240,54 +229,12 @@ function del(url, data = {}, options = {}) {
   });
 }
 
-/**
- * 上传文件到服务器
- * @param {String} url 上传接口路径
- * @param {String} filePath 本地文件路径
- * @param {Object} [formData={}] 额外表单数据
- * @returns {Promise<any>}
- */
-const uploadFile = (url, filePath, formData = {}) => {
-  return new Promise((resolve, reject) => {
-    wx.uploadFile({
-      url: getBaseUrl() + url,
-      filePath: filePath,
-      name: 'file',
-      formData: formData,
-      header: {
-        ...getAuthHeader() // 修复：复用已有的获取认证头方法
-      },
-      success: (res) => {
-        if (res.statusCode === 200) {
-          const data = parseUploadResponse(res.data);
-          if (
-            data &&
-            typeof data === 'object' &&
-            Object.prototype.hasOwnProperty.call(data, 'code') &&
-            data.code !== 200
-          ) {
-            reject(new Error(data.message || '上传失败'));
-            return;
-          }
-          resolve(data);
-        } else {
-          reject(new Error(`上传失败 (${res.statusCode})`));
-        }
-      },
-      fail: (error) => {
-        reject(normalizeNetworkError(error));
-      }
-    });
-  });
-};
-
 module.exports = {
   request,
   get,
   post,
   put,
   del,
-  uploadFile,
   TOKEN_STORAGE_KEY,
   UNAUTHORIZED_EVENT_NAME
 };

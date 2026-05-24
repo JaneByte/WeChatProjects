@@ -119,6 +119,11 @@
   padding: 2rpx 10rpx;
 }
 .hint { font-size: 22rpx; color: #647457; margin-top: 6rpx; }
+.flash-spec-text {
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  color: #d14d2f;
+}
 .price { font-size: 30rpx; color: #5a8a28; font-weight: 600; }
 .flash-price-box { display: flex; align-items: baseline; gap: 8rpx; }
 .origin-price {
@@ -127,10 +132,20 @@
   text-decoration: line-through;
 }
 .foot-row { margin-top: 10rpx; display: flex; align-items: center; justify-content: space-between; }
-.right-foot { display: flex; align-items: center; gap: 10rpx; }
-.flash-progress-row { display: flex; align-items: center; gap: 8rpx; }
+.right-foot {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 14rpx;
+}
+.flash-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 220rpx;
+}
 .flash-progress-track {
-  width: 110rpx;
+  width: 124rpx;
   height: 12rpx;
   border-radius: 999rpx;
   background: #ffe5de;
@@ -159,6 +174,12 @@
   background: linear-gradient(135deg, #73a937, #5a8a28);
   border-radius: 999rpx;
   padding: 8rpx 18rpx;
+}
+.add-btn--flash {
+  min-width: 132rpx;
+  text-align: center;
+  background: linear-gradient(135deg, #ff8a5b, #f45b4f);
+  box-shadow: 0 10rpx 18rpx rgba(244, 91, 79, 0.18);
 }
 .spec-mask {
   position: fixed;

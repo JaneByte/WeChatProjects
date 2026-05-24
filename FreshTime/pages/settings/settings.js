@@ -60,6 +60,7 @@ Page({
     post('/settings/save', { notifyOrder, notifyPromo }, { retry: 0 })
       .then(() => {
         this.setData({ notifyOrder, notifyPromo });
+        wx.showToast({ title: '设置已更新', icon: 'success', duration: 1000 });
       })
       .catch((error) => showRequestError(error, '设置保存失败'))
       .finally(() => this.setData({ submitting: false }));

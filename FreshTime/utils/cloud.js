@@ -1,5 +1,14 @@
 ﻿// utils/cloud.js
 
+function isCloudFileId(value) {
+  return typeof value === 'string' && value.startsWith('cloud://');
+}
+
+function getFileExtension(filePath = '') {
+  const match = `${filePath || ''}`.match(/(\.[a-zA-Z0-9]+)(?:[\?#].*)?$/);
+  return match && match[1] ? match[1].toLowerCase() : '.jpg';
+}
+
 /**
  * 根据 cloud 文件 ID 列表换取临时 URL
  * @param {Array<string>} fileIds cloud:// 文件 ID
@@ -12,7 +21,7 @@ async function getTempFileUrls(fileIds) {
 
   try {
     const res = await wx.cloud.getTempFileURL({
-      fileList: fileIds.filter((id) => id && id.startsWith('cloud://'))
+      fileList: fileIds.filter((id) => isCloudFileId(id))
     });
 
     const urlMap = {};
@@ -29,6 +38,28 @@ async function getTempFileUrls(fileIds) {
   }
 }
 
+async function resolveImageUrl(fileIdOrUrl = '') {
+  const raw = `${fileIdOrUrl || ''}`.trim();
+  if (!raw) return '';
+  if (!isCloudFileId(raw)) return raw;
+  const urlMap = await getTempFileUrls([raw]);
+  return urlMap[raw] || '';
+}
+
+async function uploadAvatarToCloud(filePath, userId) {
+  if (!filePath) {
+    throw new Error('头像文件不能为空');
+  }
+  const extension = getFileExtension(filePath);
+  const safeUserId = Number(userId || 0) > 0 ? Number(userId) : Date.now();
+  const cloudPath = `avatars/${safeUserId}_${Date.now()}${extension}`;
+  const res = await wx.cloud.uploadFile({
+    cloudPath,
+    filePath
+  });
+  return (res && res.fileID) || '';
+}
+
 /**
  * 处理商品列表图片（cloud:// -> 临时 URL）
  * @param {Array} goodsList 商品列表
@@ -40,7 +71,7 @@ async function processGoodsImages(goodsList, setData, dataKey = 'goodsList') {
 
   const fileIds = goodsList
     .map((item) => item.mainImage || item.image)
-    .filter((id) => id && id.startsWith('cloud://'));
+    .filter((id) => isCloudFileId(id));
 
   if (fileIds.length === 0) return;
 
@@ -62,6 +93,9 @@ async function processGoodsImages(goodsList, setData, dataKey = 'goodsList') {
 }
 
 module.exports = {
+  isCloudFileId,
   getTempFileUrls,
-  processGoodsImages
+  processGoodsImages,
+  resolveImageUrl,
+  uploadAvatarToCloud
 };

@@ -10,12 +10,13 @@
     </view>
     <view class="avatar-row">
       <view class="avatar-picker-shell">
-        <image class="avatar-preview" src="{{profile.avatar}}" mode="aspectFill"></image>
+        <image class="avatar-preview" src="{{avatarPreview}}" mode="aspectFill"></image>
         <button class="avatar-picker-trigger" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
       </view>
       <view class="avatar-copy">
         <text class="avatar-title">头像</text>
         <text class="avatar-tip">点击获取微信头像</text>
+        <text class="avatar-tip">建议选择常规 jpg、png 图片，少数特殊格式图片可能无法即时预览</text>
       </view>
     </view>
   </view>

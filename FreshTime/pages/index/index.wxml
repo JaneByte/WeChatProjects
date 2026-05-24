@@ -98,6 +98,7 @@
                   <text class="flash-price">¥{{item.flashPrice || item.price}}</text>
                   <text class="flash-origin" wx:if="{{Number(item.originPrice) > Number(item.flashPrice || item.price)}}">¥{{item.originPrice}}</text>
                 </view>
+                <text class="flash-spec-text">{{item.flashSpecText || '标准装'}}</text>
                 <view class="flash-progress">
                   <view class="flash-progress-track">
                     <view class="flash-progress-inner" style="width: {{item.soldPercent}}%;"></view>

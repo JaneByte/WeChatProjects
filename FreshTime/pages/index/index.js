@@ -187,7 +187,7 @@ Page({
     return list.map((item) => {
       const rawImage = item.mainImage || item.image || '';
       const image = urlMap[rawImage] || rawImage;
-      const stock = typeof item.stock === 'number' ? item.stock : (typeof item.flashStock === 'number' ? item.flashStock : 0);
+      const stock = this.parseNumberField(item.stock, 0);
       if (!asFlash) {
         return {
           ...item,
@@ -199,10 +199,11 @@ Page({
       }
       const originPrice = Number(item.originalPrice || item.originPrice || item.price || 0);
       const flashPrice = Number(item.flashPrice || item.price || 0);
-      const flashStock = Number(item.flashStock || 0);
-      const soldPercent = this.calcSoldPercent(stock, flashStock);
+      const flashStock = this.parseNumberField(item.flashStock || item.flash_stock, 0);
+      const soldPercent = this.calcFlashDisplayPercent(item, stock, flashStock);
       const flashEndTimestamp = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
       const flashRemainText = this.formatFlashRemainText(flashEndTimestamp);
+      const flashSpecText = this.buildFlashSpecText(item);
       return {
         ...item,
         mainImage: image,
@@ -213,18 +214,60 @@ Page({
         flashPrice: flashPrice.toFixed(2),
         soldPercent,
         flashEndTimestamp,
-        flashRemainText
+        flashRemainText,
+        flashSpecText
       };
     });
   },
 
   calcSoldPercent(currentStock, initialFlashStock) {
-    const nowStock = Number(currentStock || 0);
-    const totalStock = Number(initialFlashStock || 0);
+    const nowStock = this.parseNumberField(currentStock, 0);
+    const totalStock = this.parseNumberField(initialFlashStock, 0);
     if (totalStock <= 0) return 0;
     const sold = Math.max(0, totalStock - nowStock);
     const ratio = Math.round((sold * 100) / totalStock);
     return Math.max(0, Math.min(100, ratio));
+  },
+
+  calcFlashDisplayPercent(item = {}, currentStock = 0, initialFlashStock = 0) {
+    const startTs = this.parseTimeToTimestamp(item.flashStartTime || item.flash_start_time || 0);
+    const endTs = this.parseTimeToTimestamp(item.flashEndTime || item.flash_end_time || 0);
+    if (!(startTs > 0) || !(endTs > startTs)) {
+      return 18;
+    }
+    const nowBucket = this.getFlashTimeBucket();
+    const elapsed = Math.max(0, Math.min(nowBucket - startTs, endTs - startTs));
+    const duration = endTs - startTs;
+    const timeRatio = duration > 0 ? elapsed / duration : 0;
+    const stagedPercent = Math.round(18 + (timeRatio * 68));
+    return Math.max(18, Math.min(92, stagedPercent));
+  },
+
+  getFlashTimeBucket() {
+    const minuteMs = 60 * 1000;
+    return Math.floor(Date.now() / minuteMs) * minuteMs;
+  },
+
+  buildFlashSpecText(item = {}) {
+    const skuList = Array.isArray(item.skuList) ? item.skuList : [];
+    const standardSku = skuList.find((sku) => {
+      const name = `${sku.skuName || ''}`.trim();
+      return name.includes('标准') || name.includes('默认');
+    }) || skuList[0] || null;
+    if (!standardSku) {
+      return item.unit ? `${item.unit}标准装` : '标准装';
+    }
+    const skuName = `${standardSku.skuName || ''}`.trim();
+    const weight = Number(standardSku.skuWeightG || 0);
+    if (skuName && weight > 0) return `${weight}g${skuName.includes('标准') ? skuName : `${skuName}`}`;
+    if (weight > 0) return `${weight}g标准装`;
+    if (skuName) return skuName;
+    return item.unit ? `${item.unit}标准装` : '标准装';
+  },
+
+  parseNumberField(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
   },
 
   async normalizeHomeHero(hero = {}) {
@@ -313,7 +356,8 @@ Page({
     const second = Math.floor((remain % (1000 * 60)) / 1000);
     const flashSaleList = (this.data.flashSaleList || []).map((item) => ({
       ...item,
-      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp)
+      flashRemainText: this.formatFlashRemainText(item.flashEndTimestamp),
+      soldPercent: this.calcFlashDisplayPercent(item, item.stock, item.flashStock || item.flash_stock || 0)
     }));
     this.setData({
       flashSaleList
@@ -519,5 +563,3 @@ Page({
       .finally(() => this.setData({ addingCart: false }));
   }
 });
-
-

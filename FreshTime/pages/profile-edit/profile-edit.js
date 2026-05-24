@@ -1,4 +1,4 @@
-const { uploadFile } = require('../../utils/request.js');
+const { resolveImageUrl, uploadAvatarToCloud } = require('../../utils/cloud.js');
 const { showRequestError } = require('../../utils/ui.js');
 const app = getApp();
 const DEFAULT_AVATAR = '/assets/icon/my.png';
@@ -8,12 +8,39 @@ function isLocalAvatarPath(path) {
   return /^(wxfile:|http:\/\/tmp\/|\/tmp\/|file:|blob:)/.test(path);
 }
 
+function normalizeAvatarFile(filePath) {
+  return new Promise((resolve) => {
+    if (!isLocalAvatarPath(filePath)) {
+      resolve({
+        tempFilePath: filePath || '',
+        compressed: false
+      });
+      return;
+    }
+    wx.compressImage({
+      src: filePath,
+      quality: 82,
+      compressedHeight: 720,
+      compressedWidth: 720,
+      success: (res) => resolve({
+        tempFilePath: (res && res.tempFilePath) || filePath,
+        compressed: true
+      }),
+      fail: () => resolve({
+        tempFilePath: filePath,
+        compressed: false
+      })
+    });
+  });
+}
+
 Page({
   data: {
     loading: false,
     submitting: false,
     mode: 'edit',
     redirect: '',
+    avatarPreview: DEFAULT_AVATAR,
     profile: {
       nickname: '微信用户',
       avatar: DEFAULT_AVATAR
@@ -38,12 +65,15 @@ Page({
     this.syncLocalProfile();
   },
 
-  syncLocalProfile() {
+  async syncLocalProfile() {
     const loginProfile = app.getLoginProfile() || {};
+    const avatar = loginProfile.avatar || DEFAULT_AVATAR;
+    const avatarPreview = await app.getResolvedAvatar(avatar);
     this.setData({
+      avatarPreview: avatarPreview || DEFAULT_AVATAR,
       profile: {
         nickname: loginProfile.nickname || '微信用户',
-        avatar: loginProfile.avatar || DEFAULT_AVATAR
+        avatar
       }
     });
   },
@@ -51,17 +81,12 @@ Page({
   onChooseAvatar(e) {
     const avatarUrl = e?.detail?.avatarUrl || '';
     if (!avatarUrl) return;
-    
-    const that = this;
-    wx.getImageInfo({
-      src: avatarUrl,
-      success: () => {
-        that.setData({ 'profile.avatar': avatarUrl });
-      },
-      fail: () => {
-        wx.showToast({ title: '头像加载失败，请重试', icon: 'none' });
-        that.setData({ 'profile.avatar': DEFAULT_AVATAR });
-      }
+    normalizeAvatarFile(avatarUrl).then((result) => {
+      const nextPath = (result && result.tempFilePath) || avatarUrl;
+      this.setData({
+        avatarPreview: nextPath,
+        'profile.avatar': nextPath
+      });
     });
   },
 
@@ -111,20 +136,26 @@ Page({
     let uploadPromise = Promise.resolve(avatarUrl);
 
     if (isLocalAvatarPath(avatarUrl)) {
-      uploadPromise = uploadFile('/upload/image', avatarUrl)
-        .then((res) => ((res && res.data && res.data.url) || ''));
+      uploadPromise = uploadAvatarToCloud(avatarUrl, app.getUserId());
     }
 
     uploadPromise
-      .then((serverAvatarUrl) => {
+      .then(async (serverAvatarUrl) => {
         if (isLocalAvatarPath(avatarUrl) && !serverAvatarUrl) {
           throw new Error('头像上传失败，请重试');
         }
+        const nextAvatar = serverAvatarUrl || avatarUrl || DEFAULT_AVATAR;
+        const avatarPreview = await resolveImageUrl(nextAvatar) || nextAvatar || DEFAULT_AVATAR;
         const finalProfile = {
           nickname,
-          avatar: serverAvatarUrl || avatarUrl || DEFAULT_AVATAR
+          avatar: nextAvatar
         };
-        this.setData({ profile: finalProfile });
+        this.setData({
+          avatarPreview,
+          profile: {
+            ...finalProfile
+          }
+        });
         app.setLoginProfile({
           ...app.getLoginProfile(),
           ...finalProfile

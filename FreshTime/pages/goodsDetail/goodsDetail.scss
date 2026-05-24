@@ -28,11 +28,29 @@
   color: #1e3311;
 }
 
-.price {
+.goods-price-current {
   margin-top: 12rpx;
   color: #73a937;
   font-size: 42rpx;
   font-weight: 700;
+}
+
+.goods-price-wrap {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 14rpx;
+  flex-wrap: wrap;
+}
+
+.goods-price-wrap .goods-price-current {
+  margin-top: 0;
+}
+
+.goods-price-original {
+  font-size: 24rpx;
+  color: #9aa78f;
+  text-decoration: line-through;
 }
 
 .seasonal-panel {
@@ -60,6 +78,66 @@
 .seasonal-badge.warn {
   color: #ad6229;
   background: #fff1e2;
+}
+
+.flash-panel {
+  margin-top: 14rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #fff7ef 0%, #fffdf9 100%);
+  border: 1rpx solid #f2d3b6;
+}
+
+.flash-panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.flash-panel-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #c85c25;
+  background: #ffe7d8;
+}
+
+.flash-panel-remain {
+  font-size: 22rpx;
+  color: #d14d2f;
+  font-weight: 600;
+}
+
+.flash-panel-spec {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #7a5a1f;
+}
+
+.flash-panel-progress {
+  margin-top: 14rpx;
+}
+
+.flash-panel-track {
+  width: 100%;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #ffe7d2;
+  overflow: hidden;
+}
+
+.flash-panel-inner {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #ffb36c, #ff6b57);
+}
+
+.flash-panel-text {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #d35a33;
 }
 
 .meta {
@@ -310,4 +388,3 @@
   border-radius: 10rpx;
   background: #f6faf2;
 }
-

@@ -32,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String LOGIN_TYPE_GUEST = "guest";
     private static final int MAX_NICKNAME_LENGTH = 20;
     private static final Pattern REMOTE_AVATAR_PATTERN = Pattern.compile("^(https?:)?//.+");
+    private static final Pattern CLOUD_AVATAR_PATTERN = Pattern.compile("^cloud://.+");
     private static final String CODE_2_SESSION_URL =
             "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code";
 
@@ -268,6 +269,9 @@ public class AuthServiceImpl implements AuthService {
             return "头像地址无效，请重新上传";
         }
         if (avatar.startsWith("/assets/")) {
+            return null;
+        }
+        if (CLOUD_AVATAR_PATTERN.matcher(avatar).matches()) {
             return null;
         }
         if (!REMOTE_AVATAR_PATTERN.matcher(avatar).matches()) {

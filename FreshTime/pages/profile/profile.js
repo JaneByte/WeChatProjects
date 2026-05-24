@@ -61,16 +61,17 @@ Page({
       });
   },
 
-  refreshUserProfile() {
+  async refreshUserProfile() {
     const profile = app.getLoginProfile() || {};
     const userId = app.getUserId();
     const isLoggedIn = !!(userId && app.getToken());
     const nickname = profile.nickname || '微信快捷登录';
-    const avatar = profile.avatar || '/assets/icon/my.png';
+    const avatarFileId = profile.avatar || '/assets/icon/my.png';
+    const avatar = await app.getResolvedAvatar(avatarFileId);
     
     this.setData({
       isLoggedIn,
-      profileIncomplete: isLoggedIn && app.isDefaultProfile({ nickname, avatar }),
+      profileIncomplete: isLoggedIn && app.isDefaultProfile({ nickname, avatar: avatarFileId }),
       loginPromptVisible: !isLoggedIn,
       userInfo: {
         nickname,

@@ -1,5 +1,6 @@
 // app.js
 const { get, post, TOKEN_STORAGE_KEY } = require('./utils/request');
+const { resolveImageUrl } = require('./utils/cloud');
 
 const USER_ID_KEY = 'userId';
 const LOGIN_PROFILE_KEY = 'loginProfile';
@@ -108,6 +109,13 @@ App({
 
   getLoginProfile() {
     return this.globalData.loginProfile;
+  },
+
+  async getResolvedAvatar(avatar) {
+    const raw = typeof avatar === 'string' ? avatar.trim() : '';
+    if (!raw || raw === DEFAULT_AVATAR) return raw || DEFAULT_AVATAR;
+    const resolved = await resolveImageUrl(raw);
+    return resolved || DEFAULT_AVATAR;
   },
 
   buildDefaultNickname(seed = '') {

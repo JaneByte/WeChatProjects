@@ -1,4 +1,5 @@
 const { get, post } = require('../../utils/request');
+const { processGoodsImages } = require('../../utils/cloud.js');
 const { showRequestError } = require('../../utils/ui');
 const app = getApp();
 
@@ -45,8 +46,8 @@ Page({
       const priceNum = Number((firstSku && firstSku.skuPrice) || item.price || item.payPrice || 0);
       return {
         ...item,
-        image: item.mainImage || item.image || '',
-        mainImage: item.mainImage || item.image || '',
+        image: item.mainImage || item.goodsImage || item.image || '',
+        mainImage: item.mainImage || item.goodsImage || item.image || '',
         unit: item.unit || '份',
         desc: item.desc || '领券后下单更划算',
         price: priceNum.toFixed(2),
@@ -60,6 +61,15 @@ Page({
       leftColumnList: cols.leftColumnList,
       rightColumnList: cols.rightColumnList
     });
+    processGoodsImages(normalized, (payload) => {
+      const goodsList = payload && payload.recommendGoodsList ? payload.recommendGoodsList : normalized;
+      const nextCols = this.splitGoodsColumns(goodsList);
+      this.setData({
+        recommendGoodsList: goodsList,
+        leftColumnList: nextCols.leftColumnList,
+        rightColumnList: nextCols.rightColumnList
+      });
+    }, 'recommendGoodsList');
   },
 
   loadAvailableList() {
@@ -96,7 +106,7 @@ Page({
               id: goodsId,
               name: row.goodsName || row.name || '商品',
               price: row.price || row.payPrice || 0,
-              mainImage: row.mainImage || row.image || '',
+              mainImage: row.mainImage || row.goodsImage || row.image || '',
               unit: row.unit || '份'
             });
           });

@@ -47,6 +47,7 @@
         <text class="flash-item-remain" wx:if="{{currentType === 'flash' && item.flashRemainText}}">{{item.flashRemainText}}</text>
         <text class="hint" wx:if="{{item.sceneHint}}">{{item.sceneHint}}</text>
         <text class="hint coupon-hint" wx:if="{{item.couponThresholdHint}}">{{item.couponThresholdHint}}</text>
+        <text class="flash-spec-text" wx:if="{{currentType === 'flash'}}">秒杀规格：{{item.flashSpecText || '500g标准装'}}</text>
         <view class="foot-row">
           <view class="flash-price-box" wx:if="{{currentType === 'flash'}}">
             <text class="price">¥{{item.flashPrice}}</text>
@@ -61,7 +62,9 @@
               </view>
               <text class="flash-progress-text">已抢{{item.flashPercent}}%</text>
             </view>
-            <view class="add-btn" catchtap="onAddCart" data-id="{{item.id}}">加入</view>
+            <view class="add-btn {{currentType === 'flash' ? 'add-btn--flash' : ''}}" catchtap="onAddCart" data-id="{{item.id}}">
+              {{currentType === 'flash' ? '立即抢' : '加入'}}
+            </view>
           </view>
         </view>
       </view>

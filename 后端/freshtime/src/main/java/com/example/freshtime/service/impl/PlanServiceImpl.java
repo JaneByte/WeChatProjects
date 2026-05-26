@@ -14,8 +14,8 @@ import com.example.freshtime.mapper.CategoryMapper;
 import com.example.freshtime.mapper.GoodsMapper;
 import com.example.freshtime.mapper.GoodsSkuMapper;
 import com.example.freshtime.mapper.GoodsTagMapper;
-import com.example.freshtime.mapper.PackPricingRuleMapper;
 import com.example.freshtime.mapper.PlanRuleConfigMapper;
+import com.example.freshtime.mapper.SeasonalConfigMapper;
 import com.example.freshtime.service.PlanService;
 import com.example.freshtime.service.impl.support.PlanPricingHelper;
 import com.example.freshtime.service.impl.support.PlanRoleHelper;
@@ -61,14 +61,17 @@ public class PlanServiceImpl implements PlanService {
     private PlanRuleConfigMapper planRuleConfigMapper;
 
     @Autowired
-    private PackPricingRuleMapper packPricingRuleMapper;
+    private SeasonalConfigMapper seasonalConfigMapper;
 
     private Map<Long, Set<String>> goodsTagCodeMapCache = Collections.emptyMap();
+    private final ThreadLocal<Map<String, String>> planRuleConfigThreadCache = new ThreadLocal<>();
     private static final Map<String, String> DEFAULT_PLAN_RULES = PlanRuleHelper.buildDefaultPlanRules();
     private static final Map<String, String> DEFAULT_PACK_PRICING_RULES = buildDefaultPackPricingRules();
 
     @Override
     public ApiResponse<?> generateMealPlan(Long userId, GenerateMealPlanRequest request) {
+        beginPlanRuleContext();
+        try {
         if (request == null) {
             return ApiResponse.badRequest("请求参数不能为空");
         }
@@ -81,8 +84,14 @@ public class PlanServiceImpl implements PlanService {
 
         WeightProfile profile = resolveWeightProfile("meal");
         BudgetRange budget = resolveBudgetRange(budgetLevel, "meal");
-        List<Goods> allPool = filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), null);
-        List<Goods> pool = filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), request.getDislikeTags());
+        List<Goods> allPool = excludeDislikedGoods(
+                filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), null),
+                request.getDislikeGoodsIds()
+        );
+        List<Goods> pool = excludeDislikedGoods(
+                filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), request.getDislikeTags()),
+                request.getDislikeGoodsIds()
+        );
         List<String> warnings = new ArrayList<>();
         if (pool.size() < 3) {
             pool = allPool;
@@ -94,12 +103,20 @@ public class PlanServiceImpl implements PlanService {
         prepareTagCache(pool);
 
         Map<Long, Category> categoryMap = loadCategoryMap();
-        Goods mainGoods = pickBestMealGoods(pool, categoryMap, "veg", budget, dietGoal, cookMode, profile, userId, shuffleSeed, null);
-        Goods sideGoods = pickBestMealGoods(pool, categoryMap, "veg", budget, dietGoal, cookMode, profile, userId, shuffleSeed, mainGoods == null ? null : mainGoods.getId());
-        Goods fruitGoods = pickBestMealGoods(pool, categoryMap, "fruit", budget, dietGoal, cookMode, profile, userId, shuffleSeed, sideGoods == null ? (mainGoods == null ? null : mainGoods.getId()) : sideGoods.getId(), mainGoods == null ? null : mainGoods.getId());
+        List<Goods> previousPlanGoods = loadPreviousPlanGoods(request.getPreviousPlanGoodsIds());
+        Goods mainGoods = pickBestMealGoods(pool, categoryMap, "veg", budget, dietGoal, cookMode, profile, userId, shuffleSeed, previousPlanGoods.size() > 0 ? previousPlanGoods.get(0) : null, null);
+        Goods sideGoods = pickBestMealGoods(pool, categoryMap, "veg", budget, dietGoal, cookMode, profile, userId, shuffleSeed, previousPlanGoods.size() > 1 ? previousPlanGoods.get(1) : null, mainGoods == null ? null : mainGoods.getId());
+        Goods fruitGoods = pickBestMealGoods(pool, categoryMap, "fruit", budget, dietGoal, cookMode, profile, userId, shuffleSeed, previousPlanGoods.size() > 2 ? previousPlanGoods.get(2) : null, sideGoods == null ? (mainGoods == null ? null : mainGoods.getId()) : sideGoods.getId(), mainGoods == null ? null : mainGoods.getId());
 
         if (mainGoods == null || sideGoods == null || fruitGoods == null) {
-            return ApiResponse.badRequest("未找到满足条件的小份优选组合，请调整偏好后重试");
+            List<Goods> fallbackItems = pickMealFallbackGoods(pool, categoryMap);
+            if (fallbackItems.size() < 3) {
+                return ApiResponse.badRequest("当前在售商品较少，暂时还配不出合适的小份优选");
+            }
+            warnings.add("已根据当前在售商品为你放宽条件，优先挑选一份更稳妥的小份组合");
+            mainGoods = fallbackItems.get(0);
+            sideGoods = fallbackItems.get(1);
+            fruitGoods = fallbackItems.get(2);
         }
 
         List<PlanItem> baseItems = new ArrayList<>();
@@ -140,10 +157,15 @@ public class PlanServiceImpl implements PlanService {
         data.put("strategySummary", buildStrategySummary("meal", profile, !warnings.isEmpty(), warnings));
         data.put("replaceOptions", new HashMap<>());
         return ApiResponse.success(data);
+        } finally {
+            endPlanRuleContext();
+        }
     }
 
     @Override
     public ApiResponse<?> generateComboPlan(Long userId, GenerateComboPlanRequest request) {
+        beginPlanRuleContext();
+        try {
         if (request == null) {
             return ApiResponse.badRequest("请求参数不能为空");
         }
@@ -156,7 +178,10 @@ public class PlanServiceImpl implements PlanService {
         boolean preferVegOnly = shouldPreferVegOnlyCombo(goalScene);
         BudgetRange budget = scaleBudgetRange(resolveBudgetRange(safe(request.getBudgetLevel(), "standard"), "combo"), resolveServingCount(peopleCount));
 
-        List<Goods> pool = filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), null);
+        List<Goods> pool = excludeDislikedGoods(
+                filterAvailableGoods(goodsMapper.selectAdminGoodsList(null, 1, null), null),
+                request.getDislikeGoodsIds()
+        );
         List<String> warnings = new ArrayList<>();
         if (pool.size() < 3) {
             return ApiResponse.badRequest("可用商品不足，暂无法生成搭配");
@@ -164,16 +189,17 @@ public class PlanServiceImpl implements PlanService {
         prepareTagCache(pool);
 
         Map<Long, Category> categoryMap = loadCategoryMap();
-        Goods firstVegGoods = pickBestComboGoods(pool, categoryMap, goalScene, "veg", peopleCount, tastePref, profile, true, userId, shuffleSeed, null);
+        List<Goods> previousPlanGoods = loadPreviousPlanGoods(request.getPreviousPlanGoodsIds());
+        Goods firstVegGoods = pickBestComboGoods(pool, categoryMap, goalScene, "veg", peopleCount, tastePref, profile, true, userId, shuffleSeed, previousPlanGoods.size() > 0 ? previousPlanGoods.get(0) : null, null);
         if (firstVegGoods == null) {
             firstVegGoods = pickFallbackComboGoods(pool, categoryMap, "veg", null);
         }
-        Goods secondVegGoods = pickBestComboGoods(pool, categoryMap, goalScene, "veg", peopleCount, tastePref, profile, false, userId, shuffleSeed, firstVegGoods == null ? null : firstVegGoods.getId());
+        Goods secondVegGoods = pickBestComboGoods(pool, categoryMap, goalScene, "veg", peopleCount, tastePref, profile, false, userId, shuffleSeed, previousPlanGoods.size() > 1 ? previousPlanGoods.get(1) : null, firstVegGoods == null ? null : firstVegGoods.getId());
         if (secondVegGoods == null) {
             secondVegGoods = pickFallbackComboGoods(pool, categoryMap, "veg", firstVegGoods == null ? null : firstVegGoods.getId());
         }
         String thirdRole = preferVegOnly ? "veg" : "fruit";
-        Goods thirdGoods = pickBestComboGoods(pool, categoryMap, goalScene, thirdRole, peopleCount, tastePref, profile, false, userId, shuffleSeed, secondVegGoods == null ? null : secondVegGoods.getId(), firstVegGoods == null ? null : firstVegGoods.getId());
+        Goods thirdGoods = pickBestComboGoods(pool, categoryMap, goalScene, thirdRole, peopleCount, tastePref, profile, false, userId, shuffleSeed, previousPlanGoods.size() > 2 ? previousPlanGoods.get(2) : null, secondVegGoods == null ? null : secondVegGoods.getId(), firstVegGoods == null ? null : firstVegGoods.getId());
         if (thirdGoods == null) {
             thirdGoods = pickFallbackComboGoods(pool, categoryMap, thirdRole, secondVegGoods == null ? null : secondVegGoods.getId(), firstVegGoods == null ? null : firstVegGoods.getId());
         }
@@ -186,7 +212,10 @@ public class PlanServiceImpl implements PlanService {
             }
             List<Goods> fallbackItems = pickComboFallbackGoods(fallbackPool, categoryMap, goalScene);
             if (fallbackItems.size() < 3) {
-                return ApiResponse.badRequest("当前可选商品较少，暂时还配不出合适搭配");
+                fallbackItems = pickComboFallbackGoods(new ArrayList<>(pool), categoryMap, "");
+            }
+            if (fallbackItems.size() < 3) {
+                return ApiResponse.badRequest("当前在售商品较少，暂时还配不出合适搭配");
             }
             warnings.add("已根据当前在售商品为你优先挑选一组顺手好搭的组合");
             firstVegGoods = fallbackItems.get(0);
@@ -215,10 +244,15 @@ public class PlanServiceImpl implements PlanService {
         data.put("strategySummary", buildStrategySummary("combo", profile, !warnings.isEmpty(), warnings));
         data.put("replaceOptions", new HashMap<>());
         return ApiResponse.success(data);
+        } finally {
+            endPlanRuleContext();
+        }
     }
 
     @Override
     public ApiResponse<?> replacePlanItem(Long userId, ReplacePlanItemRequest request) {
+        beginPlanRuleContext();
+        try {
         if (request == null || request.getOriginSkuId() == null) {
             return ApiResponse.badRequest("originSkuId不能为空");
         }
@@ -267,6 +301,9 @@ public class PlanServiceImpl implements PlanService {
         data.put("priceSummary", buildPriceSummary(singleItemList, item.getPrice(), safe(request.getPlanType(), "meal")));
         data.put("message", "替换成功");
         return ApiResponse.success(data);
+        } finally {
+            endPlanRuleContext();
+        }
     }
 
     @Override
@@ -379,6 +416,21 @@ public class PlanServiceImpl implements PlanService {
         return result;
     }
 
+    private List<Goods> excludeDislikedGoods(List<Goods> source, List<Long> dislikeGoodsIds) {
+        if (source == null || source.isEmpty() || dislikeGoodsIds == null || dislikeGoodsIds.isEmpty()) {
+            return source;
+        }
+        Set<Long> excludeSet = dislikeGoodsIds.stream()
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toSet());
+        if (excludeSet.isEmpty()) {
+            return source;
+        }
+        return source.stream()
+                .filter(g -> g != null && g.getId() != null && !excludeSet.contains(g.getId()))
+                .collect(Collectors.toList());
+    }
+
     private boolean containsDislike(Goods g, List<String> dislikeTags) {
         if (dislikeTags == null || dislikeTags.isEmpty()) return false;
         for (String tag : dislikeTags) {
@@ -397,6 +449,9 @@ public class PlanServiceImpl implements PlanService {
 
     private boolean containsHardConflictKeyword(Goods g, String typeOrGoal) {
         String text = (safe(g.getName(), "") + "," + safe(g.getKeywords(), "")).toLowerCase();
+        if (PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.global_blacklist_keywords"))) {
+            return true;
+        }
         if ("juice".equals(typeOrGoal)) {
             return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.juice_blacklist_keywords"));
         }
@@ -406,31 +461,42 @@ public class PlanServiceImpl implements PlanService {
         if ("hotpot".equals(typeOrGoal)) {
             return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.hotpot_blacklist_keywords"));
         }
+        if ("bento_side".equals(typeOrGoal)) {
+            return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.bento_blacklist_keywords"));
+        }
         if ("meal".equals(typeOrGoal)) {
-            return text.matches(".*(榴莲|菠萝蜜).*");
+            return false;
         }
         return false;
     }
 
-    private Goods pickBestMealGoods(List<Goods> pool, Map<Long, Category> categoryMap, String role, BudgetRange budget, String dietGoal, String cookMode, WeightProfile profile, Long userId, Long shuffleSeed, Long... excludes) {
+    private Goods pickBestMealGoods(List<Goods> pool, Map<Long, Category> categoryMap, String role, BudgetRange budget, String dietGoal, String cookMode, WeightProfile profile, Long userId, Long shuffleSeed, Goods previousSlotGoods, Long... excludes) {
         boolean preferSatiety = "veg".equals(role) && (excludes == null || excludes.length == 0 || excludes[0] == null);
         List<Goods> candidates = pool.stream()
                 .filter(g -> !isExcluded(g.getId(), excludes))
                 .filter(g -> roleMatched(g, role, categoryMap, "meal"))
                 .filter(g -> !containsHardConflictKeyword(g, "meal"))
-                .sorted((a, b) -> Integer.compare(scoreMealGoods(b, role, budget, dietGoal, cookMode, categoryMap, profile, preferSatiety), scoreMealGoods(a, role, budget, dietGoal, cookMode, categoryMap, profile, preferSatiety)))
+                .filter(g -> !hasConflictWithGoods(g, "meal", "meal", excludes))
+                .sorted((a, b) -> Integer.compare(
+                        scoreMealGoods(b, role, budget, dietGoal, cookMode, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(b, previousSlotGoods, categoryMap),
+                        scoreMealGoods(a, role, budget, dietGoal, cookMode, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(a, previousSlotGoods, categoryMap)
+                ))
                 .limit(3)
                 .collect(Collectors.toList());
         return pickWithRotation(candidates, userId, shuffleSeed, "meal-" + role);
     }
 
-    private Goods pickBestComboGoods(List<Goods> pool, Map<Long, Category> categoryMap, String goalScene, String role, String peopleCount, String tastePref, WeightProfile profile, boolean preferSatiety, Long userId, Long shuffleSeed, Long... excludes) {
+    private Goods pickBestComboGoods(List<Goods> pool, Map<Long, Category> categoryMap, String goalScene, String role, String peopleCount, String tastePref, WeightProfile profile, boolean preferSatiety, Long userId, Long shuffleSeed, Goods previousSlotGoods, Long... excludes) {
         List<Goods> ranked = pool.stream()
                 .filter(g -> !isExcluded(g.getId(), excludes))
                 .filter(g -> !isSeasoningLike(g))
                 .filter(g -> roleMatched(g, role, categoryMap, "combo"))
                 .filter(g -> !containsHardConflictKeyword(g, goalScene))
-                .sorted((a, b) -> Integer.compare(scoreComboGoods(b, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety), scoreComboGoods(a, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety)))
+                .filter(g -> !hasConflictWithGoods(g, "combo", goalScene, excludes))
+                .sorted((a, b) -> Integer.compare(
+                        scoreComboGoods(b, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(b, previousSlotGoods, categoryMap),
+                        scoreComboGoods(a, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(a, previousSlotGoods, categoryMap)
+                ))
                 .collect(Collectors.toList());
         List<Goods> candidates = retainStrongComboCandidates(ranked, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety);
         if (candidates.isEmpty()) {
@@ -438,7 +504,11 @@ public class PlanServiceImpl implements PlanService {
                     .filter(g -> !isExcluded(g.getId(), excludes))
                     .filter(g -> !isSeasoningLike(g))
                     .filter(g -> roleMatched(g, role, categoryMap, "combo"))
-                    .sorted((a, b) -> Integer.compare(scoreComboGoods(b, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety), scoreComboGoods(a, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety)))
+                    .filter(g -> !hasConflictWithGoods(g, "combo", goalScene, excludes))
+                    .sorted((a, b) -> Integer.compare(
+                            scoreComboGoods(b, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(b, previousSlotGoods, categoryMap),
+                            scoreComboGoods(a, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety) - scoreRegenerateSimilarityPenalty(a, previousSlotGoods, categoryMap)
+                    ))
                     .collect(Collectors.toList());
             candidates = retainStrongComboCandidates(candidates, goalScene, role, peopleCount, tastePref, categoryMap, profile, preferSatiety);
         }
@@ -504,6 +574,100 @@ public class PlanServiceImpl implements PlanService {
             }
         }
         return result;
+    }
+
+    private List<Goods> pickMealFallbackGoods(List<Goods> pool, Map<Long, Category> categoryMap) {
+        List<Goods> ranked = new ArrayList<>(pool);
+        ranked.sort((a, b) -> Integer.compare(
+                scoreMealGoods(b, "veg", resolveBudgetRange("standard", "meal"), "balanced", "quick_cook", categoryMap, resolveWeightProfile("meal"), true),
+                scoreMealGoods(a, "veg", resolveBudgetRange("standard", "meal"), "balanced", "quick_cook", categoryMap, resolveWeightProfile("meal"), true)
+        ));
+
+        Goods firstVeg = null;
+        Goods secondVeg = null;
+        Goods fruit = null;
+        for (Goods goods : ranked) {
+            if (goods == null) continue;
+            if (firstVeg == null && roleMatched(goods, "veg", categoryMap, "meal") && !isSeasoningLike(goods)) {
+                firstVeg = goods;
+                continue;
+            }
+            if (secondVeg == null && roleMatched(goods, "veg", categoryMap, "meal") && !isSeasoningLike(goods)
+                    && (firstVeg == null || !firstVeg.getId().equals(goods.getId()))) {
+                secondVeg = goods;
+                continue;
+            }
+            if (fruit == null && roleMatched(goods, "fruit", categoryMap, "meal")) {
+                fruit = goods;
+            }
+        }
+
+        List<Goods> result = new ArrayList<>();
+        if (firstVeg != null) result.add(firstVeg);
+        if (secondVeg != null) result.add(secondVeg);
+        if (fruit != null) result.add(fruit);
+
+        if (result.size() < 3) {
+            for (Goods goods : ranked) {
+                if (goods == null) continue;
+                boolean exists = result.stream().anyMatch(item -> item.getId().equals(goods.getId()));
+                if (!exists) {
+                    result.add(goods);
+                }
+                if (result.size() >= 3) break;
+            }
+        }
+        return result;
+    }
+
+    private List<Goods> loadPreviousPlanGoods(List<Long> previousPlanGoodsIds) {
+        List<Goods> result = new ArrayList<>();
+        if (previousPlanGoodsIds == null || previousPlanGoodsIds.isEmpty()) {
+            return result;
+        }
+        for (Long goodsId : previousPlanGoodsIds) {
+            if (goodsId == null || goodsId <= 0) {
+                result.add(null);
+                continue;
+            }
+            result.add(goodsMapper.selectById(goodsId));
+        }
+        return result;
+    }
+
+    private int scoreRegenerateSimilarityPenalty(Goods candidate, Goods previousSlotGoods, Map<Long, Category> categoryMap) {
+        if (candidate == null || candidate.getId() == null || previousSlotGoods == null || previousSlotGoods.getId() == null) {
+            return 0;
+        }
+        int penalty = 0;
+        if (candidate.getId().equals(previousSlotGoods.getId())) {
+            penalty += 80;
+        }
+        if (candidate.getCategoryId() != null && candidate.getCategoryId().equals(previousSlotGoods.getCategoryId())) {
+            penalty += 18;
+        }
+        String candidateText = (safe(candidate.getName(), "") + "," + safe(candidate.getKeywords(), "")).toLowerCase();
+        String previousText = (safe(previousSlotGoods.getName(), "") + "," + safe(previousSlotGoods.getKeywords(), "")).toLowerCase();
+        if (PlanRuleHelper.isSimilarProduceFamily(candidateText, previousText)) {
+            penalty += 20;
+        }
+        Set<String> candidateTags = getTagCodes(candidate);
+        Set<String> previousTags = getTagCodes(previousSlotGoods);
+        if (!candidateTags.isEmpty() && !previousTags.isEmpty()) {
+            Set<String> overlap = new HashSet<>(candidateTags);
+            overlap.retainAll(previousTags);
+            penalty += Math.min(12, overlap.size() * 4);
+        }
+        Category candidateCategory = categoryMap == null ? null : categoryMap.get(candidate.getCategoryId());
+        Category previousCategory = categoryMap == null ? null : categoryMap.get(previousSlotGoods.getCategoryId());
+        if (candidateCategory != null && previousCategory != null) {
+            String candidateName = safe(candidateCategory.getName(), "");
+            String previousName = safe(previousCategory.getName(), "");
+            if (!candidateName.isEmpty() && candidateName.equals(previousName)) {
+                penalty += 8;
+            }
+        }
+        return penalty;
     }
 
     private boolean isExcluded(Long id, Long... excludes) {
@@ -768,17 +932,35 @@ public class PlanServiceImpl implements PlanService {
 
     private int scoreMealTagFit(Goods goods, String role, String dietGoal, String cookMode, boolean preferSatiety) {
         int score = 0;
+        String text = (safe(goods == null ? null : goods.getName(), "") + "," + safe(goods == null ? null : goods.getKeywords(), "")).toLowerCase();
         if (hasTag(goods, "single_preferred")) score += 12;
         if (hasTag(goods, "family_preferred")) score -= 4;
         if (hasTag(goods, "quick_cook") && !"no_cook".equals(cookMode)) score += 8;
         if ("fruit".equals(role) && hasTag(goods, "nutrition_refreshing")) score += 10;
-        if (("veg".equals(role) || "main".equals(role)) && hasTag(goods, "nutrition_satiety")) score += preferSatiety ? 18 : 10;
+        if (("veg".equals(role) || "main".equals(role)) && hasTag(goods, "nutrition_satiety")) {
+            score += preferSatiety ? ("light".equals(dietGoal) ? 8 : 24) : 10;
+        }
+        if (preferSatiety && ("veg".equals(role) || "main".equals(role)) && isMealSatietyProduce(text)) {
+            score += "light".equals(dietGoal) ? 4 : 18;
+        }
+        if ("high_fiber".equals(dietGoal) && isMealHighFiberProduce(text)) score += 22;
+        if ("light".equals(dietGoal) && isMealRefreshingProduce(text)) score += 22;
+        if ("balanced".equals(dietGoal) && isMealHighFiberProduce(text)) score += 12;
+        if ("balanced".equals(dietGoal) && isMealRefreshingProduce(text)) score += 12;
+        if (isMealStrongFlavorProduce(text)) score -= 8;
+        if ("light".equals(dietGoal) && isMealSatietyProduce(text)) score -= 12;
+        if ("light".equals(dietGoal) && text.matches(".*(土豆|南瓜|玉米|红薯|芋头|山药).*")) score -= 12;
+        if ("balanced".equals(dietGoal) && text.matches(".*(蒜苗|大葱|洋葱|苦瓜).*")) score -= 6;
+        if (preferSatiety && text.matches(".*(菌|菇).*")) score -= 6;
         if ("high_fiber".equals(dietGoal) && hasTag(goods, "nutrition_satiety")) score += 6;
+        if ("light".equals(dietGoal) && hasTag(goods, "nutrition_refreshing")) score += 12;
+        if ("balanced".equals(dietGoal) && hasTag(goods, "nutrition_refreshing")) score += 6;
         return score;
     }
 
     private int scoreComboTagFit(Goods goods, String goalScene, String role, String peopleCount, boolean preferSatiety) {
         int score = 0;
+        String text = (safe(goods == null ? null : goods.getName(), "") + "," + safe(goods == null ? null : goods.getKeywords(), "")).toLowerCase();
         int serving = resolveServingCount(peopleCount);
 
         if ("hotpot".equals(goalScene)) {
@@ -786,25 +968,33 @@ public class PlanServiceImpl implements PlanService {
             if (hasTag(goods, "hotpot_leafy")) score += 14;
             if (hasTag(goods, "hotpot_mushroom")) score += 16;
             if (hasTag(goods, "hotpot_root")) score += 12;
+            if (PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.hotpot_priority_keywords"))) score += 12;
             if (hasTag(goods, "avoid_hotpot")) score -= 45;
         }
         if ("salad".equals(goalScene)) {
             if (hasTag(goods, "salad_core")) score += 26;
             if (hasTag(goods, "salad_crisp")) score += 14;
             if (hasTag(goods, "no_cook")) score += 12;
+            if (PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.salad_priority_keywords"))) score += 12;
             if (hasTag(goods, "avoid_salad")) score -= 40;
+            if (text.matches(".*(即食|冷拌|脆|爽|沙拉).*")) score += 8;
+            if (text.matches(".*(耐煮|久煮|火锅|炖煮).*")) score -= 12;
         }
         if ("juice".equals(goalScene)) {
             if (hasTag(goods, "juice_core")) score += 26;
             if (hasTag(goods, "juice_high_water")) score += 16;
             if (hasTag(goods, "nutrition_refreshing")) score += 10;
+            if (PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.juice_priority_keywords"))) score += 12;
             if (hasTag(goods, "avoid_juice")) score -= 40;
         }
         if ("bento_side".equals(goalScene)) {
             if (hasTag(goods, "bento_core")) score += 24;
             if (hasTag(goods, "bento_stable")) score += 14;
             if (hasTag(goods, "quick_cook")) score += 10;
+            if (PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.bento_priority_keywords"))) score += 12;
             if (hasTag(goods, "avoid_combo")) score -= 30;
+            if (text.matches(".*(便当|耐放|分装|焯水|快手).*")) score += 8;
+            if (text.matches(".*(鲜切即食|果切|榨汁|沙拉|多汁).*")) score -= 12;
         }
 
         if (serving <= 1) {
@@ -885,6 +1075,7 @@ public class PlanServiceImpl implements PlanService {
             if ("combo".equals(planType) && isSeasoningLike(g)) continue;
             if (!replacementRoleMatched(g, role, categoryMap, planType, firstSlot)) continue;
             if ("combo".equals(planType) && containsHardConflictKeyword(g, goalScene)) continue;
+            if (hasConflictWithSelectedIds(g, planType, goalScene, currentGoodsIds)) continue;
 
             GoodsSku sku = "combo".equals(planType)
                     ? selectPreferredComboSku(g.getId(), role, peopleCount, profile)
@@ -990,7 +1181,7 @@ public class PlanServiceImpl implements PlanService {
             if (isStarchyProduce(existedText)) starchyCount += 1;
             if (hasDirectConflict(candidateText, existedText, goal)) return true;
         }
-        if (sameRootCount >= 2) return true;
+        if (sameRootCount >= 1) return true;
         if ("combo".equals(type) && sameRoleCount >= 2 && !("hotpot".equals(goal) && "veg".equals(inferTextRole(candidateText, type)))) return true;
         if ("meal".equals(type) && "fruit".equals(inferTextRole(candidateText, type)) && fruitCount >= 1) return true;
         if (("salad".equals(goal) || "juice".equals(goal)) && strongFlavorCount >= 2) return true;
@@ -1002,10 +1193,19 @@ public class PlanServiceImpl implements PlanService {
         if (PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.general_conflict_pairs"))) {
             return true;
         }
+        if ("meal".equals(goal) && PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.meal_conflict_pairs"))) {
+            return true;
+        }
         if ("juice".equals(goal) && PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.juice_conflict_pairs"))) {
             return true;
         }
         if ("salad".equals(goal) && PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.salad_conflict_pairs"))) {
+            return true;
+        }
+        if ("hotpot".equals(goal) && PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.hotpot_conflict_pairs"))) {
+            return true;
+        }
+        if ("bento_side".equals(goal) && PlanRuleHelper.hasConfiguredConflict(a, b, readRuleList("plan.bento_conflict_pairs"))) {
             return true;
         }
         if ("hotpot".equals(goal) && ((a.contains("西瓜") && b.contains("火锅")) || (b.contains("西瓜") && a.contains("火锅")))) {
@@ -1014,18 +1214,39 @@ public class PlanServiceImpl implements PlanService {
         return false;
     }
 
-    private boolean isSimilarProduceFamily(String a, String b) {
-        return shareKeyword(a, b, "苹果")
-                || shareKeyword(a, b, "番茄")
-                || shareKeyword(a, b, "黄瓜")
-                || shareKeyword(a, b, "土豆")
-                || shareKeyword(a, b, "胡萝卜")
-                || shareKeyword(a, b, "草莓")
-                || shareKeyword(a, b, "蓝莓");
+    private boolean hasConflictWithGoods(Goods candidate, String planType, String goal, Long... selectedGoodsIds) {
+        if (candidate == null || candidate.getId() == null || selectedGoodsIds == null || selectedGoodsIds.length == 0) {
+            return false;
+        }
+        String candidateText = (safe(candidate.getName(), "") + "," + safe(candidate.getKeywords(), "")).toLowerCase();
+        for (Long goodsId : selectedGoodsIds) {
+            if (goodsId == null || goodsId <= 0) continue;
+            Goods selected = goodsMapper.selectById(goodsId);
+            if (selected == null || selected.getId() == null || selected.getId().equals(candidate.getId())) continue;
+            String selectedText = (safe(selected.getName(), "") + "," + safe(selected.getKeywords(), "")).toLowerCase();
+            if (hasDirectConflict(candidateText, selectedText, "combo".equals(planType) ? goal : "meal")) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private boolean shareKeyword(String a, String b, String keyword) {
-        return a.contains(keyword) && b.contains(keyword);
+    private boolean hasConflictWithSelectedIds(Goods candidate, String planType, String goal, Set<Long> selectedGoodsIds) {
+        if (candidate == null || candidate.getId() == null || selectedGoodsIds == null || selectedGoodsIds.isEmpty()) {
+            return false;
+        }
+        String candidateText = (safe(candidate.getName(), "") + "," + safe(candidate.getKeywords(), "")).toLowerCase();
+        String resolvedGoal = "combo".equals(planType) ? goal : "meal";
+        for (Long goodsId : selectedGoodsIds) {
+            if (goodsId == null || goodsId <= 0 || goodsId.equals(candidate.getId())) continue;
+            Goods selected = goodsMapper.selectById(goodsId);
+            if (selected == null) continue;
+            String selectedText = (safe(selected.getName(), "") + "," + safe(selected.getKeywords(), "")).toLowerCase();
+            if (hasDirectConflict(candidateText, selectedText, resolvedGoal)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String inferTextRole(String text, String planType) {
@@ -1038,11 +1259,27 @@ public class PlanServiceImpl implements PlanService {
     }
 
     private boolean isStrongFlavorProduce(String text) {
-        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.strong_flavor_keywords"));
+        return isMealStrongFlavorProduce(text);
+    }
+
+    private boolean isMealStrongFlavorProduce(String text) {
+        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.meal_strong_flavor_keywords"));
+    }
+
+    private boolean isMealSatietyProduce(String text) {
+        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.meal_satiety_keywords"));
+    }
+
+    private boolean isMealHighFiberProduce(String text) {
+        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.meal_high_fiber_keywords"));
+    }
+
+    private boolean isMealRefreshingProduce(String text) {
+        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.meal_refreshing_keywords"));
     }
 
     private boolean isStarchyProduce(String text) {
-        return PlanRuleHelper.containsAnyKeyword(text, readRuleList("plan.starchy_keywords"));
+        return isMealSatietyProduce(text);
     }
 
     private boolean isWateryFruitProduce(String text) {
@@ -1070,7 +1307,14 @@ public class PlanServiceImpl implements PlanService {
     }
 
     private List<String> readRuleList(String ruleKey) {
-        String raw = loadPlanRuleConfig().getOrDefault(ruleKey, DEFAULT_PLAN_RULES.getOrDefault(ruleKey, ""));
+        Map<String, String> config = loadPlanRuleConfig();
+        String raw = config.getOrDefault(ruleKey, DEFAULT_PLAN_RULES.getOrDefault(ruleKey, ""));
+        if ((raw == null || raw.trim().isEmpty()) && "plan.meal_satiety_keywords".equals(ruleKey)) {
+            raw = config.getOrDefault("plan.starchy_keywords", DEFAULT_PLAN_RULES.getOrDefault("plan.meal_satiety_keywords", ""));
+        }
+        if ((raw == null || raw.trim().isEmpty()) && "plan.meal_strong_flavor_keywords".equals(ruleKey)) {
+            raw = config.getOrDefault("plan.strong_flavor_keywords", DEFAULT_PLAN_RULES.getOrDefault("plan.meal_strong_flavor_keywords", ""));
+        }
         if (raw == null || raw.trim().isEmpty()) return Collections.emptyList();
         return java.util.Arrays.stream(raw.split(","))
                 .map(String::trim)
@@ -1102,6 +1346,10 @@ public class PlanServiceImpl implements PlanService {
     }
 
     private Map<String, String> loadPlanRuleConfig() {
+        Map<String, String> cached = planRuleConfigThreadCache.get();
+        if (cached != null && !cached.isEmpty()) {
+            return cached;
+        }
         Map<String, String> config = new HashMap<>(DEFAULT_PLAN_RULES);
         try {
             List<Map<String, Object>> rows = planRuleConfigMapper.selectAll();
@@ -1116,18 +1364,30 @@ public class PlanServiceImpl implements PlanService {
         } catch (Exception ignored) {
             return config;
         }
+        if (cached != null) {
+            planRuleConfigThreadCache.set(config);
+        }
         return config;
+    }
+
+    private void beginPlanRuleContext() {
+        planRuleConfigThreadCache.set(new HashMap<>());
+    }
+
+    private void endPlanRuleContext() {
+        planRuleConfigThreadCache.remove();
     }
 
     private Map<String, String> loadPackPricingRules() {
         Map<String, String> config = new HashMap<>(DEFAULT_PACK_PRICING_RULES);
         try {
-            List<Map<String, Object>> rows = packPricingRuleMapper.selectAll();
+            List<Map<String, Object>> rows = seasonalConfigMapper.selectAll();
             if (rows != null) {
                 for (Map<String, Object> row : rows) {
-                    String key = row.get("ruleKey") == null ? "" : String.valueOf(row.get("ruleKey")).trim();
+                    String key = row.get("configKey") == null ? "" : String.valueOf(row.get("configKey")).trim();
+                    if (!key.startsWith("pack.")) continue;
                     if (key.isEmpty()) continue;
-                    String value = row.get("ruleValue") == null ? "" : String.valueOf(row.get("ruleValue")).trim();
+                    String value = row.get("configValue") == null ? "" : String.valueOf(row.get("configValue")).trim();
                     config.put(key, value);
                 }
             }
@@ -1148,14 +1408,26 @@ public class PlanServiceImpl implements PlanService {
 
     private static Map<String, String> buildDefaultPlanRules() {
         Map<String, String> config = new HashMap<>();
-        config.put("plan.strong_flavor_keywords", "洋葱,大葱,蒜,韭菜,蒜苗,苦瓜");
+        config.put("plan.global_blacklist_keywords", "");
+        config.put("plan.global_exclude_tags", "exclude_plan");
         config.put("plan.juice_blacklist_keywords", "蒜,洋葱,大葱,香葱,韭菜,辣椒");
         config.put("plan.salad_blacklist_keywords", "榴莲,菠萝蜜,蒜苗,大葱,洋葱");
         config.put("plan.hotpot_blacklist_keywords", "鲜切即食,果切杯,即食水果杯");
-        config.put("plan.starchy_keywords", "土豆,南瓜,玉米,红薯,芋头,山药,香蕉");
+        config.put("plan.bento_blacklist_keywords", "鲜切即食,果切杯,即食水果杯");
+        config.put("plan.meal_satiety_keywords", "土豆,南瓜,玉米,红薯,芋头,山药,香蕉");
+        config.put("plan.meal_high_fiber_keywords", "西兰花,芹菜,秋葵,菜花,菠菜,油麦菜,西芹,芦笋");
+        config.put("plan.meal_refreshing_keywords", "黄瓜,番茄,生菜,西红柿,圣女果,苹果,橙,柠檬");
+        config.put("plan.meal_strong_flavor_keywords", "洋葱,大葱,蒜,韭菜,蒜苗,苦瓜");
+        config.put("plan.juice_priority_keywords", "橙,苹果,胡萝卜,番茄,柠檬");
+        config.put("plan.salad_priority_keywords", "生菜,黄瓜,番茄,牛油果,苹果,蓝莓");
+        config.put("plan.hotpot_priority_keywords", "菠菜,生菜,油麦菜,金针菇,香菇,土豆,玉米,豆腐");
+        config.put("plan.bento_priority_keywords", "西兰花,胡萝卜,玉米,秋葵,菜花,菌菇");
         config.put("plan.watery_fruit_keywords", "西瓜,哈密瓜,香瓜,椰青,柚子");
+        config.put("plan.meal_conflict_pairs", "");
         config.put("plan.juice_conflict_pairs", "黄瓜|香蕉,番茄|香蕉");
         config.put("plan.salad_conflict_pairs", "土豆|西瓜,洋葱|草莓");
+        config.put("plan.hotpot_conflict_pairs", "");
+        config.put("plan.bento_conflict_pairs", "");
         config.put("plan.general_conflict_pairs", "榴莲|柠檬");
         return config;
     }
@@ -1578,7 +1850,7 @@ public class PlanServiceImpl implements PlanService {
     private String normalizePlanSourceScene(String planType, String sourceScene) {
         String scene = safe(sourceScene, "");
         if (!scene.isEmpty()) return scene;
-        return "combo".equalsIgnoreCase(safe(planType, "")) ? "蔬果搭配" : "小份优选";
+        return "combo".equalsIgnoreCase(safe(planType, "")) ? "场景搭配" : "小份优选";
     }
 
     private void saveCart(CartInfo cartInfo) {
@@ -1649,8 +1921,16 @@ public class PlanServiceImpl implements PlanService {
 
     private boolean isExcludedFromPlan(Goods goods) {
         if (goods == null || goods.getId() == null) return false;
-        // 通过标签判断是否被排除
-        return hasTag(goods, "exclude_plan");
+        List<String> excludeTags = readRuleList("plan.global_exclude_tags");
+        if (excludeTags.isEmpty()) {
+            return hasTag(goods, "exclude_plan");
+        }
+        for (String tagCode : excludeTags) {
+            if (tagCode != null && !tagCode.trim().isEmpty() && hasTag(goods, tagCode.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String sceneToTagCode(String goalScene) {

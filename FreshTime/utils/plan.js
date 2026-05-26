@@ -111,7 +111,7 @@ function normalizeAddCartResult(raw = {}) {
 }
 
 function generateMealPlan(payload = {}) {
-  return post('/meal-plan/generate', payload, { retry: 0 })
+  return post('/meal-plan/generate', payload, { retry: 0, timeout: 25000 })
     .then((res) => {
       const { code, message, data } = unwrapApiResponse(res);
       if (code !== 200) {
@@ -134,7 +134,7 @@ function generateMealPlan(payload = {}) {
 }
 
 function generateComboPlan(payload = {}) {
-  return post('/combo-plan/generate', payload, { retry: 0 })
+  return post('/combo-plan/generate', payload, { retry: 0, timeout: 25000 })
     .then((res) => {
       const { code, message, data } = unwrapApiResponse(res);
       if (code !== 200) {
@@ -157,7 +157,7 @@ function generateComboPlan(payload = {}) {
 }
 
 function replacePlanItem(payload = {}) {
-  return post('/plan/item/replace', payload, { retry: 0 })
+  return post('/plan/item/replace', payload, { retry: 0, timeout: 25000 })
     .then((res) => {
       const { code, message, data } = unwrapApiResponse(res);
       if (code !== 200) {

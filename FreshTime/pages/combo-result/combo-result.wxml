@@ -1,11 +1,11 @@
 <view class='page'>
-  <view class='state' wx:if='{{loading}}'>正在根据你的场景搭配商品，请稍等</view>
+  <view class='state' wx:if='{{loading}}'>正在按所选场景生成推荐方案，请稍等</view>
   <view class='state' wx:elif='{{!combo}}'>这次还没配出合适方案，换个条件再试试</view>
 
   <view wx:else>
     <view class='hero'>
       <view class='title'>{{combo.comboName}}</view>
-      <view class='sub'>按场景帮你配齐</view>
+      <view class='sub'>按当前场景生成的一组推荐方案</view>
       <view class='hero-price'>预计总价 <text class='hero-price__value'>¥{{combo.priceSummary.totalPrice}}</text></view>
       <view class='price-card'>
         <view class='price-row'>
@@ -26,7 +26,7 @@
     </view>
 
     <view class='card'>
-      <view class='card-title'>这组搭配包含</view>
+      <view class='card-title'>本次方案包含</view>
       <view class='item' wx:for='{{combo.items}}' wx:key='_itemKey'>
         <view class='item-head'>
           <view class='item-name-row'>
@@ -49,7 +49,7 @@
     </view>
 
     <view class='action-row'>
-      <button class='ghost-btn' bindtap='onRegenerate'>换一组搭配</button>
+      <button class='ghost-btn' bindtap='onRegenerate'>换一套方案</button>
       <button class='primary-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onBuyNow'>立即购买</button>
     </view>
   </view>

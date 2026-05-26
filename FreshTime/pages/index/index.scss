@@ -91,7 +91,7 @@ page {
 }
 
 .brand-sub {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: rgba(255, 255, 255, 0.88);
   font-weight: 500;
 }
@@ -225,7 +225,7 @@ page {
 
 .notice-prefix {
   flex-shrink: 0;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #7a5a1f;
   background: #f8e5bf;
   border-radius: 999rpx;
@@ -249,7 +249,7 @@ page {
 }
 
 .notice-text {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #748173;
 }
 
@@ -266,7 +266,7 @@ page {
 }
 
 .head-more {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-secondary;
 }
 
@@ -308,14 +308,14 @@ page {
 }
 
 .flash-tip-text {
-  font-size: 21rpx;
+  font-size: 23rpx;
   color: #8a6a0a;
 }
 
 .flash-tip-sub {
   display: block;
   margin-top: 6rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #9a8350;
 }
 
@@ -339,7 +339,7 @@ page {
 }
 
 .flash-name {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: $text-dark;
   font-weight: 600;
 }
@@ -348,7 +348,7 @@ page {
   display: inline-flex;
   margin-top: 8rpx;
   padding: 6rpx 12rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 700;
   color: #d14d2f;
   background: rgba(255, 120, 87, 0.12);
@@ -370,7 +370,7 @@ page {
 }
 
 .flash-origin {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #e76f3e;
   text-decoration: line-through;
 }
@@ -378,7 +378,7 @@ page {
 .flash-spec-text {
   display: block;
   margin-top: 6rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #8c7651;
 }
 
@@ -411,12 +411,12 @@ page {
 .flash-progress-text {
   display: block;
   margin-top: 4rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #d35a33;
 }
 
 .flash-stock {
-  font-size: 21rpx;
+  font-size: 23rpx;
   color: #5d7f60;
   font-weight: 500;
   flex: 1;
@@ -473,13 +473,13 @@ page {
 
 .entry-text {
   margin-top: 10rpx;
-  font-size: 23rpx;
+  font-size: 25rpx;
   color: $text-secondary;
 }
 
 .entry-subtext {
   margin-top: 6rpx;
-  font-size: 18rpx;
+  font-size: 20rpx;
   line-height: 1.4;
   color: #94a08f;
   text-align: center;
@@ -509,7 +509,7 @@ page {
 }
 
 .load-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: $text-light;
 }
 
@@ -585,7 +585,7 @@ page {
 }
 
 .home-error-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #4a6154;
 }
 
@@ -597,7 +597,7 @@ page {
   border-radius: 999rpx;
   color: #ffffff;
   background: linear-gradient(135deg, #73a937, #5a8a28);
-  font-size: 24rpx;
+  font-size: 26rpx;
 }
 
 .quick-entry,

@@ -37,16 +37,32 @@ public final class PlanScoringHelper {
         score += Math.min(safeInt(goods == null ? null : goods.getSalesVolume()) / 80, salesWeight);
         score += Math.min(safeInt(goods == null ? null : goods.getStock()) / 30, stockWeight);
         String text = safe(goods == null ? null : goods.getName(), "") + "," + safe(goods == null ? null : goods.getKeywords(), "") + "," + safe(goods == null ? null : goods.getOrigin(), "");
-        if ("high_fiber".equals(dietGoal) && hasTag(tagCodes, "diet_high_fiber")) score += 15;
-        if ("light".equals(dietGoal) && hasTag(tagCodes, "diet_light")) score += 15;
+        if ("high_fiber".equals(dietGoal) && hasTag(tagCodes, "diet_high_fiber")) score += 18;
+        if ("light".equals(dietGoal) && hasTag(tagCodes, "diet_light")) score += 18;
+        if ("balanced".equals(dietGoal) && hasTag(tagCodes, "diet_high_fiber")) score += 8;
+        if ("balanced".equals(dietGoal) && hasTag(tagCodes, "diet_light")) score += 8;
         if ("main".equals(role) && hasTag(tagCodes, "role_main")) score += 18;
         if ("side".equals(role) && hasTag(tagCodes, "role_side")) score += 18;
         if ("fruit".equals(role) && hasTag(tagCodes, "role_fruit")) score += 18;
-        if ("high_fiber".equals(dietGoal) && !hasTag(tagCodes, "diet_high_fiber") && text.matches(".*(菜|豆|麦|菌|瓜).*")) score += 8;
-        if ("light".equals(dietGoal) && !hasTag(tagCodes, "diet_light") && text.matches(".*(生菜|黄瓜|番茄|西兰花|蓝莓|苹果).*")) score += 8;
+        if ("high_fiber".equals(dietGoal) && !hasTag(tagCodes, "diet_high_fiber") && text.matches(".*(菜|豆|麦|菌|瓜|芹|秋葵|西兰花).*")) score += 10;
+        if ("light".equals(dietGoal) && !hasTag(tagCodes, "diet_light") && text.matches(".*(生菜|黄瓜|番茄|蓝莓|苹果|橙|柠檬).*")) score += 12;
+        if ("balanced".equals(dietGoal) && text.matches(".*(生菜|黄瓜|番茄|西兰花|胡萝卜|苹果|橙|玉米).*")) score += 10;
         if (preferSatiety) {
-            if (hasTag(tagCodes, "role_main")) score += 20;
-            else if (text.matches(".*(菌|菇|番茄|土豆|南瓜|玉米|山药|红薯|芋头|胡萝卜|彩椒|豆腐|茄子).*")) score += 10;
+            boolean starchyLike = text.matches(".*(土豆|南瓜|玉米|山药|红薯|芋头|莲藕|芡实|板栗|紫薯|贝贝南瓜).*");
+            boolean mushroomLike = text.matches(".*(菌|菇).*");
+            boolean satietyLike = text.matches(".*(番茄|胡萝卜|彩椒|豆腐|茄子).*");
+            int roleMainBonus = "light".equals(dietGoal) ? 10 : ("balanced".equals(dietGoal) ? 18 : 26);
+            int satietyTagBonus = "light".equals(dietGoal) ? 8 : ("balanced".equals(dietGoal) ? 14 : 22);
+            int starchyBonus = "light".equals(dietGoal) ? 4 : ("balanced".equals(dietGoal) ? 10 : 20);
+            int satietyLikeBonus = "light".equals(dietGoal) ? 2 : ("balanced".equals(dietGoal) ? 6 : 8);
+            int mushroomBonus = "light".equals(dietGoal) ? 1 : ("balanced".equals(dietGoal) ? 3 : 4);
+            if (hasTag(tagCodes, "role_main")) score += roleMainBonus;
+            if (hasTag(tagCodes, "nutrition_satiety")) score += satietyTagBonus;
+            if (starchyLike) score += starchyBonus;
+            else if (satietyLike) score += satietyLikeBonus;
+            else if (mushroomLike) score += mushroomBonus;
+            if ("light".equals(dietGoal) && (starchyLike || hasTag(tagCodes, "nutrition_satiety"))) score -= 10;
+            if ("balanced".equals(dietGoal) && starchyLike) score -= 2;
         }
         score += scoreCookModeFit(goods, role, cookMode);
         score += safeInt(mealPortionFitSupplier.apply(role));
@@ -150,12 +166,15 @@ public final class PlanScoringHelper {
             if ("fruit".equals(role) && text.matches(".*(榴莲|椰子).*")) return -10;
         }
         if ("salad".equals(goalScene)) {
-            if (text.matches(".*(生菜|黄瓜|番茄|蓝莓|草莓|苹果|牛油果).*")) return 12;
-            if (text.matches(".*(土豆|南瓜|玉米).*")) return -6;
+            if (text.matches(".*(生菜|黄瓜|番茄|蓝莓|草莓|苹果|牛油果|紫甘蓝|羽衣甘蓝).*")) return 14;
+            if (text.matches(".*(脆|爽|即食|沙拉|油醋|冷拌).*")) return 8;
+            if (text.matches(".*(土豆|南瓜|玉米|芋头|山药).*")) return -10;
+            if (text.matches(".*(耐煮|久煮|火锅|炖煮).*")) return -10;
         }
         if ("bento_side".equals(goalScene)) {
-            if (text.matches(".*(西兰花|胡萝卜|玉米|秋葵|菜花|菌菇).*")) return 12;
-            if (text.matches(".*(多汁|鲜切即食).*")) return -6;
+            if (text.matches(".*(西兰花|胡萝卜|玉米|秋葵|菜花|菌菇|芦笋|荷兰豆).*")) return 14;
+            if (text.matches(".*(便当|耐放|焯水|分装|快手).*")) return 8;
+            if (text.matches(".*(多汁|鲜切即食|果切|沙拉|榨汁).*")) return -10;
         }
         return 0;
     }

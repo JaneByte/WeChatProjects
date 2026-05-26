@@ -17,6 +17,7 @@ Page({
     unavailableCouponList: [],
     selectedCouponId: null,
     selectedCouponIndex: -1,
+    couponManualCleared: false,
     pendingOrderId: null,
     checkoutMeta: null,
     orderTipText: '',
@@ -74,7 +75,7 @@ Page({
       return scene;
     }
     if (type === 'MEAL') return '小份优选';
-    if (type === 'COMBO') return '蔬果搭配';
+    if (type === 'COMBO') return '场景搭配';
     if (type === 'SEASONAL') return '当季精选';
     if (type === 'FLASH') return '限时秒杀';
     return '';
@@ -139,10 +140,12 @@ Page({
     if (!id) return;
     const target = this.data.availableCouponList.find((item) => Number(item.id) === id);
     if (!target) return;
+    this.setData({ couponManualCleared: false });
     this.applySelectedCoupon(Number(target.id));
   },
 
   onClearCoupon() {
+    this.setData({ couponManualCleared: true });
     this.applySelectedCoupon(null);
   },
 
@@ -173,6 +176,10 @@ Page({
       const selectedAvailable = this.data.availableCouponList.find((item) => Number(item.id) === selectedId);
       if (selectedAvailable) {
         this.applySelectedCoupon(selectedId);
+        return;
+      }
+      if (this.data.couponManualCleared) {
+        this.applySelectedCoupon(null);
         return;
       }
       if (autoPickBest && this.data.availableCouponList.length > 0) {

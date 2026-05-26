@@ -38,7 +38,7 @@ Page({
     const sceneMetaMap = {
       '时令': {
         sceneClass: 'scene-seasonal',
-        title: '当季鲜选',
+        title: '当季精选',
         subtitle: '优先挑出口感更稳、更新鲜、也更适合买的当季蔬果',
         badge: '当季推荐',
         emptyText: '当前筛选下暂无当季商品，换个条件试试',

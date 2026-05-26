@@ -89,7 +89,6 @@ Page({
   },
 
   canAfterSale(detail = {}) {
-    if (Number(detail.status) === 1) return true;
     if (Number(detail.status) !== 3 || !detail.finishTime) return false;
     const ts = this.parseDateTime(detail.finishTime);
     if (Number.isNaN(ts)) return false;

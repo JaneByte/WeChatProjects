@@ -45,7 +45,7 @@
         <div class="stat-card stat-card-feature-lite">
           <span class="stat-label">搭配订单</span>
           <strong class="stat-value">{{ overview.comboOrderCount }}</strong>
-          <span class="card-tip">包含蔬果搭配商品的已支付订单</span>
+          <span class="card-tip">包含场景搭配商品的已支付订单</span>
         </div>
         <div class="stat-card stat-card-feature-lite">
           <span class="stat-label">当季精选订单</span>

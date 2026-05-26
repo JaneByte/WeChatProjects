@@ -10,11 +10,14 @@
       </div>
 
       <div class="form-grid login-form">
-        <input v-model.trim="username" class="input" placeholder="店铺账号" />
-        <input v-model.trim="password" class="input" type="password" placeholder="登录密码" />
+        <input v-model.trim="username" class="input login-input" placeholder="店铺账号" @keydown.enter="onLogin" />
+        <input v-model.trim="password" class="input login-input" type="password" placeholder="登录密码" @keydown.enter="onLogin" />
       </div>
 
-      <div v-if="error" class="error-box">{{ error }}</div>
+      <div v-if="error" class="error-box login-error-box">
+        <div class="login-error-title">登录失败</div>
+        <div>{{ error }}</div>
+      </div>
 
       <div class="toolbar">
         <button class="primary-btn" @click="onLogin" :disabled="loading">

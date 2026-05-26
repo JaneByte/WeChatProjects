@@ -1,24 +1,24 @@
 .page { padding: 24rpx; }
 .address, .list, .remark, .summary, .bottom { background: #fff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 16rpx; }
-.name { font-size: 28rpx; color: #1e3311; font-weight: 600; }
-.text { margin-top: 8rpx; color: #647457; font-size: 24rpx; }
-.hint { margin-top: 8rpx; color: #73a937; font-size: 22rpx; }
-.item { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 26rpx; }
+.name { font-size: 30rpx; color: #1e3311; font-weight: 600; }
+.text { margin-top: 8rpx; color: #647457; font-size: 26rpx; }
+.hint { margin-top: 8rpx; color: #73a937; font-size: 24rpx; }
+.item { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 28rpx; }
 .empty-list { text-align: center; }
 .empty-list button { margin-top: 14rpx; }
-.remark-label { font-size: 24rpx; color: #647457; }
+.remark-label { font-size: 26rpx; color: #647457; }
 .remark-input { margin-top: 12rpx; height: 72rpx; border-radius: 12rpx; background: #f8faf5; padding: 0 16rpx; }
 .coupon-section { margin-top: 12rpx; }
-.coupon-title { font-size: 22rpx; color: #647457; margin-bottom: 8rpx; }
+.coupon-title { font-size: 24rpx; color: #647457; margin-bottom: 8rpx; }
 .coupon-list { display: flex; flex-direction: column; gap: 10rpx; }
 .coupon-item { padding: 14rpx; border-radius: 12rpx; background: #edf6e0; border: 1rpx solid #e4eadf; }
 .coupon-item-active { border-color: #73a937; background: #edf6e0; }
 .coupon-item-disabled { background: #f8faf5; border-color: #e4eadf; color: #b8c2ae; }
-.coupon-main { font-size: 24rpx; }
-.coupon-sub { margin-top: 6rpx; font-size: 20rpx; color: #647457; }
-.coupon-empty { font-size: 22rpx; color: #b8c2ae; }
-.coupon-clear { margin-top: 10rpx; font-size: 22rpx; color: #73a937; }
-.summary-line { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 24rpx; color: #647457; }
+.coupon-main { font-size: 26rpx; }
+.coupon-sub { margin-top: 6rpx; font-size: 22rpx; color: #647457; }
+.coupon-empty { font-size: 24rpx; color: #b8c2ae; }
+.coupon-clear { margin-top: 10rpx; font-size: 24rpx; color: #73a937; }
+.summary-line { display: flex; justify-content: space-between; padding: 10rpx 0; font-size: 26rpx; color: #647457; }
 .summary-line.total { font-size: 28rpx; color: #5a8a28; font-weight: 600; }
 .bottom { display: flex; justify-content: space-between; align-items: center; }
 .submit { background: linear-gradient(135deg, #73a937, #5a8a28); color: #fff; border-radius: 14rpx; height: 68rpx; line-height: 68rpx; }
@@ -44,7 +44,7 @@
 }
 
 .section-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #1e3311;
   font-weight: 600;
   margin-bottom: 14rpx;
@@ -66,7 +66,7 @@
 }
 
 .item-name {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #1e3311;
   line-height: 1.45;
 }
@@ -75,7 +75,7 @@
   display: block;
   margin-top: 8rpx;
   color: #7b8d75;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 
 .item-side {
@@ -93,7 +93,7 @@
 
 .item-price {
   display: block;
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #5a8a28;
   font-weight: 700;
 }
@@ -103,7 +103,7 @@
 }
 
 .item-origin-price {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #b8c2ae;
   text-decoration: line-through;
 }
@@ -111,14 +111,14 @@
 .item-price-tag {
   display: block;
   margin-top: 6rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #df5d49;
 }
 
 .item-qty {
   display: block;
   margin-top: 6rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #7b8d75;
 }
 
@@ -146,7 +146,7 @@
   margin-top: 6rpx;
   padding-top: 16rpx;
   border-top: 1rpx solid #edf2e7;
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 700;
 }
 
@@ -161,7 +161,7 @@
 
 .bottom-total {
   display: block;
-  font-size: 32rpx;
+  font-size: 34rpx;
   color: #1e3311;
   font-weight: 700;
 }
@@ -170,7 +170,7 @@
   display: block;
   margin-top: 8rpx;
   color: #7b8d75;
-  font-size: 22rpx;
+  font-size: 24rpx;
   line-height: 1.5;
 }
 
@@ -181,5 +181,4 @@
   line-height: 72rpx;
   box-shadow: 0 12rpx 22rpx rgba(115, 169, 55, 0.18);
 }
-
 

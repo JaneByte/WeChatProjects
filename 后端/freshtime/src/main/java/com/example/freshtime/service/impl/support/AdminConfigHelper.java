@@ -10,9 +10,9 @@ public class AdminConfigHelper {
             return "套餐优惠配置";
         }
         if (ruleKey.startsWith("pack.combo.")) {
-            if (ruleKey.endsWith("discount_rate")) return "蔬果搭配基础折扣率";
-            if (ruleKey.endsWith("min_discount")) return "蔬果搭配最低优惠额";
-            if (ruleKey.endsWith("max_discount")) return "蔬果搭配最高优惠额";
+            if (ruleKey.endsWith("discount_rate")) return "场景搭配基础折扣率";
+            if (ruleKey.endsWith("min_discount")) return "场景搭配最低优惠额";
+            if (ruleKey.endsWith("max_discount")) return "场景搭配最高优惠额";
         }
         if (ruleKey.startsWith("pack.meal.")) {
             if (ruleKey.endsWith("discount_rate")) return "小份优选基础折扣率";

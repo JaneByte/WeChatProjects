@@ -10,13 +10,14 @@ Page({
     replacing: false,
     plan: null,
     payload: null,
+    excludedGoodsIds: [],
     planSummaryTitle: '',
     planSummaryText: ''
   },
 
   onLoad() {
     const payload = wx.getStorageSync('mealPlanPayload') || {};
-    this.setData({ payload });
+    this.setData({ payload, excludedGoodsIds: [] });
     this.loadPlan(payload);
   },
 
@@ -41,7 +42,7 @@ Page({
       })
       .catch((error) => {
         this.setData({ plan: null });
-        showRequestError(error, '小份优选方案生成失败');
+        showRequestError(error, '这次没配出理想方案，已尽量为你放宽条件');
       })
       .finally(() => this.setData({ loading: false }));
   },
@@ -53,11 +54,24 @@ Page({
 
   onRegenerate() {
     trackEvent('plan_regenerate', { planType: 'meal' });
+    const currentPlan = this.data.plan || {};
+    const previousPlanGoodsIds = Array.isArray(currentPlan.items)
+      ? currentPlan.items.map((item) => Number(item && item.goodsId ? item.goodsId : 0)).filter((id) => id > 0)
+      : [];
+    const excludedGoodsIds = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds.slice() : [];
+    (currentPlan.items || []).forEach((item) => {
+      const goodsId = Number(item && item.goodsId ? item.goodsId : 0);
+      if (goodsId > 0 && excludedGoodsIds.indexOf(goodsId) < 0) {
+        excludedGoodsIds.push(goodsId);
+      }
+    });
     const nextPayload = {
       ...(this.data.payload || {}),
-      shuffleSeed: Date.now()
+      shuffleSeed: Date.now(),
+      dislikeGoodsIds: excludedGoodsIds,
+      previousPlanGoodsIds
     };
-    this.setData({ payload: nextPayload });
+    this.setData({ payload: nextPayload, excludedGoodsIds });
     this.loadPlan(nextPayload);
   },
 
@@ -65,12 +79,7 @@ Page({
     const list = Array.isArray(this.data.plan && this.data.plan.items) ? this.data.plan.items.slice() : [];
     if (itemIndex < 0 || itemIndex >= list.length) return;
     list[itemIndex] = this.decorateItem({ ...list[itemIndex], ...replacement }, itemIndex);
-    const nextPriceSummary = priceSummary
-      ? {
-          ...this.data.plan.priceSummary,
-          ...priceSummary
-        }
-      : this.data.plan.priceSummary;
+    const nextPriceSummary = this.buildPlanPriceSummary(list, priceSummary);
     this.setData({
       'plan.items': list,
       'plan.priceSummary': nextPriceSummary
@@ -104,15 +113,25 @@ Page({
 
   buildSummaryTitle(plan = {}, payload = {}) {
     const sceneText = this.formatSceneText(payload.sceneText || payload.sceneType || '');
-    return sceneText ? `${sceneText}已配好` : '小份优选已配好';
+    const goalText = this.formatGoalText(payload.dietGoal || '');
+    if (sceneText && goalText) return `${sceneText}·${goalText}`;
+    if (sceneText) return `${sceneText}已配好`;
+    if (goalText) return `${goalText}方案已配好`;
+    return '小份优选已配好';
   },
 
   buildSummaryText(plan = {}, payload = {}) {
     const budget = this.formatBudgetText(payload.budgetLabel || payload.budgetLevel || '');
     const servings = Number(plan.serving || payload.serving || 1);
+    const goalKey = `${payload.dietGoal || ''}`.trim();
+    const goalSummaryMap = {
+      high_fiber: '更偏高纤和饱腹感，适合想吃得稳妥一点',
+      light: '更偏清爽轻负担，整体口感会更轻一点',
+      balanced: '更偏日常均衡，兼顾蔬菜、水果和顺手搭配'
+    };
     const parts = [
       `${servings} 人份量`,
-      '已经帮你搭配好',
+      goalSummaryMap[goalKey] || '已经帮你搭配好',
       budget ? budget : ''
     ].filter(Boolean);
     return parts.join(' · ');
@@ -142,6 +161,17 @@ Page({
     return budgetMap[text] || text;
   },
 
+  formatGoalText(goal) {
+    const text = `${goal || ''}`.trim();
+    if (!text) return '';
+    const goalMap = {
+      high_fiber: '高纤饱腹',
+      light: '清爽轻负担',
+      balanced: '均衡日常'
+    };
+    return goalMap[text] || text;
+  },
+
   formatRoleText(role) {
     if (role === 'main') return '主食材';
     if (role === 'side') return '搭配食材';
@@ -168,6 +198,29 @@ Page({
     return `¥${amount.toFixed(2)}`;
   },
 
+  buildPlanPriceSummary(items = [], sourcePriceSummary = {}) {
+    const currentSummary = (this.data.plan && this.data.plan.priceSummary) || {};
+    const originalTotalPrice = items.reduce((sum, item) => {
+      const price = Number(item && item.price ? item.price : 0);
+      const quantity = Number(item && item.quantity ? item.quantity : 1);
+      return sum + (price * quantity);
+    }, 0);
+    const packDiscount = Number(
+      sourcePriceSummary && sourcePriceSummary.packDiscount !== undefined
+        ? sourcePriceSummary.packDiscount
+        : currentSummary.packDiscount || 0
+    );
+    const totalPrice = Math.max(0, originalTotalPrice - packDiscount);
+    return {
+      ...currentSummary,
+      ...sourcePriceSummary,
+      originalTotalPrice: originalTotalPrice.toFixed(2),
+      packDiscount: packDiscount.toFixed(2),
+      totalPrice: totalPrice.toFixed(2),
+      savedAmount: packDiscount.toFixed(2)
+    };
+  },
+
   onReplaceItem(e) {
     if (this.data.replacing) return;
     const rawIndex = e && e.currentTarget && e.currentTarget.dataset
@@ -186,12 +239,24 @@ Page({
       originGoodsId: sourceItem.goodsId,
       originSkuId: sourceItem.skuId,
       originRole: sourceItem.role || '',
-      itemIndex
+      itemIndex,
+      currentGoodsIds: (() => {
+        const ids = Array.isArray(plan.items) ? plan.items.map((item) => Number(item.goodsId || 0)).filter((id) => id > 0) : [];
+        const excluded = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds : [];
+        excluded.forEach((id) => {
+          const normalized = Number(id || 0);
+          if (normalized > 0 && ids.indexOf(normalized) < 0) ids.push(normalized);
+        });
+        return ids;
+      })()
     })
       .then((result) => {
-        const beforeTotal = Number((plan.priceSummary && plan.priceSummary.totalPrice) || 0);
-        const nextTotal = Number((result.priceSummary && result.priceSummary.totalPrice) || beforeTotal);
         const next = result.item || {};
+        const excludedGoodsIds = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds.slice() : [];
+        const originGoodsId = Number(sourceItem.goodsId || 0);
+        if (originGoodsId > 0 && excludedGoodsIds.indexOf(originGoodsId) < 0) {
+          excludedGoodsIds.push(originGoodsId);
+        }
         this.replaceItemLocal(itemIndex, {
           goodsId: Number(next.goodsId || sourceItem.goodsId || 0),
           skuId: Number(next.skuId || sourceItem.skuId || 0),
@@ -199,6 +264,7 @@ Page({
           price: Number(next.price || sourceItem.price || 0),
           reason: next.reason || '已为你换成更适合的一项'
         }, result.priceSummary);
+        this.setData({ excludedGoodsIds });
         wx.showToast({ title: '已替换', icon: 'success' });
         trackEvent('plan_item_replace', {
           planType: 'meal',

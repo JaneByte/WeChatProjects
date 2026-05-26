@@ -50,6 +50,7 @@ public class AdminGoodsSkuHelper {
             return "";
         }
         Set<String> duplicateKeys = new HashSet<>();
+        int activeCount = 0;
         for (int i = 0; i < skuList.size(); i++) {
             AdminGoodsSaveRequest.SkuItem item = skuList.get(i);
             int index = i + 1;
@@ -73,6 +74,12 @@ public class AdminGoodsSkuHelper {
             if (!duplicateKeys.add(duplicateKey)) {
                 return "同一商品下存在重复规格，请检查规格名称和重量";
             }
+            if (item.getStatus() == null || item.getStatus() == 1) {
+                activeCount += 1;
+            }
+        }
+        if (activeCount <= 0) {
+            return "至少保留一条启用规格；如需停售请直接下架商品";
         }
         return "";
     }
@@ -85,7 +92,15 @@ public class AdminGoodsSkuHelper {
             return;
         }
         if (skuList.isEmpty()) {
-            goodsSkuMapper.deleteByGoodsId(goods.getId());
+            List<GoodsSku> currentList = goodsSkuMapper.selectAdminListByGoodsId(goods.getId());
+            if (currentList == null || currentList.isEmpty()) {
+                GoodsSku defaultSku = buildDefaultSku(goods);
+                goodsSkuMapper.insert(defaultSku);
+            } else {
+                goodsSkuMapper.deleteByGoodsId(goods.getId());
+                goodsSkuMapper.insert(buildDefaultSku(goods));
+            }
+            goodsMapper.updateGoodsStock(goods.getId(), defaultInt(goods.getStock()));
             return;
         }
         List<Long> keepIds = new ArrayList<>();
@@ -123,6 +138,20 @@ public class AdminGoodsSkuHelper {
         }
         goodsSkuMapper.deleteByGoodsIdAndExcludeIds(goods.getId(), keepIds);
         goodsMapper.updateGoodsStock(goods.getId(), activeSkuStockTotal);
+    }
+
+    private GoodsSku buildDefaultSku(Goods goods) {
+        GoodsSku sku = new GoodsSku();
+        sku.setGoodsId(goods.getId());
+        sku.setSkuName("标准装");
+        sku.setSkuWeightG(500);
+        sku.setSkuPrice(goods.getPrice());
+        sku.setSkuStock(defaultInt(goods.getStock()));
+        sku.setStatus(1);
+        sku.setSort(1);
+        sku.setSpecType("weight");
+        sku.setSpecValue("500");
+        return sku;
     }
 
     private String trim(String text) {

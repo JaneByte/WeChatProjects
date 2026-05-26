@@ -11,6 +11,9 @@ public interface GoodsMapper {
     String GOODS_COLUMNS = "id, category_id, name, main_image, images, detail, price, original_price, stock, unit, " +
             "sales_volume, is_recommend, is_flash, flash_price, flash_start_time, flash_end_time, flash_stock, " +
             "home_sort, show_in_home, status, origin, keywords, season_start_month, season_end_month, season_late_threshold_days, season_early_hint, season_peak_hint, season_late_hint, create_time";
+    String GOODS_COLUMNS_WITH_ALIAS = "g.id, g.category_id, g.name, g.main_image, g.images, g.detail, g.price, g.original_price, g.stock, g.unit, " +
+            "g.sales_volume, g.is_recommend, g.is_flash, g.flash_price, g.flash_start_time, g.flash_end_time, g.flash_stock, " +
+            "g.home_sort, g.show_in_home, g.status, g.origin, g.keywords, g.season_start_month, g.season_end_month, g.season_late_threshold_days, g.season_early_hint, g.season_peak_hint, g.season_late_hint, g.create_time";
 
     // 根据分类ID查询商品
     @Select("SELECT " + GOODS_COLUMNS + " FROM goods WHERE category_id = #{categoryId} AND status = 1 ORDER BY is_recommend DESC, create_time DESC")
@@ -24,11 +27,30 @@ public interface GoodsMapper {
     @Select("SELECT " + GOODS_COLUMNS + " FROM goods WHERE id = #{id}")
     Goods selectById(Long id);
 
-    // 搜索商品（匹配名称、关键词、产地）
-    @Select("SELECT " + GOODS_COLUMNS + " FROM goods WHERE status = 1 AND (name LIKE CONCAT('%',#{keyword},'%') OR keywords LIKE CONCAT('%',#{keyword},'%') OR origin LIKE CONCAT('%',#{keyword},'%')) ORDER BY sales_volume DESC, is_recommend DESC, create_time DESC LIMIT #{offset}, #{pageSize}")
+    // 搜索商品（匹配名称、关键词、产地、分类名）
+    @Select("SELECT " + GOODS_COLUMNS_WITH_ALIAS + " FROM goods g " +
+            "LEFT JOIN category c ON c.id = g.category_id " +
+            "LEFT JOIN category p ON p.id = c.parent_id " +
+            "WHERE g.status = 1 AND (" +
+            "g.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.keywords LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.origin LIKE CONCAT('%',#{keyword},'%') " +
+            "OR c.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR p.name LIKE CONCAT('%',#{keyword},'%')" +
+            ") " +
+            "ORDER BY g.sales_volume DESC, g.is_recommend DESC, g.create_time DESC LIMIT #{offset}, #{pageSize}")
     List<Goods> searchByKeyword(@Param("keyword") String keyword, @Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
 
-    @Select("SELECT COUNT(1) FROM goods WHERE status = 1 AND (name LIKE CONCAT('%',#{keyword},'%') OR keywords LIKE CONCAT('%',#{keyword},'%') OR origin LIKE CONCAT('%',#{keyword},'%'))")
+    @Select("SELECT COUNT(1) FROM goods g " +
+            "LEFT JOIN category c ON c.id = g.category_id " +
+            "LEFT JOIN category p ON p.id = c.parent_id " +
+            "WHERE g.status = 1 AND (" +
+            "g.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.keywords LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.origin LIKE CONCAT('%',#{keyword},'%') " +
+            "OR c.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR p.name LIKE CONCAT('%',#{keyword},'%')" +
+            ")")
     Integer countByKeyword(@Param("keyword") String keyword);
 
     @Select("SELECT " + GOODS_COLUMNS + " FROM goods WHERE status = 1 AND stock > 0 AND " +
@@ -46,13 +68,22 @@ public interface GoodsMapper {
     List<Goods> selectByTagName(@Param("tagName") String tagName);
 
     @Select("<script>" +
-            "SELECT " + GOODS_COLUMNS + " FROM goods WHERE 1 = 1 " +
+            "SELECT " + GOODS_COLUMNS_WITH_ALIAS + " FROM goods g " +
+            "LEFT JOIN category c ON c.id = g.category_id " +
+            "LEFT JOIN category p ON p.id = c.parent_id " +
+            "WHERE 1 = 1 " +
             "<if test='keyword != null and keyword != \"\"'> " +
-            "AND (name LIKE CONCAT('%',#{keyword},'%') OR keywords LIKE CONCAT('%',#{keyword},'%') OR origin LIKE CONCAT('%',#{keyword},'%')) " +
+            "AND (" +
+            "g.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.keywords LIKE CONCAT('%',#{keyword},'%') " +
+            "OR g.origin LIKE CONCAT('%',#{keyword},'%') " +
+            "OR c.name LIKE CONCAT('%',#{keyword},'%') " +
+            "OR p.name LIKE CONCAT('%',#{keyword},'%')" +
+            ") " +
             "</if>" +
-            "<if test='status != null'> AND status = #{status} </if>" +
-            "<if test='categoryId != null'> AND category_id = #{categoryId} </if>" +
-            "ORDER BY create_time DESC" +
+            "<if test='status != null'> AND g.status = #{status} </if>" +
+            "<if test='categoryId != null'> AND g.category_id = #{categoryId} </if>" +
+            "ORDER BY g.create_time DESC" +
             "</script>")
     List<Goods> selectAdminGoodsList(@Param("keyword") String keyword,
                                      @Param("status") Integer status,

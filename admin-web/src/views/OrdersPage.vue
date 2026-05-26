@@ -220,7 +220,7 @@ function formatPayStatus(value) {
 
 function formatOrderSource(value) {
   if (value === 'MEAL') return '小份优选';
-  if (value === 'COMBO') return '蔬果搭配';
+  if (value === 'COMBO') return '场景搭配';
   if (value === 'SEASONAL') return '当季精选';
   if (value === 'MIXED') return '混合来源';
   return '普通商品';

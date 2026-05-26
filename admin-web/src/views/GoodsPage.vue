@@ -65,7 +65,7 @@
               <div class="cell-title">{{ summarizeSkuStock(item) }}</div>
             </td>
             <td class="table-number-cell">
-              <div class="cell-title">{{ summarizeSkuSales(item) }}</div>
+              <div class="cell-title">{{ Number(item.salesVolume || 0) }}</div>
             </td>
             <td class="table-status-cell">
               <span :class="['status-pill', item.status === 1 ? 'status-active' : 'status-off']">
@@ -895,6 +895,11 @@ function addSku() {
 function removeSku(index) {
   const current = formSkuList.value[index];
   if (!current) {
+    return;
+  }
+  const activeCount = formSkuList.value.filter((sku) => Number(sku?.status ?? 1) === 1).length;
+  if (current.id && Number(current.status ?? 1) === 1 && activeCount <= 1) {
+    error.value = '至少保留一条启用规格；如需停售请直接下架商品';
     return;
   }
   if (current.id) {

@@ -10,13 +10,14 @@ Page({
     replacing: false,
     combo: null,
     payload: null,
+    excludedGoodsIds: [],
     comboSummaryTitle: '',
     comboSummaryText: ''
   },
 
   onLoad() {
     const payload = wx.getStorageSync('comboPlanPayload') || {};
-    this.setData({ payload });
+    this.setData({ payload, excludedGoodsIds: [] });
     this.loadPlan(payload);
   },
 
@@ -41,7 +42,7 @@ Page({
       })
       .catch((error) => {
         this.setData({ combo: null });
-        showRequestError(error, '搭配方案生成失败');
+        showRequestError(error, '这次没配出理想搭配，已尽量为你放宽条件');
       })
       .finally(() => this.setData({ loading: false }));
   },
@@ -53,11 +54,24 @@ Page({
 
   onRegenerate() {
     trackEvent('plan_regenerate', { planType: 'combo' });
+    const currentCombo = this.data.combo || {};
+    const previousPlanGoodsIds = Array.isArray(currentCombo.items)
+      ? currentCombo.items.map((item) => Number(item && item.goodsId ? item.goodsId : 0)).filter((id) => id > 0)
+      : [];
+    const excludedGoodsIds = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds.slice() : [];
+    (currentCombo.items || []).forEach((item) => {
+      const goodsId = Number(item && item.goodsId ? item.goodsId : 0);
+      if (goodsId > 0 && excludedGoodsIds.indexOf(goodsId) < 0) {
+        excludedGoodsIds.push(goodsId);
+      }
+    });
     const nextPayload = {
       ...(this.data.payload || {}),
-      shuffleSeed: Date.now()
+      shuffleSeed: Date.now(),
+      dislikeGoodsIds: excludedGoodsIds,
+      previousPlanGoodsIds
     };
-    this.setData({ payload: nextPayload });
+    this.setData({ payload: nextPayload, excludedGoodsIds });
     this.loadPlan(nextPayload);
   },
 
@@ -65,12 +79,7 @@ Page({
     const list = Array.isArray(this.data.combo && this.data.combo.items) ? this.data.combo.items.slice() : [];
     if (itemIndex < 0 || itemIndex >= list.length) return;
     list[itemIndex] = this.decorateItem({ ...list[itemIndex], ...replacement }, itemIndex);
-    const nextPriceSummary = priceSummary
-      ? {
-          ...this.data.combo.priceSummary,
-          ...priceSummary
-        }
-      : this.data.combo.priceSummary;
+    const nextPriceSummary = this.buildPlanPriceSummary(list, priceSummary);
     this.setData({
       'combo.items': list,
       'combo.priceSummary': nextPriceSummary
@@ -113,7 +122,7 @@ Page({
     const budget = this.formatBudgetText(payload.budgetLabel || payload.budgetLevel || '');
     const peopleCount = this.formatPeopleCount(payload.peopleCount || '');
     const parts = [
-      '按场景配齐更省心',
+      '按当前场景直接生成',
       peopleCount ? peopleCount : '',
       budget ? budget : ''
     ].filter(Boolean);
@@ -122,13 +131,13 @@ Page({
 
   formatSceneText(scene) {
     const text = `${scene || ''}`.trim();
-    if (!text) return '蔬果搭配';
+    if (!text) return '场景搭配';
     const sceneMap = {
       hotpot: '火锅配菜',
       salad: '沙拉轻食',
       juice: '果蔬榨汁',
       bento_side: '便当配菜',
-      combo: '蔬果搭配'
+      combo: '场景搭配'
     };
     return sceneMap[text] || text;
   },
@@ -182,6 +191,29 @@ Page({
     return `¥${amount.toFixed(2)}`;
   },
 
+  buildPlanPriceSummary(items = [], sourcePriceSummary = {}) {
+    const currentSummary = (this.data.combo && this.data.combo.priceSummary) || {};
+    const originalTotalPrice = items.reduce((sum, item) => {
+      const price = Number(item && item.price ? item.price : 0);
+      const quantity = Number(item && item.quantity ? item.quantity : 1);
+      return sum + (price * quantity);
+    }, 0);
+    const packDiscount = Number(
+      sourcePriceSummary && sourcePriceSummary.packDiscount !== undefined
+        ? sourcePriceSummary.packDiscount
+        : currentSummary.packDiscount || 0
+    );
+    const totalPrice = Math.max(0, originalTotalPrice - packDiscount);
+    return {
+      ...currentSummary,
+      ...sourcePriceSummary,
+      originalTotalPrice: originalTotalPrice.toFixed(2),
+      packDiscount: packDiscount.toFixed(2),
+      totalPrice: totalPrice.toFixed(2),
+      savedAmount: packDiscount.toFixed(2)
+    };
+  },
+
   onReplaceItem(e) {
     if (this.data.replacing) return;
     const rawIndex = e && e.currentTarget && e.currentTarget.dataset
@@ -203,7 +235,15 @@ Page({
       itemIndex,
       goalScene: this.data.payload && this.data.payload.goalScene ? this.data.payload.goalScene : '',
       peopleCount: this.data.payload && this.data.payload.peopleCount ? this.data.payload.peopleCount : '1',
-      currentGoodsIds: Array.isArray(combo.items) ? combo.items.map((item) => Number(item.goodsId || 0)).filter((id) => id > 0) : [],
+      currentGoodsIds: (() => {
+        const ids = Array.isArray(combo.items) ? combo.items.map((item) => Number(item.goodsId || 0)).filter((id) => id > 0) : [];
+        const excluded = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds : [];
+        excluded.forEach((id) => {
+          const normalized = Number(id || 0);
+          if (normalized > 0 && ids.indexOf(normalized) < 0) ids.push(normalized);
+        });
+        return ids;
+      })(),
       currentItems: Array.isArray(combo.items)
         ? combo.items.map((item) => ({
             goodsId: Number(item.goodsId || 0),
@@ -212,9 +252,12 @@ Page({
         : []
     })
       .then((result) => {
-        const beforeTotal = Number((combo.priceSummary && combo.priceSummary.totalPrice) || 0);
-        const nextTotal = Number((result.priceSummary && result.priceSummary.totalPrice) || beforeTotal);
         const next = result.item || {};
+        const excludedGoodsIds = Array.isArray(this.data.excludedGoodsIds) ? this.data.excludedGoodsIds.slice() : [];
+        const originGoodsId = Number(sourceItem.goodsId || 0);
+        if (originGoodsId > 0 && excludedGoodsIds.indexOf(originGoodsId) < 0) {
+          excludedGoodsIds.push(originGoodsId);
+        }
         this.replaceItemLocal(itemIndex, {
           goodsId: Number(next.goodsId || sourceItem.goodsId || 0),
           skuId: Number(next.skuId || sourceItem.skuId || 0),
@@ -222,6 +265,7 @@ Page({
           price: Number(next.price || sourceItem.price || 0),
           reason: next.reason || '已为你换成更适合的一项'
         }, result.priceSummary);
+        this.setData({ excludedGoodsIds });
         wx.showToast({ title: '已替换', icon: 'success' });
         trackEvent('plan_item_replace', {
           planType: 'combo',
@@ -270,7 +314,7 @@ Page({
         quantity: Number(item.quantity || 1),
         sourceType: 'COMBO',
         sourcePlanId: Number(combo.comboId || 0),
-        sourceScene: '蔬果搭配'
+        sourceScene: '场景搭配'
       }));
     wx.setStorageSync('checkoutItems', checkoutItems);
     wx.setStorageSync('checkoutMeta', {

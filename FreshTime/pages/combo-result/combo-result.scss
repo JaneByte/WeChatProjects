@@ -10,7 +10,7 @@
   text-align: center;
   color: #7b8f74;
   padding: 80rpx 0;
-  font-size: 26rpx;
+  font-size: 28rpx;
 }
 
 .hero {
@@ -22,19 +22,19 @@
 }
 
 .title {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 700;
 }
 
 .sub {
   margin-top: 6rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   opacity: 0.88;
 }
 
 .hero-price {
   margin-top: 14rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   opacity: 0.94;
 }
 
@@ -66,12 +66,12 @@
 }
 
 .price-label {
-  font-size: 22rpx;
+  font-size: 24rpx;
   opacity: 0.9;
 }
 
 .price-value {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: #ffffff;
 }
@@ -88,7 +88,7 @@
 
 .price-hint {
   margin-top: 12rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.92);
 }
@@ -102,13 +102,13 @@
 }
 
 .summary-title {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
 }
 
 .summary-text {
   margin-top: 6rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   line-height: 1.5;
   opacity: 0.94;
 }
@@ -122,7 +122,7 @@
 }
 
 .card-title {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: #243622;
   margin-bottom: 8rpx;
@@ -154,7 +154,7 @@
 }
 
 .item-name {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #2f4530;
   flex: 1;
   min-width: 0;
@@ -162,7 +162,7 @@
 
 .replace-btn {
   flex-shrink: 0;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #4c815f;
   background: #f3faf4;
   border: 1rpx solid #d4e7d7;
@@ -174,7 +174,7 @@
 .item-reason,
 .meta-line {
   margin-top: 4rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #5f7460;
 }
 
@@ -215,7 +215,7 @@
   margin: 0;
   line-height: 72rpx;
   border-radius: 14rpx;
-  font-size: 24rpx;
+  font-size: 26rpx;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -244,7 +244,7 @@
 
 .hero-note {
   margin-top: 8rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   line-height: 1.5;
   opacity: 0.92;
 }
@@ -273,6 +273,6 @@
   border-radius: 16rpx;
   background: #f3f8f1;
   color: #3f5944;
-  font-size: 20rpx;
+  font-size: 22rpx;
   line-height: 1.5;
 }

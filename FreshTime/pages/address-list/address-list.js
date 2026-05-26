@@ -53,13 +53,24 @@ Page({
       app.requireLogin({ redirect: '/pages/address-list/address-list' }).catch(() => {});
       return;
     }
-
-    del('/address/delete', { id }, { retry: 0 })
-      .then(() => {
-        wx.showToast({ title: '删除成功', icon: 'success' });
-        this.loadList();
-      })
-      .catch((error) => showRequestError(error, '删除失败'));
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后将无法恢复，是否继续？',
+      confirmColor: '#c95f4a',
+      success: (res) => {
+        if (!res.confirm) return;
+        del(`/address/delete?id=${id}`, {}, { retry: 0 })
+          .then(() => {
+            const selectedAddress = wx.getStorageSync('selectedAddress');
+            if (selectedAddress && Number(selectedAddress.id) === Number(id)) {
+              wx.removeStorageSync('selectedAddress');
+            }
+            wx.showToast({ title: '删除成功', icon: 'success' });
+            this.loadList();
+          })
+          .catch((error) => showRequestError(error, '删除失败'));
+      }
+    });
   },
 
   onChoose(e) {

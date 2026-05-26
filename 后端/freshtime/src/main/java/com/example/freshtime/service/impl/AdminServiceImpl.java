@@ -19,7 +19,6 @@ import com.example.freshtime.mapper.GoodsMapper;
 import com.example.freshtime.mapper.GoodsSkuMapper;
 import com.example.freshtime.mapper.GoodsTagMapper;
 import com.example.freshtime.mapper.OrderMapper;
-import com.example.freshtime.mapper.PackPricingRuleMapper;
 import com.example.freshtime.mapper.PlanRuleConfigMapper;
 import com.example.freshtime.mapper.SeasonalConfigMapper;
 import com.example.freshtime.mapper.TagMapper;
@@ -79,9 +78,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private SeasonalConfigMapper seasonalConfigMapper;
-
-    @Autowired
-    private PackPricingRuleMapper packPricingRuleMapper;
 
     @Autowired
     private AdminDashboardHelper adminDashboardHelper;
@@ -513,7 +509,20 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public ApiResponse<?> getPackPricingRules() {
-        return ApiResponse.success("查询成功", packPricingRuleMapper.selectAll());
+        List<Map<String, Object>> rows = seasonalConfigMapper.selectAll();
+        List<Map<String, Object>> data = new ArrayList<>();
+        if (rows != null) {
+            for (Map<String, Object> row : rows) {
+                String key = row.get("configKey") == null ? "" : String.valueOf(row.get("configKey")).trim();
+                if (!key.startsWith("pack.")) continue;
+                Map<String, Object> item = new HashMap<>();
+                item.put("ruleKey", key);
+                item.put("ruleValue", row.get("configValue") == null ? "" : String.valueOf(row.get("configValue")));
+                item.put("description", adminConfigHelper.resolvePackPricingDescription(key));
+                data.add(item);
+            }
+        }
+        return ApiResponse.success("查询成功", data);
     }
 
     @Override
@@ -524,9 +533,9 @@ public class AdminServiceImpl implements AdminService {
         for (Map.Entry<String, String> entry : config.entrySet()) {
             String key = trim(entry.getKey());
             if (key.isEmpty()) continue;
-            packPricingRuleMapper.upsert(key, trim(entry.getValue()), adminConfigHelper.resolvePackPricingDescription(key));
+            seasonalConfigMapper.upsert(key, trim(entry.getValue()));
         }
-        return ApiResponse.success("保存成功", packPricingRuleMapper.selectAll());
+        return getPackPricingRules();
     }
 
     private String trim(String text) {

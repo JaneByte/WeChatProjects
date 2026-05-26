@@ -39,7 +39,6 @@ function parseDateTime(value) {
 }
 
 function canAfterSale(item = {}) {
-  if (Number(item.status) === 1) return true;
   if (Number(item.status) !== 3 || !item.finishTime) return false;
   const ts = parseDateTime(item.finishTime);
   if (Number.isNaN(ts)) return false;

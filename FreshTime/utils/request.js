@@ -86,6 +86,7 @@ function emitUnauthorized() {
  * @param {Object} [options.header={}] 请求头
  * @param {Number} [options.timeout=DEFAULT_TIMEOUT] 超时时间
  * @param {Number} [options.retry=0] 失败重试次数（仅 5xx/网络失败生效）
+ * @param {Boolean} [options.skipAuthRedirect=false] 遇到 401 时是否跳过自动拉起登录页
  * @returns {Promise<any>}
  */
 function request(options = {}) {
@@ -95,7 +96,8 @@ function request(options = {}) {
     data = {},
     header = {},
     timeout = DEFAULT_TIMEOUT,
-    retry = 0
+    retry = 0,
+    skipAuthRedirect = false
   } = options;
 
   if (!url) {
@@ -133,7 +135,9 @@ function request(options = {}) {
             } catch (error) {
               // noop
             }
-            emitUnauthorized();
+            if (!skipAuthRedirect) {
+              emitUnauthorized();
+            }
             const unauthorizedError = new Error(getHttpErrorMessage(401));
             unauthorizedError.code = 401;
             reject(unauthorizedError);

@@ -9,7 +9,7 @@
 .scene-top { display: flex; align-items: center; justify-content: space-between; }
 .scene-title { font-size: 34rpx; color: #ffffff; font-weight: 700; }
 .scene-badge {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #1e3311;
   background: #e9f5d8;
   border-radius: 999rpx;
@@ -18,7 +18,7 @@
 .scene-subtitle {
   margin-top: 10rpx;
   display: block;
-  font-size: 23rpx;
+  font-size: 25rpx;
   color: rgba(255, 255, 255, 0.92);
 }
 .scene-panel {
@@ -29,8 +29,8 @@
   border: 1rpx solid #e4eadf;
 }
 .scene-panel-title { display: block; font-size: 24rpx; color: #1e3311; font-weight: 600; }
-.scene-panel-text { display: block; margin-top: 6rpx; font-size: 22rpx; color: #647457; }
-.scene-pack-tip { display: block; margin-top: 8rpx; font-size: 21rpx; color: #5a8a28; }
+.scene-panel-text { display: block; margin-top: 6rpx; font-size: 24rpx; color: #647457; }
+.scene-pack-tip { display: block; margin-top: 8rpx; font-size: 23rpx; color: #5a8a28; }
 .flash-hero {
   margin-bottom: 16rpx;
   padding: 18rpx 20rpx;
@@ -41,7 +41,7 @@
 .flash-hero-top { display: flex; align-items: center; justify-content: space-between; }
 .flash-hero-title { font-size: 34rpx; color: #ffffff; font-weight: 700; }
 .flash-hero-badge {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #8f1f00;
   background: #ffe6c8;
   border-radius: 999rpx;
@@ -58,7 +58,7 @@
 .flash-hero-tip {
   margin-top: 8rpx;
   display: block;
-  font-size: 21rpx;
+  font-size: 23rpx;
   color: rgba(255, 255, 255, 0.88);
 }
 .scene-filter-wrap,
@@ -80,7 +80,7 @@
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
   border: 1rpx solid #cfdcc6;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #5f6f52;
   background: #f8faf5;
 }
@@ -96,38 +96,38 @@
   color: #44563a;
   margin-bottom: 10rpx;
 }
-.state { color: #b8c2ae; text-align: center; padding: 40rpx 0; }
+.state { color: #b8c2ae; text-align: center; padding: 40rpx 0; font-size: 26rpx; }
 .list { background: #ffffff; border-radius: 16rpx; border: 1rpx solid #e4eadf; padding: 0 16rpx; }
 .item { display: flex; padding: 18rpx 0; border-bottom: 1rpx solid #e4eadf; }
 .item:last-child { border-bottom: none; }
 .img { width: 160rpx; height: 160rpx; border-radius: 12rpx; background: #f8faf5; }
 .meta { margin-left: 16rpx; display: flex; flex-direction: column; justify-content: space-between; }
 .name-row { display: flex; align-items: center; column-gap: 10rpx; }
-.name { font-size: 28rpx; color: #1e3311; }
+.name { font-size: 30rpx; color: #1e3311; }
 .tag {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #1e3311;
   background: #e9f5d8;
   border-radius: 999rpx;
   padding: 2rpx 10rpx;
 }
 .flash-tag {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #ffffff;
   background: #ff6f61;
   border-radius: 999rpx;
   padding: 2rpx 10rpx;
 }
-.hint { font-size: 22rpx; color: #647457; margin-top: 6rpx; }
+.hint { font-size: 24rpx; color: #647457; margin-top: 6rpx; }
 .flash-spec-text {
   margin-top: 8rpx;
-  font-size: 21rpx;
+  font-size: 23rpx;
   color: #d14d2f;
 }
 .price { font-size: 30rpx; color: #5a8a28; font-weight: 600; }
 .flash-price-box { display: flex; align-items: baseline; gap: 8rpx; }
 .origin-price {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #9fa896;
   text-decoration: line-through;
 }
@@ -157,11 +157,11 @@
   background: linear-gradient(90deg, #ff9e6e, #ff6d63);
 }
 .flash-progress-text {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #ff6d63;
 }
 .combo-badge {
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: #5a8a28;
   background: #edf6e0;
   border: 1rpx solid #d5e8be;
@@ -169,7 +169,7 @@
   padding: 2rpx 10rpx;
 }
 .add-btn {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #ffffff;
   background: linear-gradient(135deg, #73a937, #5a8a28);
   border-radius: 999rpx;
@@ -196,12 +196,12 @@
   padding: 24rpx;
 }
 .spec-popup-title { display: block; font-size: 28rpx; font-weight: 700; color: #1e3311; }
-.spec-popup-name { display: block; margin-top: 10rpx; font-size: 26rpx; color: #2d4220; }
+.spec-popup-name { display: block; margin-top: 10rpx; font-size: 28rpx; color: #2d4220; }
 .spec-popup-price,
-.spec-popup-qty { display: block; margin-top: 8rpx; font-size: 24rpx; color: #647457; }
+.spec-popup-qty { display: block; margin-top: 8rpx; font-size: 26rpx; color: #647457; }
 .spec-popup-row { margin-top: 18rpx; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14rpx; }
 .spec-cancel-btn,
-.spec-confirm-btn { height: 72rpx; line-height: 72rpx; border-radius: 14rpx; font-size: 26rpx; }
+.spec-confirm-btn { height: 72rpx; line-height: 72rpx; border-radius: 14rpx; font-size: 28rpx; }
 .spec-cancel-btn { background: #f1f4ed; color: #5f6f52; }
 .spec-confirm-btn { background: #73a937; color: #ffffff; }
 
@@ -274,7 +274,7 @@
 .flash-hero-note {
   display: block;
   margin-top: 8rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   color: rgba(255, 255, 255, 0.82);
 }
 
@@ -282,7 +282,7 @@
   display: inline-flex;
   margin-top: 8rpx;
   padding: 6rpx 12rpx;
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 700;
   color: #d14d2f;
   background: rgba(255, 120, 87, 0.12);

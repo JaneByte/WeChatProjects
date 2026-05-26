@@ -11,5 +11,7 @@ public class GenerateMealPlanRequest {
     private String dietGoal;
     private String cookMode;
     private List<String> dislikeTags;
+    private List<Long> dislikeGoodsIds;
+    private List<Long> previousPlanGoodsIds;
     private Long shuffleSeed;
 }

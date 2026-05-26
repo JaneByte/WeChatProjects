@@ -97,7 +97,7 @@ Page({
       return scene;
     }
     if (type === 'MEAL') return '小份优选';
-    if (type === 'COMBO') return '蔬果搭配';
+    if (type === 'COMBO') return '场景搭配';
     if (type === 'SEASONAL') return '当季精选';
     if (type === 'FLASH') return '限时秒杀';
     return '';

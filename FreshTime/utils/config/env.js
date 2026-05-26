@@ -1,7 +1,7 @@
 const API_BASE_URL_MAP = {
-  develop: 'http://10.200.52.62:8080/api',
-  trial: 'http://10.200.52.62:8080/api',
-  release: 'http://10.200.52.62:8080/api'
+  develop: 'http://10.200.66.177:8080/api',
+  trial: 'http://10.200.66.177:8080/api',
+  release: 'http://10.200.66.177:8080/api'
 };
 
 

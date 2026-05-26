@@ -1,7 +1,7 @@
 <view class='page'>
   <view class='hero'>
     <view class='hero-title'>场景搭配推荐</view>
-    <view class='hero-sub'>按你的场景，帮你一次配齐更合适的一组蔬果</view>
+    <view class='hero-sub'>根据不同吃法场景，帮你快速选出更合适的一组食材</view>
   </view>
 
   <view class='card'>
@@ -64,5 +64,5 @@
     </view>
   </view>
 
-  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>帮我配一组搭配</button>
+  <button class='submit-btn' loading='{{submitting}}' disabled='{{submitting}}' bindtap='onGenerate'>生成场景方案</button>
 </view>

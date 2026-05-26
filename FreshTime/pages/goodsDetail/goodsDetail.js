@@ -72,7 +72,7 @@ Page({
 
   loadDetail() {
     this.setData({ loading: true });
-    get('/goods/detail', { id: this.data.id }, { retry: 0 })
+    get('/goods/detail', { id: this.data.id }, { retry: 0, skipAuthRedirect: true })
       .then((res) => {
         const detail = (res && res.data) || null;
         if (!detail || !detail.id || Number(detail.status) === 0) {
@@ -208,7 +208,7 @@ Page({
   },
 
   recheckGoodsAvailability(goodsId, expectQty) {
-    return get('/goods/detail', { id: goodsId }, { retry: 0 }).then((res) => {
+    return get('/goods/detail', { id: goodsId }, { retry: 0, skipAuthRedirect: true }).then((res) => {
       const fresh = (res && res.data) || null;
       if (!fresh || !fresh.id || Number(fresh.status) !== 1) {
         throw new Error('商品已下架');
@@ -331,7 +331,7 @@ Page({
 
   loadCommentSummary() {
     if (!this.data.id) return;
-    get('/comment/summary', { goodsId: this.data.id }, { retry: 0 })
+    get('/comment/summary', { goodsId: this.data.id }, { retry: 0, skipAuthRedirect: true })
       .then((res) => {
         const summary = (res && res.data) || {};
         this.setData({ commentSummary: summary });
@@ -350,7 +350,7 @@ Page({
       goodsId: this.data.id,
       page: nextPage,
       pageSize: this.data.commentPageSize
-    }, { retry: 0 })
+    }, { retry: 0, skipAuthRedirect: true })
       .then((res) => {
         const data = (res && res.data) || {};
         const list = Array.isArray(data.list) ? data.list : [];

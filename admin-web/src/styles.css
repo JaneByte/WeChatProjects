@@ -582,6 +582,32 @@ select {
   margin-top: 24px;
 }
 
+.login-input {
+  min-width: 100%;
+  font-size: 15px;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #7bb03d;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(123, 176, 61, 0.12);
+}
+
+.login-error-box {
+  margin-top: 20px;
+  padding: 16px 18px;
+  border: 1px solid #f1c6bf;
+  background: linear-gradient(180deg, #fff4f1 0%, #ffefeb 100%);
+}
+
+.login-error-title {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #a63e2f;
+}
+
 .form-grid {
   margin-top: 18px;
   display: grid;

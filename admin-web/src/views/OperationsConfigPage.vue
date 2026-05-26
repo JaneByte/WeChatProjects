@@ -44,7 +44,7 @@
         <div class="section-head">
           <div>
             <h3 class="section-title">套餐优惠配置</h3>
-            <p class="section-desc">统一维护小份优选与蔬果搭配的折扣率、最低优惠额和最高优惠额。</p>
+            <p class="section-desc">统一维护小份优选与场景搭配的折扣率、最低优惠额和最高优惠额。</p>
           </div>
         </div>
         <div class="form-grid">
@@ -117,9 +117,9 @@ const seasonalFields = [
 ];
 
 const packPricingFields = [
-  { key: 'pack.combo.discount_rate', label: '搭配折扣率', placeholder: '如：0.05', hint: '蔬果搭配基础折扣率' },
-  { key: 'pack.combo.min_discount', label: '搭配最低优惠额', placeholder: '如：2.00', hint: '蔬果搭配至少优惠多少' },
-  { key: 'pack.combo.max_discount', label: '搭配最高优惠额', placeholder: '如：12.00', hint: '蔬果搭配最多优惠多少' },
+  { key: 'pack.combo.discount_rate', label: '搭配折扣率', placeholder: '如：0.05', hint: '场景搭配基础折扣率' },
+  { key: 'pack.combo.min_discount', label: '搭配最低优惠额', placeholder: '如：2.00', hint: '场景搭配至少优惠多少' },
+  { key: 'pack.combo.max_discount', label: '搭配最高优惠额', placeholder: '如：12.00', hint: '场景搭配最多优惠多少' },
   { key: 'pack.meal.discount_rate', label: '小份优选折扣率', placeholder: '如：0.03', hint: '小份优选基础折扣率' },
   { key: 'pack.meal.min_discount', label: '小份优选最低优惠额', placeholder: '如：1.00', hint: '小份优选至少优惠多少' },
   { key: 'pack.meal.max_discount', label: '小份优选最高优惠额', placeholder: '如：8.00', hint: '小份优选最多优惠多少' }
@@ -144,11 +144,11 @@ function mapRowsToConfig(rows = []) {
   return next;
 }
 
-function resolveValue(key, value) {
+function resolveValue(key, value, fallbackToDefault = true) {
   if (value !== undefined && value !== null && String(value).trim() !== '') {
     return String(value);
   }
-  if (Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG_VALUES, key)) {
+  if (fallbackToDefault && Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG_VALUES, key)) {
     return DEFAULT_CONFIG_VALUES[key];
   }
   return '';
@@ -156,7 +156,7 @@ function resolveValue(key, value) {
 
 function formatCurrentValue(value) {
   const text = String(value ?? '').trim();
-  return text || '当前未单独配置';
+  return text || '当前未配置，系统将按后端默认规则计算';
 }
 
 async function loadSeasonalConfig() {
@@ -171,7 +171,7 @@ async function loadPackPricingRules() {
   const res = await http.get('/pack-pricing-rules');
   const next = mapRowsToConfig(res.data);
   packPricingFields.forEach((item) => {
-    packPricingForm[item.key] = resolveValue(item.key, next[item.key]);
+    packPricingForm[item.key] = resolveValue(item.key, next[item.key], false);
   });
 }
 

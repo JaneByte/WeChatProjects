@@ -37,9 +37,9 @@ Page({
 
     navList: [
       { type: 'couponZone', text: '领券福利', subText: '先领券再下单', iconText: '券', linkType: 'coupon', linkValue: '' },
-      { type: 'seasonalFresh', text: '当季鲜选', subText: '应季更新更划算', iconText: '时', linkType: 'scene', linkValue: '时令' },
+      { type: 'seasonalFresh', text: '当季精选', subText: '应季更新更划算', iconText: '时', linkType: 'scene', linkValue: '时令' },
       { type: 'smallPortion', text: '小份优选', subText: '单人份量少浪费', iconText: '小', linkType: 'scene', linkValue: '小份量' },
-      { type: 'comboMix', text: '蔬果搭配', subText: '按场景一次配齐', iconText: '搭', linkType: 'scene', linkValue: '搭配' }
+      { type: 'comboMix', text: '场景搭配', subText: '按场景一次配齐', iconText: '搭', linkType: 'scene', linkValue: '搭配' }
     ],
 
     goodsList: [],

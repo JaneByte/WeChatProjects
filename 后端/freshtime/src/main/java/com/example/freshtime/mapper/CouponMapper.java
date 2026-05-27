@@ -16,13 +16,13 @@ public interface CouponMapper {
             "FROM coupon WHERE status = 1 ORDER BY threshold_amount ASC, discount_amount DESC, id DESC")
     List<CouponInfo> selectCouponPool();
 
-    @Select("SELECT id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
+    @Select("SELECT id, coupon_id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
             "FROM user_coupon " +
             "WHERE user_id = #{userId} AND status = 1 " +
             "ORDER BY expire_date ASC, id DESC")
     List<CouponInfo> selectActiveByUserId(@Param("userId") Long userId);
 
-    @Select("SELECT id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
+    @Select("SELECT id, coupon_id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
             "FROM user_coupon WHERE id = #{id} AND user_id = #{userId} LIMIT 1")
     CouponInfo selectByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
@@ -32,17 +32,17 @@ public interface CouponMapper {
     @org.apache.ibatis.annotations.Update("UPDATE user_coupon SET status = 1 WHERE id = #{id} AND user_id = #{userId} AND status = 2")
     int markUnused(@Param("id") Long id, @Param("userId") Long userId);
 
-    @Select("SELECT id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
+    @Select("SELECT id, coupon_id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
             "FROM user_coupon WHERE user_id = #{userId} AND title = #{title} AND expire_date = #{expireDate} AND status = 1 LIMIT 1")
     CouponInfo selectActiveByUserIdAndTitle(@Param("userId") Long userId,
                                             @Param("title") String title,
                                             @Param("expireDate") java.time.LocalDate expireDate);
 
-    @Insert("INSERT INTO user_coupon(user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status) " +
-            "VALUES(#{userId}, #{title}, #{conditionText}, #{thresholdAmount}, #{discountAmount}, #{expireDate}, #{status})")
+    @Insert("INSERT INTO user_coupon(coupon_id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status) " +
+            "VALUES(#{couponId}, #{userId}, #{title}, #{conditionText}, #{thresholdAmount}, #{discountAmount}, #{expireDate}, #{status})")
     int insertCoupon(CouponInfo couponInfo);
 
-    @Select("SELECT id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
+    @Select("SELECT id, coupon_id, user_id, title, condition_text, threshold_amount, discount_amount, expire_date, status " +
             "FROM user_coupon WHERE user_id = #{userId} AND title = #{title} AND status = 1 LIMIT 1")
     CouponInfo selectUserActiveByTitle(@Param("userId") Long userId, @Param("title") String title);
 

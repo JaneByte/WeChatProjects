@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Data
 public class CouponInfo {
     private Long id;
+    private Long couponId;
     private Long userId;
     private String title;
     private String conditionText;

@@ -81,6 +81,7 @@ public class CouponServiceImpl implements CouponService {
             return ApiResponse.fail(409, "该优惠券已领取");
         }
         CouponInfo row = new CouponInfo();
+        row.setCouponId(target.getId());
         row.setUserId(userId);
         row.setTitle(target.getTitle());
         row.setConditionText(target.getConditionText());
